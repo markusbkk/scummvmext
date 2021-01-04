@@ -26,7 +26,7 @@
 #include "sci/sci.h"
 #include "sci/graphics/helpers.h"
 #include "sci/graphics/view.h"
-
+#include "common/system.h"
 #include "graphics/sjis.h"
 #include "graphics/korfont.h"
 #include "graphics/pixelformat.h"
@@ -91,10 +91,11 @@ public:
 	void bakCreateBackup();
 	void bakCopyRectToScreen(const Common::Rect &rect, int16 x, int16 y);
 	void bakDiscard();
-
+	void bakBGCreateBackup();
+	void bakBGCopyRectToScreen(const Common::Rect &rect, int16 x, int16 y);
 	// video frame displaying
 	void copyVideoFrameToScreen(const byte *buffer, int pitch, const Common::Rect &rect, bool is8bit);
-
+	
 	// Vector drawing
 private:
 	void vectorPutLinePixel(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control);
@@ -159,8 +160,7 @@ public:
 
 private:
 	uint16 _width;
-	uint16 _height;
-	uint _pixels;
+	uint16 _height;	
 	uint16 _scriptWidth;
 	uint16 _scriptHeight;
 	uint16 _displayWidth;
@@ -168,7 +168,7 @@ private:
 	uint _displayPixels;
 
 	Graphics::PixelFormat _format;
-
+	Graphics::PixelFormat format8;
 	byte _colorWhite;
 	byte _colorDefaultVectorData;
 
@@ -184,7 +184,7 @@ private:
 	 */
 	bool _unditheringEnabled;
 	int16 _ditheredPicColors[DITHERED_BG_COLORS_SIZE];
-
+	
 	// These screens have the real resolution of the game engine (320x200 for
 	// SCI0/SCI1/SCI11 games, 640x480 for SCI2 games). SCI0 games will be
 	// dithered in here at any time.
@@ -199,10 +199,16 @@ private:
 	 */
 	byte *_displayScreen;
 
+	// Enhanced pixels
+	byte *_wasEnhanced;
+	byte *_wasEnhancedPrevious;
+	uint _pixels;
+
 	// Screens for RGB mode support
 	byte *_displayedScreen;
 	byte *_rgbScreen;
-
+	byte *_rgbBGX;
+	byte *_rgbBG;
 	// For RGB per-view/pic palette mods
 	byte *_paletteMapScreen;
 	byte _curPaletteMapValue;
@@ -210,6 +216,7 @@ private:
 	bool _paletteModsEnabled;
 
 	byte *_backupScreen; // for bak* functions
+	byte *_backupBGScreen; // for bak* functions
 
 	void convertToRGB(const Common::Rect &rect);
 	void displayRectRGB(const Common::Rect &rect, int x, int y);
@@ -254,11 +261,83 @@ public:
 
 		// Set pixel for visual, priority and control map directly, those are not upscaled
 		const int offset = y * _width + x;
+		
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			_visualScreen[offset] = color;
+
+			_wasEnhanced[offset] = 0;
+
+			if (_paletteMapScreen) {
+			
+			_paletteMapScreen[offset] = _curPaletteMapValue;
+
+				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 0] = *(&color);			
+				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 1] = *(&color) + 1;
+				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 2] = *(&color) + 2;
+
+			} else {
+			
+				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 0] = *(&color);
+				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 1] = *(&color) + 1;
+				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 2] = *(&color) + 2;
+
+				//_visualScreen[offset] = (uint16)_format.RGBToColor((uint8)r, (uint8)g, (uint8)b);
+			}
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_DISABLED:
+				_displayScreen[offset] = color;
+				break;
+
+			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x440:
+			case GFX_SCREEN_UPSCALED_640x480:
+				putScaledPixelOnDisplay(x, y, color);
+				break;
+			default:
+				break;
+			}
+		}
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			_priorityScreen[offset] = priority;
+		}
+		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
+			_controlScreen[offset] = control;
+		}
+	}
+	void putPixelEnhanced(int16 x, int16 y, byte drawMask, byte color, const byte* xcolor, byte priority, byte control) {
+		if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
+			putPixel480x300(x, y, drawMask, color, priority, control);
+			return;
+		}
+
+		// Set pixel for visual, priority and control map directly, those are not upscaled
+		const int offset = y * _width + x;
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
 			_visualScreen[offset] = color;
-			if (_paletteMapScreen)
+			if (_paletteMapScreen) {
+
 				_paletteMapScreen[offset] = _curPaletteMapValue;
+				
+				//_visualScreen[offset] = (uint16)g_system->getScreenFormat().RGBToColor(*xcolor, *xcolor + 1, *xcolor + 2);
+
+				_wasEnhanced[offset] = 1;
+
+				for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+					_rgbBGX[(offset * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor++;
+				}
+
+			} else {
+				//_visualScreen[offset] = (uint16)g_system->getScreenFormat().RGBToColor(*xcolor, *xcolor + 1, *xcolor + 2);
+
+				_wasEnhanced[offset] = 1;
+				for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+					_rgbBGX[(offset * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor++;
+				}
+			}
+			
 
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:
@@ -281,7 +360,6 @@ public:
 			_controlScreen[offset] = control;
 		}
 	}
-
 	void putPixel480x300(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 		const int offset = ((y * 3) / 2 * _width) + ((x * 3) / 2);
 
@@ -327,6 +405,7 @@ public:
 		int offset = y * _width + x;
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+			//_enhancedScreen[offset] = 0;
 			_visualScreen[offset] = color;
 			_displayScreen[offset] = color;
 			if (_paletteMapScreen)
@@ -411,7 +490,7 @@ public:
 			}
 
 			int offset = actualY * _width + x;
-
+			_wasEnhanced[offset] = 0;
 			_visualScreen[offset] = color;
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:

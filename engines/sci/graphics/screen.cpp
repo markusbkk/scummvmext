@@ -149,9 +149,10 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 		memset(&_upscaledWidthMapping, 0, sizeof(_upscaledWidthMapping) );
 		break;
 	}
-
+	
 	_displayPixels = _displayWidth * _displayHeight;
-
+	_wasEnhanced = (byte *)calloc(_displayPixels, 1);
+	_wasEnhancedPrevious = (byte *)calloc(_displayPixels, 1);
 	// Allocate visual, priority, control and display screen
 	_visualScreen = (byte *)calloc(_pixels, 1);
 	_priorityScreen = (byte *)calloc(_pixels, 1);
@@ -189,7 +190,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	}
 
 	// Initialize the actual screen
-	Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
+	format8 = Graphics::PixelFormat::createFormatCLUT8();
 	const Graphics::PixelFormat *format = &format8;
 	if (ConfMan.getBool("rgb_rendering"))
 		format = 0; // Backend's preferred mode; RGB if available
@@ -215,6 +216,8 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	if (_format.bytesPerPixel != 1) {
 		_displayedScreen = (byte *)calloc(_displayPixels, 1);
 		_rgbScreen = (byte *)calloc(_format.bytesPerPixel*_displayPixels, 1);
+		_rgbBGX = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+		_rgbBG = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
 		_palette = new byte[3*256];
 
 		if (_paletteModsEnabled)
@@ -231,6 +234,8 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 }
 
 GfxScreen::~GfxScreen() {
+	free(_wasEnhanced);
+	free(_wasEnhancedPrevious);
 	free(_visualScreen);
 	free(_priorityScreen);
 	free(_controlScreen);
@@ -239,25 +244,33 @@ GfxScreen::~GfxScreen() {
 	free(_paletteMapScreen);
 	free(_displayedScreen);
 	free(_rgbScreen);
+	free(_rgbBGX);
+	free(_rgbBG);
 	delete[] _palette;
 	delete[] _backupScreen;
 }
 
 void GfxScreen::convertToRGB(const Common::Rect &rect) {
 	assert(_format.bytesPerPixel != 1);
-
+	//bakBGCreateBackup();
 	for (int y = rect.top; y < rect.bottom; ++y) {
 
 		const byte *in = _displayedScreen + y * _displayWidth + rect.left;
+		const byte *we = _wasEnhanced + y * _displayWidth + rect.left;
+		const byte *wep = _wasEnhancedPrevious + y * _displayWidth + rect.left;
+		const byte *bgx = _rgbBGX + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
+		const byte *bg = _rgbBG + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 		byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 
 		// TODO: Reduce code duplication here
-
+		
 		if (_format.bytesPerPixel == 2) {
 
 			if (_paletteMapScreen) {
 				const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
 				for (int x = 0; x < rect.width(); ++x) {
+					
+
 					byte i = *in;
 					byte r = _palette[3*i + 0];
 					byte g = _palette[3*i + 1];
@@ -270,21 +283,31 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					}
 
 					uint16 c = (uint16)_format.RGBToColor(r, g, b);
+					
+					
 					WRITE_UINT16(out, c);
 					in += 1;
+					we += 1;
 					out += 2;
 					mod += 1;
 				}
 			} else {
+				
 				for (int x = 0; x < rect.width(); ++x) {
+
 					byte i = *in;
-					byte r = _palette[3*i + 0];
-					byte g = _palette[3*i + 1];
-					byte b = _palette[3*i + 2];
+					byte r = _palette[3 * i + 0];
+					byte g = _palette[3 * i + 1];
+					byte b = _palette[3 * i + 2];
+
 					uint16 c = (uint16)_format.RGBToColor(r, g, b);
+					
+					
 					WRITE_UINT16(out, c);
 					in += 1;
+					we += 1;
 					out += 2;
+					
 				}
 			}
 
@@ -294,6 +317,8 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 			if (_paletteMapScreen) {
 				const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
 				for (int x = 0; x < rect.width(); ++x) {
+					
+
 					byte i = *in;
 					byte r = _palette[3*i + 0];
 					byte g = _palette[3*i + 1];
@@ -306,25 +331,61 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					}
 
 					uint32 c = _format.RGBToColor(r, g, b);
-					WRITE_UINT32(out, c);
+					WRITE_UINT32(out, READ_UINT32(bgx));
+					if (*we == 0) {
+
+						WRITE_UINT32(out, c);
+					}
+
 					in += 1;
+					we += 1;
+					wep += 1;	
 					out += 4;
+					bg += 4;
+					bgx += 4;
 					mod += 1;
 				}
 			} else {
+				
 				for (int x = 0; x < rect.width(); ++x) {
+
 					byte i = *in;
-					byte r = _palette[3*i + 0];
-					byte g = _palette[3*i + 1];
-					byte b = _palette[3*i + 2];
+					byte r = _palette[3 * i + 0];
+					byte g = _palette[3 * i + 1];
+					byte b = _palette[3 * i + 2];
+
 					uint32 c = _format.RGBToColor(r, g, b);
-					WRITE_UINT32(out, c);
+					WRITE_UINT32(out, READ_UINT32(bgx));
+					if (*we == 0) {
+
+						WRITE_UINT32(out, c);
+					}
+					//if (*wep == 1 && *we == 0) {
+						//WRITE_UINT32(out, READ_UINT32(bgx));
+					//}
 					in += 1;
+					we += 1;
+					wep += 1;					
 					out += 4;
+					bg += 4;
+					bgx += 4;
+					
 				}
 			}
 		}
 	}
+	/*
+	for (int n = 0; n < _displayPixels; n++) {
+		if (*_wasEnhancedPrevious++ == 1 && *_wasEnhanced == 0) {
+			*_wasEnhanced++ = 1;
+		} else {
+			*_wasEnhanced++ = 0;
+		}
+	}
+	*/
+	//memcpy(_wasEnhancedPrevious, _wasEnhanced, _displayPixels);
+	//memset(_wasEnhanced, 1, _displayPixels);
+	
 }
 
 void GfxScreen::displayRectRGB(const Common::Rect &rect, int x, int y) {
@@ -366,13 +427,18 @@ void GfxScreen::displayRect(const Common::Rect &rect, int x, int y) {
 // should not be used regularly; only meant for restore game
 void GfxScreen::clearForRestoreGame() {
 	// reset all screen data
+	memset(_wasEnhanced, 0, _displayPixels);
+	memset(_wasEnhancedPrevious, 0, _displayPixels);
 	memset(_visualScreen, 0, _pixels);
 	memset(_priorityScreen, 0, _pixels);
 	memset(_controlScreen, 0, _pixels);
 	memset(_displayScreen, 0, _displayPixels);
 	if (_displayedScreen) {
 		memset(_displayedScreen, 0, _displayPixels);
-		memset(_rgbScreen, 0, _format.bytesPerPixel*_displayPixels);
+		memset(_rgbScreen, 0, _format.bytesPerPixel * _displayPixels);
+		memset(_rgbBGX, 0, _format.bytesPerPixel * _displayPixels);
+		memset(_rgbBG, 0, _format.bytesPerPixel * _displayPixels);
+		
 		if (_paletteMapScreen)
 			memset(_paletteMapScreen, 0, _displayPixels);
 	}
@@ -512,6 +578,8 @@ void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte 
 
 	if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 		// also set pixel below actual pixel
+		_wasEnhanced[offset] = 0;
+		_wasEnhanced[offset + _width] = 0;
 		_visualScreen[offset] = color;
 		_visualScreen[offset + _width] = color;
 		_displayScreen[offset] = color;
@@ -651,6 +719,7 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 	int pixels = rect.width() * rect.height();
 	if (mask & GFX_SCREEN_MASK_VISUAL) {
 		byteCount += pixels; // _visualScreen
+		byteCount += pixels; // _wasEnhanced
 		if (!_upscaledHires) {
 			byteCount += pixels; // _displayScreen
 			if (_paletteMapScreen)
@@ -673,6 +742,7 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 		if (!_upscaledHires)
 			error("bitsGetDataSize() called w/o being in upscaled hires mode");
 		byteCount += pixels; // _displayScreen (coordinates actually are given to us for hires displayScreen)
+		
 		if (_paletteMapScreen)
 			byteCount += pixels; // _paletteMapScreen
 	}
@@ -685,6 +755,7 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 
 	if (mask & GFX_SCREEN_MASK_VISUAL) {
 		bitsSaveScreen(rect, _visualScreen, _width, memoryPtr);
+		bitsSaveDisplayScreen(rect, _wasEnhanced, memoryPtr);		
 		bitsSaveDisplayScreen(rect, _displayScreen, memoryPtr);
 		if (_paletteMapScreen)
 			bitsSaveDisplayScreen(rect, _paletteMapScreen, memoryPtr);
@@ -749,6 +820,7 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 
 	if (mask & GFX_SCREEN_MASK_VISUAL) {
 		bitsRestoreScreen(rect, memoryPtr, _visualScreen, _width);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _wasEnhanced);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreen);
 		if (_paletteMapScreen)
 			bitsRestoreDisplayScreen(rect, memoryPtr, _paletteMapScreen);
@@ -1089,7 +1161,21 @@ void GfxScreen::bakCopyRectToScreen(const Common::Rect &rect, int16 x, int16 y) 
 	ptr += _format.bytesPerPixel * (rect.left + rect.top * _displayWidth);
 	g_system->copyRectToScreen(ptr, _format.bytesPerPixel * _displayWidth, x, y, rect.width(), rect.height());
 }
-
+void GfxScreen::bakBGCreateBackup() {
+	if (_format.bytesPerPixel == 1) {
+		
+		memcpy(_rgbScreen, _rgbBGX, _displayPixels);
+		
+	} else {
+		memcpy(_rgbScreen, _rgbBGX, _format.bytesPerPixel * _displayPixels);
+	}
+}
+void GfxScreen::bakBGCopyRectToScreen(const Common::Rect &rect, int16 x, int16 y) {
+	assert(_rgbBGX);
+	const byte *ptr = _rgbBGX;
+	ptr += _format.bytesPerPixel * (rect.left + rect.top * _displayWidth);
+	g_system->copyRectToScreen(ptr, _format.bytesPerPixel * _displayWidth, x, y, rect.width(), rect.height());
+}
 void GfxScreen::setPaletteMods(const PaletteMod *mods, unsigned int count) {
 	assert(count < 256);
 	for (unsigned int i = 0; i < count; ++i)

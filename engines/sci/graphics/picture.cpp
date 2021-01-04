@@ -32,6 +32,10 @@
 #include "sci/graphics/ports.h"
 #include "sci/graphics/picture.h"
 
+#include "image/png.h"
+
+#include <common/config-manager.h>
+
 namespace Sci {
 
 //#define DEBUG_PICTURE_DRAW
@@ -140,6 +144,18 @@ void GfxPicture::drawSci11Vga() {
 
 extern void unpackCelData(const SciSpan<const byte> &inBuffer, SciSpan<byte> &celBitmap, byte clearColor, int rlePos, int literalPos, ViewType viewType, uint16 width, bool isMacSci11ViewData);
 
+Graphics::Surface *loadPNG(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+	
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+
+	Graphics::Surface *srf = d.getSurface()->convertTo(g_system->getScreenFormat());
+	return srf;
+}
+
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
 	const SciSpan<const byte> rlePtr = inbuffer.subspan(rlePos);
@@ -150,10 +166,14 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	byte clearColor;
 	bool compression = true;
 	byte curByte;
+	byte xcurByte;
 	int16 y, lastY, x, leftX, rightX;
 	int pixelCount;
 	uint16 width, height;
-
+	Graphics::Surface *png;
+	const byte *enh;
+	bool enhanced = false;
+	int pxl = 0;
 	// if the picture is not an overlay and we are also not in EGA mode, use priority 0
 	if (!isEGA && !_addToFlag)
 		priority = 0;
@@ -184,6 +204,32 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
 
+	Common::FSNode folder;
+	if (ConfMan.hasKey("extrapath")) {
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + ".png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			
+			if (!file) {
+				fileName = folder.getChild(_resource->name() + ".png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					error("Enhanced Bitmap %s error", fileName.c_str());
+				} else {
+					debug(0, "Enhanced Bitmap EXISTS and has been loaded : ");
+					png = loadPNG(file);
+					enh = (const byte *)png->getPixels();
+					enhanced = true;
+				}
+			} else {
+				debug(0, "Enhanced Bitmap EXISTS and has been loaded : ");
+				png = loadPNG(file);				
+				enh = (const byte *)png->getPixels();
+				enhanced = true;
+			}
+		}	
+	}
+	debug(0, _resource->name().c_str());
 	Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
 
 	// Horizontal clipping
@@ -233,23 +279,38 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		byte drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY;
 
 		SciSpan<const byte> ptr = *celBitmap;
+
 		ptr += skipCelBitmapPixels;
 		ptr += skipCelBitmapLines * width;
 
-		if ((!isEGA) || (priority < 16)) {
+		if ((!isEGA) || ((isEGA) && (priority < 16))) {
 			// VGA + EGA, EGA only checks priority, when given priority is below 16
 			if (!_mirroredFlag) {
 				// Draw bitmap to screen
 				x = leftX;
 				while (y < lastY) {
-					curByte = *ptr++;
-					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
-						_screen->putPixel(x, y, drawMask, curByte, priority, 0);
+					
+						curByte = *ptr++;
+					if (enhanced) {
+						    for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+							    enh++;
+						    }
+					}
+					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
 
+						if (!enhanced) {
+							_screen->putPixel(x, y, drawMask, curByte, priority, 0);
+						} else {
+							_screen->putPixelEnhanced(x, y, drawMask, curByte, enh, priority, 0);
+						}
+					}
 					x++;
 
 					if (x >= rightX) {
 						ptr += sourcePixelSkipPerRow;
+						if (enhanced) {
+							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
+						}
 						x = leftX;
 						y++;
 					}
@@ -258,12 +319,26 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				// Draw bitmap to screen (mirrored)
 				x = rightX - 1;
 				while (y < lastY) {
-					curByte = *ptr++;
-					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
-						_screen->putPixel(x, y, drawMask, curByte, priority, 0);
+					
+						curByte = *ptr++;
+					if (enhanced) {
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+							enh++;
+						}
+					}
+					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
 
+						if (!enhanced) {
+							_screen->putPixel(x, y, drawMask, curByte, priority, 0);
+						} else {
+							_screen->putPixelEnhanced(x, y, drawMask, curByte, enh, priority, 0);
+						}
+					}
 					if (x == leftX) {
 						ptr += sourcePixelSkipPerRow;
+						if (enhanced) {
+							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
+						}
 						x = rightX;
 						y++;
 					}
@@ -279,14 +354,28 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				// EGA+priority>15: Draw bitmap to screen
 				x = leftX;
 				while (y < lastY) {
-					curByte = *ptr++;
-					if (curByte != clearColor)
-						_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+					
+						curByte = *ptr++;
+					if (enhanced) {
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+							enh++;
+						}
+					}
+					if (curByte != clearColor) {
 
+						if (!enhanced) {
+							_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+						} else {
+							_screen->putPixelEnhanced(x, y, GFX_SCREEN_MASK_VISUAL, curByte, enh, 0, 0);
+						}
+					}
 					x++;
 
 					if (x >= rightX) {
 						ptr += sourcePixelSkipPerRow;
+						if (enhanced) {
+							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
+						}
 						x = leftX;
 						y++;
 					}
@@ -295,12 +384,26 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				// EGA+priority>15: Draw bitmap to screen (mirrored)
 				x = rightX - 1;
 				while (y < lastY) {
-					curByte = *ptr++;
-					if (curByte != clearColor)
-						_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+					
+						curByte = *ptr++;
+					if (enhanced) {
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+							enh++;
+						}
+					}
+					if (curByte != clearColor) {
 
+						if (!enhanced) {
+							_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+						} else {
+							_screen->putPixelEnhanced(x, y, GFX_SCREEN_MASK_VISUAL, curByte, enh, 0, 0);
+						}
+					}
 					if (x == leftX) {
 						ptr += sourcePixelSkipPerRow;
+						if (enhanced) {
+							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
+						}
 						x = rightX;
 						y++;
 					}
@@ -433,7 +536,7 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 	int16 pattern_Code = 0, pattern_Texture = 0;
 	bool icemanDrawFix = false;
 	bool ignoreBrokenPriority = false;
-
+	
 	memset(&palette, 0, sizeof(palette));
 
 	if (_EGApaletteNo >= PIC_EGAPALETTE_COUNT) {
