@@ -283,6 +283,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		ptr += skipCelBitmapPixels;
 		ptr += skipCelBitmapLines * width;
 
+		if (enhanced) {
+			enh += skipCelBitmapPixels * g_system->getScreenFormat().bytesPerPixel;
+			enh += (skipCelBitmapLines * width) * g_system->getScreenFormat().bytesPerPixel;
+		}
+
 		if ((!isEGA) || ((isEGA) && (priority < 16))) {
 			// VGA + EGA, EGA only checks priority, when given priority is below 16
 			if (!_mirroredFlag) {
