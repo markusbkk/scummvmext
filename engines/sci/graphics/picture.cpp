@@ -167,7 +167,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	bool compression = true;
 	byte curByte;
 	byte xcurByte;
-	int16 y, lastY, x, leftX, rightX;
+	int16 y, inity, lastY, x, leftX, rightX;
 	int pixelCount;
 	uint16 width, height;
 	Graphics::Surface *png;
@@ -209,7 +209,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-			
+
 			if (!file) {
 				fileName = folder.getChild(_resource->name() + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
@@ -223,11 +223,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			} else {
 				debug(0, "Enhanced Bitmap EXISTS and has been loaded : ");
-				png = loadPNG(file);				
+				png = loadPNG(file);
 				enh = (const byte *)png->getPixels();
 				enhanced = true;
 			}
-		}	
+		}
 	}
 	debug(0, _resource->name().c_str());
 	Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
@@ -284,136 +284,215 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		ptr += skipCelBitmapLines * width;
 
 		if (enhanced) {
-			enh += skipCelBitmapPixels * g_system->getScreenFormat().bytesPerPixel;
-			enh += (skipCelBitmapLines * width) * g_system->getScreenFormat().bytesPerPixel;
+			enh += (skipCelBitmapPixels * 2) * g_system->getScreenFormat().bytesPerPixel;
+			enh += ((skipCelBitmapLines * width) * 2) * g_system->getScreenFormat().bytesPerPixel;
 		}
+		
+		inity = y;
+			if ((!isEGA) || (priority < 16)) {
+				// VGA + EGA, EGA only checks priority, when given priority is below 16
+				if (!_mirroredFlag) {
+					// Draw bitmap to screen
+					x = leftX;
 
-		if ((!isEGA) || ((isEGA) && (priority < 16))) {
-			// VGA + EGA, EGA only checks priority, when given priority is below 16
-			if (!_mirroredFlag) {
-				// Draw bitmap to screen
-				x = leftX;
-				while (y < lastY) {
-					
+					while (y < lastY) {
+
 						curByte = *ptr++;
-					if (enhanced) {
-						    for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
-							    enh++;
-						    }
-					}
-					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
 
-						if (!enhanced) {
+						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
+
 							_screen->putPixel(x, y, drawMask, curByte, priority, 0);
-						} else {
-							_screen->putPixelEnhanced(x, y, drawMask, curByte, enh, priority, 0);
+						}
+						x++;
+
+						if (x >= rightX) {
+							ptr += sourcePixelSkipPerRow;
+
+							x = leftX;
+							y++;
 						}
 					}
-					x++;
+				} else {
+					// Draw bitmap to screen (mirrored)
+					x = rightX - 1;
+					while (y < lastY) {
 
-					if (x >= rightX) {
-						ptr += sourcePixelSkipPerRow;
-						if (enhanced) {
-							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
+						curByte = *ptr++;
+
+						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
+
+							_screen->putPixel(x, y, drawMask, curByte, priority, 0);
 						}
-						x = leftX;
-						y++;
+						if (x == leftX) {
+							ptr += sourcePixelSkipPerRow;
+
+							x = rightX;
+							y++;
+						}
+
+						x--;
 					}
 				}
 			} else {
-				// Draw bitmap to screen (mirrored)
-				x = rightX - 1;
-				while (y < lastY) {
-					
+				// EGA, when priority is above 15
+				//  we don't check priority and also won't set priority at all
+				//  fixes picture 48 of kq5 (island overview). Bug #5182
+				if (!_mirroredFlag) {
+					// EGA+priority>15: Draw bitmap to screen
+					x = leftX;
+					while (y < lastY) {
+
 						curByte = *ptr++;
-					if (enhanced) {
-						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
-							enh++;
-						}
-					}
-					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
 
-						if (!enhanced) {
-							_screen->putPixel(x, y, drawMask, curByte, priority, 0);
-						} else {
-							_screen->putPixelEnhanced(x, y, drawMask, curByte, enh, priority, 0);
-						}
-					}
-					if (x == leftX) {
-						ptr += sourcePixelSkipPerRow;
-						if (enhanced) {
-							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
-						}
-						x = rightX;
-						y++;
-					}
+						if (curByte != clearColor) {
 
-					x--;
+							_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+						}
+						x++;
+
+						if (x >= rightX) {
+							ptr += sourcePixelSkipPerRow;
+
+							x = leftX;
+							y++;
+						}
+					}
+				} else {
+					// EGA+priority>15: Draw bitmap to screen (mirrored)
+					x = rightX - 1;
+					while (y < lastY) {
+
+						curByte = *ptr++;
+
+						if (curByte != clearColor) {
+
+							_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+						}
+						if (x == leftX) {
+							ptr += sourcePixelSkipPerRow;
+
+							x = rightX;
+							y++;
+						}
+
+						x--;
+					}
 				}
 			}
-		} else {
-			// EGA, when priority is above 15
-			//  we don't check priority and also won't set priority at all
-			//  fixes picture 48 of kq5 (island overview). Bug #5182
-			if (!_mirroredFlag) {
-				// EGA+priority>15: Draw bitmap to screen
-				x = leftX;
-				while (y < lastY) {
-					
-						curByte = *ptr++;
-					if (enhanced) {
-						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+		    if (enhanced) {
+			    y = inity;
+			if ((!isEGA) || (priority < 16)) {
+				// VGA + EGA, EGA only checks priority, when given priority is below 16
+				if (!_mirroredFlag) {
+					// Draw bitmap to screen
+					x = leftX;
+
+					while (y < lastY * 2) {
+
+						
+
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel * 2; e++) {
 							enh++;
 						}
-					}
-					if (curByte != clearColor) {
 
-						if (!enhanced) {
-							_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
-						} else {
-							_screen->putPixelEnhanced(x, y, GFX_SCREEN_MASK_VISUAL, curByte, enh, 0, 0);
+						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
+
+							_screen->putPixelEnhanced(x, y, drawMask, enh, priority, 0);
+						}
+						x++;
+
+						if (x >= rightX) {
+							
+
+							enh += (sourcePixelSkipPerRow * 2) * g_system->getScreenFormat().bytesPerPixel;
+
+							x = leftX;
+							y++;
 						}
 					}
-					x++;
+				} else {
+					// Draw bitmap to screen (mirrored)
+					x = rightX - 1;
+					while (y < lastY * 2) {
 
-					if (x >= rightX) {
-						ptr += sourcePixelSkipPerRow;
-						if (enhanced) {
-							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
+						
+
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel * 2; e++) {
+							enh++;
 						}
-						x = leftX;
-						y++;
+
+						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y))) {
+
+							_screen->putPixelEnhanced(x, y, drawMask, enh, priority, 0);
+						}
+						if (x == leftX) {
+							
+
+							enh += (sourcePixelSkipPerRow * 2) * g_system->getScreenFormat().bytesPerPixel;
+
+							x = rightX;
+							y++;
+						}
+
+						x--;
 					}
 				}
 			} else {
-				// EGA+priority>15: Draw bitmap to screen (mirrored)
-				x = rightX - 1;
-				while (y < lastY) {
-					
-						curByte = *ptr++;
-					if (enhanced) {
-						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
+				// EGA, when priority is above 15
+				//  we don't check priority and also won't set priority at all
+				//  fixes picture 48 of kq5 (island overview). Bug #5182
+				if (!_mirroredFlag) {
+					// EGA+priority>15: Draw bitmap to screen
+					x = leftX;
+					while (y < lastY * 2) {
+
+						
+
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel * 2; e++) {
 							enh++;
 						}
-					}
-					if (curByte != clearColor) {
 
-						if (!enhanced) {
-							_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
-						} else {
-							_screen->putPixelEnhanced(x, y, GFX_SCREEN_MASK_VISUAL, curByte, enh, 0, 0);
+						if (curByte != clearColor) {
+
+							_screen->putPixelEnhanced(x, y, GFX_SCREEN_MASK_VISUAL, enh, 0, 0);
+						}
+						x++;
+
+						if (x >= rightX) {
+							
+
+							enh += (sourcePixelSkipPerRow * 2) * g_system->getScreenFormat().bytesPerPixel;
+
+							x = leftX;
+							y++;
 						}
 					}
-					if (x == leftX) {
-						ptr += sourcePixelSkipPerRow;
-						if (enhanced) {
-							enh += sourcePixelSkipPerRow * g_system->getScreenFormat().bytesPerPixel;
-						}
-						x = rightX;
-						y++;
-					}
+				} else {
+					// EGA+priority>15: Draw bitmap to screen (mirrored)
+					x = rightX - 1;
+					while (y < lastY * 2) {
 
-					x--;
+						
+
+						for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel * 2; e++) {
+							enh++;
+						}
+
+						if (curByte != clearColor) {
+
+							_screen->putPixelEnhanced(x, y, GFX_SCREEN_MASK_VISUAL, enh, 0, 0);
+						}
+						if (x == leftX) {
+							
+
+							enh += (sourcePixelSkipPerRow * 2) * g_system->getScreenFormat().bytesPerPixel;
+
+							x = rightX;
+							y++;
+						}
+
+						x--;
+					}
 				}
 			}
 		}
