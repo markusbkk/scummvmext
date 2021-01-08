@@ -70,7 +70,6 @@ class GfxScreen {
 public:
 	GfxScreen(ResourceManager *resMan);
 	~GfxScreen();
-
 	uint16 getWidth() { return _width; }
 	uint16 getHeight() { return _height; }
 	uint16 getScriptWidth() { return _scriptWidth; }
@@ -159,6 +158,7 @@ public:
 	bool paletteModsEnabled() const { return _paletteModsEnabled; }
 
 private:
+
 	uint16 _width;
 	uint16 _height;
 	uint16 _scriptWidth;
@@ -166,7 +166,7 @@ private:
 	uint16 _displayWidth;
 	uint16 _displayHeight;
 	uint _displayPixels;
-	uint _displayPixelsx2;
+	uint _displayPixelsXFactor;
 	Graphics::PixelFormat _format;
 	Graphics::PixelFormat format8;
 	byte _colorWhite;
@@ -252,6 +252,7 @@ private:
 
 	// pixel related code, in header so that it can be inlined for performance
 public:
+	
 	void putPixel(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 		if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 			putPixel480x300(x, y, drawMask, color, priority, control);
@@ -316,23 +317,27 @@ public:
 				_paletteMapScreen[offset] = _curPaletteMapValue;
 
 				//_visualScreen[offset] = (uint16)g_system->getScreenFormat().RGBToColor(*xcolor, *xcolor + 1, *xcolor + 2);
-
+				if (x > (_width / 2))
 				_wasEnhanced[offset] = 1;
-
-				for (int xx = 0; xx < 2; xx++) {
+				
+				for (int xx = 0; xx < g_sci->_upscaleFactor; xx++) {
 					for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
-						_rgbBGX[(((((y)) * (_width * 2)) + ((x * 2) + xx)) * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor++;
+						if (x > (_width / 2))
+						_rgbBGX[(((((y)) * (_width * g_sci->_upscaleFactor)) + ((x * g_sci->_upscaleFactor) + xx)) * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor;
+						*xcolor++;
 					}
 				}
 
 			} else {
 				//_visualScreen[offset] = (uint16)g_system->getScreenFormat().RGBToColor(*xcolor, *xcolor + 1, *xcolor + 2);
-
+				if (x > (_width / 2))
 				_wasEnhanced[offset] = 1;
-
-				for (int xx = 0; xx < 2; xx++) {
+				
+				for (int xx = 0; xx < g_sci->_upscaleFactor; xx++) {
 					for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
-						_rgbBGX[(((((y)) * (_width * 2)) + ((x * 2) + xx)) * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor++;
+						if (x > (_width / 2))
+						_rgbBGX[(((((y)) * (_width * g_sci->_upscaleFactor)) + ((x * g_sci->_upscaleFactor) + xx)) * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor;
+						*xcolor++;
 					}
 				}
 			}

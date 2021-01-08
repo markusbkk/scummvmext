@@ -137,7 +137,7 @@ class SciEngine : public Engine {
 public:
 	SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId);
 	~SciEngine() override;
-
+	uint16 _upscaleFactor = 2;
 	// Engine APIs
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;

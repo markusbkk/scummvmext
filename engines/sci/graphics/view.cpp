@@ -28,8 +28,10 @@
 #include "sci/graphics/coordadjuster.h"
 #include "sci/graphics/view.h"
 
+#include "image/png.h"
 
 #include "sci/graphics/scifx.h"
+#include <common/config-manager.h>
 
 namespace Sci {
 
@@ -799,9 +801,20 @@ byte GfxView::getMappedColor(byte color, uint16 scaleSignal, const Palette *pale
 	}
 	return outputColor;
 }
+Graphics::Surface *loadCelPNG(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
 
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+
+	Graphics::Surface *srf = d.getSurface()->convertTo(g_system->getScreenFormat());
+	return srf;
+}
 void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
 			int16 loopNo, int16 celNo, byte priority, uint16 EGAmappingNr, bool upscaledHires, uint16 scaleSignal) {
+
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
 	const SciSpan<const byte> &bitmap = getBitmap(loopNo, celNo);
@@ -826,6 +839,47 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 	// Set up custom per-view palette mod
 	byte oldpalvalue = _screen->getCurPaletteMapValue();
 	doCustomViewPalette(_screen, _resourceId, loopNo, celNo);
+
+	Graphics::Surface *png;
+	const byte *enh;
+	bool enhanced = false;
+	int pixelsLength = 0;
+	int enhInit = 0;
+	char loopNoStr[5];
+	sprintf(loopNoStr, "%d", loopNo );
+	char celNoStr[5];
+	sprintf(celNoStr, "%d", celNo);
+	debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded..", (_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").c_str());
+	Common::FSNode folder;
+	if (ConfMan.hasKey("extrapath")) {
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+			if (!file) {
+				
+				debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded..", fileName.c_str());
+				
+				fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					error("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded..", fileName.c_str());
+					//for (int y = 0; y < height; y++, bitmapData += celWidth) {
+						//for (int x = 0; x < width; x++) {
+
+						//}
+					//}
+				} else {
+					debug("Enhanced Bitmap EXISTS and has been loaded..");
+					png = loadCelPNG(file);
+					enh = (const byte *)png->getPixels();
+					enhInit = *enh;
+					pixelsLength = png->w * png->h * png->format.bpp();
+					enhanced = true;
+				}				
+			}
+		}
+	}
 
 	if (_EGAmapping) {
 		const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
