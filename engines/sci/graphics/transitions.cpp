@@ -100,7 +100,7 @@ static const GfxTransitionTranslateEntry blackoutTransitionIDs[] = {
 };
 
 void GfxTransitions::init() {
-	_oldScreen = new byte[(_screen->getDisplayHeight() * g_sci->_upscaleFactor) * (_screen->getDisplayWidth() * g_sci->_upscaleFactor)];
+	_oldScreen = new byte[_screen->getDisplayHeight() * _screen->getDisplayWidth()];
 
 	if (getSciVersion() >= SCI_VERSION_1_LATE)
 		_translationTable = NULL;
@@ -115,7 +115,7 @@ void GfxTransitions::init() {
 void GfxTransitions::setup(int16 number, bool blackoutFlag) {
 	if (number != -1) {
 #ifndef DISABLE_TRANSITIONS
-		_number = SCI_TRANSITIONS_NONE; //number;
+		_number = number;
 #else
 		_number = SCI_TRANSITIONS_NONE;
 #endif
@@ -284,10 +284,7 @@ void GfxTransitions::setNewScreen(bool blackoutFlag) {
 
 void GfxTransitions::copyRectToScreen(const Common::Rect rect, bool blackoutFlag) {
 	if (!blackoutFlag) {
-		Common::Rect upscaledRect = rect;
-		_screen->adjustToUpscaledCoordinates(upscaledRect.top, upscaledRect.left);
-		_screen->adjustToUpscaledCoordinates(upscaledRect.bottom, upscaledRect.right);
-		_screen->copyRectToScreen(upscaledRect);
+		_screen->copyRectToScreen(rect);
 	} else {
 		Graphics::Surface *surface = g_system->lockScreen();
 		if (!_screen->getUpscaledHires()) {
@@ -305,7 +302,6 @@ void GfxTransitions::copyRectToScreen(const Common::Rect rect, bool blackoutFlag
 // Note: don't do too many steps in here, otherwise cpu will crap out because of
 // the load
 void GfxTransitions::fadeOut() {
-	
 	byte oldPalette[3 * 256], workPalette[3 * 256];
 	int16 stepNr, colorNr;
 	// Sierra did not fade in/out color 255 for sci1.1, but they used it in
@@ -329,13 +325,11 @@ void GfxTransitions::fadeOut() {
 		_screen->setPalette(workPalette + 3, 1, tillColorNr);
 		g_sci->getEngineState()->sleep(2);
 	}
-	
 }
 
 // Note: don't do too many steps in here, otherwise cpu will crap out because of
 // the load
 void GfxTransitions::fadeIn() {
-	
 	int16 stepNr;
 	// Sierra did not fade in/out color 255 for sci1.1, but they used it in
 	//  several pictures (e.g. qfg3 demo/intro), so the fading looked weird
@@ -345,7 +339,6 @@ void GfxTransitions::fadeIn() {
 		_palette->kernelSetIntensity(1, tillColorNr + 1, stepNr, true);
 		g_sci->getEngineState()->sleep(2);
 	}
-	
 }
 
 // Pixelates the new picture over the old one - works against the whole screen.

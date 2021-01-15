@@ -110,6 +110,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	_opcode_formats = 0;
 
 	_forceHiresGraphics = false;
+	_enhancementMultiplier = 4;
 
 	// Set up the engine specific debug levels
 	DebugMan.addDebugChannel(kDebugLevelError, "Error", "Script error debugging");

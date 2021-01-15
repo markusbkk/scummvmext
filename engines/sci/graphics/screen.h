@@ -26,7 +26,7 @@
 #include "sci/sci.h"
 #include "sci/graphics/helpers.h"
 #include "sci/graphics/view.h"
-#include "common/system.h"
+
 #include "graphics/sjis.h"
 #include "graphics/korfont.h"
 #include "graphics/pixelformat.h"
@@ -43,7 +43,8 @@ enum GfxScreenUpscaledMode {
 	GFX_SCREEN_UPSCALED_480x300     = 1,
 	GFX_SCREEN_UPSCALED_640x400		= 2,
 	GFX_SCREEN_UPSCALED_640x440		= 3,
-	GFX_SCREEN_UPSCALED_640x480		= 4
+	GFX_SCREEN_UPSCALED_640x480		= 4,
+	GFX_SCREEN_UPSCALED_320x200_X	= 5
 };
 
 enum GfxScreenMasks {
@@ -70,6 +71,7 @@ class GfxScreen {
 public:
 	GfxScreen(ResourceManager *resMan);
 	~GfxScreen();
+
 	uint16 getWidth() { return _width; }
 	uint16 getHeight() { return _height; }
 	uint16 getScriptWidth() { return _scriptWidth; }
@@ -90,8 +92,7 @@ public:
 	void bakCreateBackup();
 	void bakCopyRectToScreen(const Common::Rect &rect, int16 x, int16 y);
 	void bakDiscard();
-	void bakBGCreateBackup();
-	void bakBGCopyRectToScreen(const Common::Rect &rect, int16 x, int16 y);
+
 	// video frame displaying
 	void copyVideoFrameToScreen(const byte *buffer, int pitch, const Common::Rect &rect, bool is8bit);
 
@@ -140,7 +141,7 @@ public:
 
 	void debugShowMap(int mapNo);
 
-	int _picNotValid;      // possible values 0, 1 and 2
+	int _picNotValid; // possible values 0, 1 and 2
 	int _picNotValidSci11; // another variable that is used by kPicNotValid in sci1.1
 
 	int16 kernelPicNotValid(int16 newPicNotValid);
@@ -158,17 +159,17 @@ public:
 	bool paletteModsEnabled() const { return _paletteModsEnabled; }
 
 private:
-
 	uint16 _width;
 	uint16 _height;
+	uint _pixels;
 	uint16 _scriptWidth;
 	uint16 _scriptHeight;
 	uint16 _displayWidth;
 	uint16 _displayHeight;
 	uint _displayPixels;
-	uint _displayPixelsXFactor;
+
 	Graphics::PixelFormat _format;
-	Graphics::PixelFormat format8;
+
 	byte _colorWhite;
 	byte _colorDefaultVectorData;
 
@@ -192,6 +193,18 @@ private:
 	byte *_priorityScreen;
 	byte *_controlScreen;
 
+	byte *_visualScreenR;
+	byte *_priorityScreenR;
+	byte *_controlScreenR;
+
+	byte *_visualScreenG;
+	byte *_priorityScreenG;
+	byte *_controlScreenG;
+
+	byte *_visualScreenB;
+	byte *_priorityScreenB;
+	byte *_controlScreenB;
+
 	/**
 	 * This screen is the one, where pixels are copied out of into the frame buffer.
 	 * It may be 640x400 for japanese SCI1 games. SCI0 games may be undithered in here.
@@ -199,24 +212,25 @@ private:
 	 */
 	byte *_displayScreen;
 
-	// Enhanced pixels
-	byte *_wasEnhanced;
-	byte *_wasEnhancedPrevious;
-	uint _pixels;
+	// Display screen copies in r g & b format
+	byte *_displayScreenR;
+	byte *_displayedScreenR;
+	byte *_displayScreenG;
+	byte *_displayedScreenG;
+	byte *_displayScreenB;
+	byte *_displayedScreenB;
 
 	// Screens for RGB mode support
 	byte *_displayedScreen;
 	byte *_rgbScreen;
-	byte *_rgbBGX;
-	byte *_rgbBG;
+
 	// For RGB per-view/pic palette mods
 	byte *_paletteMapScreen;
 	byte _curPaletteMapValue;
 	PaletteMod _paletteMods[256];
 	bool _paletteModsEnabled;
 
-	byte *_backupScreen;   // for bak* functions
-	byte *_backupBGScreen; // for bak* functions
+	byte *_backupScreen; // for bak* functions
 
 	void convertToRGB(const Common::Rect &rect);
 	void displayRectRGB(const Common::Rect &rect, int x, int y);
@@ -230,7 +244,9 @@ private:
 	 * debug purposes, to show for example the priority screen).
 	 */
 	byte *_activeScreen;
-
+	byte *_activeScreenR;
+	byte *_activeScreenG;
+	byte *_activeScreenB;
 	/**
 	 * This variable defines, if upscaled hires is active and what upscaled mode
 	 * is used.
@@ -250,9 +266,9 @@ private:
 	 */
 	bool _fontIsUpscaled;
 
+
 	// pixel related code, in header so that it can be inlined for performance
 public:
-	
 	void putPixel(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 		if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 			putPixel480x300(x, y, drawMask, color, priority, control);
@@ -263,27 +279,10 @@ public:
 		const int offset = y * _width + x;
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
-
 			_visualScreen[offset] = color;
-
-			_wasEnhanced[offset] = 0;
-
-			if (_paletteMapScreen) {
-
+			if (_paletteMapScreen)
 				_paletteMapScreen[offset] = _curPaletteMapValue;
 
-				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 0] = *(&color);
-				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 1] = *(&color) + 1;
-				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 2] = *(&color) + 2;
-
-			} else {
-
-				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 0] = *(&color);
-				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 1] = *(&color) + 1;
-				_rgbBG[(offset * g_system->getScreenFormat().bytesPerPixel) + 2] = *(&color) + 2;
-
-				//_visualScreen[offset] = (uint16)_format.RGBToColor((uint8)r, (uint8)g, (uint8)b);
-			}
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:
 				_displayScreen[offset] = color;
@@ -292,6 +291,7 @@ public:
 			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
+			case GFX_SCREEN_UPSCALED_320x200_X:
 				putScaledPixelOnDisplay(x, y, color);
 				break;
 			default:
@@ -305,45 +305,99 @@ public:
 			_controlScreen[offset] = control;
 		}
 	}
-	void putPixelEnhanced(int16 x, int16 y, byte drawMask, const byte *xcolor, byte priority, byte control) {
 
-		// Set pixel for visual, priority and control map directly, those are not upscaled
-		const int offset = y * _width + x;
+	void putPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
-			if (_paletteMapScreen) {
+			int displayOffset = 0;
 
-				_paletteMapScreen[offset] = _curPaletteMapValue;
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_320x200_X: {
 
-				//_visualScreen[offset] = (uint16)g_system->getScreenFormat().RGBToColor(*xcolor, *xcolor + 1, *xcolor + 2);
-				if (x > (_width / 2))
-				_wasEnhanced[offset] = 1;
-				
-				for (int xx = 0; xx < g_sci->_upscaleFactor; xx++) {
-					for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
-						if (x > (_width / 2))
-						_rgbBGX[(((((y)) * (_width * g_sci->_upscaleFactor)) + ((x * g_sci->_upscaleFactor) + xx)) * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor;
-						*xcolor++;
-					}
-				}
+						displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+						if (_format.bytesPerPixel == 2) {
+			
+							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (r * ((1.0 / 255.0) * a));
 
-			} else {
-				//_visualScreen[offset] = (uint16)g_system->getScreenFormat().RGBToColor(*xcolor, *xcolor + 1, *xcolor + 2);
-				if (x > (_width / 2))
-				_wasEnhanced[offset] = 1;
-				
-				for (int xx = 0; xx < g_sci->_upscaleFactor; xx++) {
-					for (int e = 0; e < g_system->getScreenFormat().bytesPerPixel; e++) {
-						if (x > (_width / 2))
-						_rgbBGX[(((((y)) * (_width * g_sci->_upscaleFactor)) + ((x * g_sci->_upscaleFactor) + xx)) * g_system->getScreenFormat().bytesPerPixel) + e] = *xcolor;
-						*xcolor++;
-					}
-				}
+						} else {
+							//assert(_format.bytesPerPixel == 4);
+
+							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (r * ((1.0 / 255.0) * a));
+						}
+				break;
+			}
+			default:
+				break;
 			}
 		}
 	}
 
+	void putPixelG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_320x200_X: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (g * ((1.0 / 255.0) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (g * ((1.0 / 255.0) * a));
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	void putPixelB(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_320x200_X: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (b * ((1.0 / 255.0) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (b * ((1.0 / 255.0) * a));
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+	void putPixelEtc(int16 x, int16 y, byte drawMask, byte priority, byte control) {
+
+		// Set pixel for visual, priority and control map directly, those are not upscaled
+		const int offset = y * _width + x;
+
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			_priorityScreen[offset] = priority;
+		}
+		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
+			_controlScreen[offset] = control;
+		}
+	}
 	void putPixel480x300(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 		const int offset = ((y * 3) / 2 * _width) + ((x * 3) / 2);
 
@@ -376,6 +430,7 @@ public:
 		case GFX_SCREEN_UPSCALED_640x400:
 		case GFX_SCREEN_UPSCALED_640x440:
 		case GFX_SCREEN_UPSCALED_640x480:
+		case GFX_SCREEN_UPSCALED_320x200_X:
 			// For regular upscaled modes forward to the regular putPixel
 			putPixel(x, y, drawMask, color, priority, control);
 			return;
@@ -389,7 +444,6 @@ public:
 		int offset = y * _width + x;
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
-			//_enhancedScreen[offset] = 0;
 			_visualScreen[offset] = color;
 			_displayScreen[offset] = color;
 			if (_paletteMapScreen)
@@ -412,8 +466,47 @@ public:
 	void putPixelOnDisplay(int16 x, int16 y, byte color) {
 		int offset = y * _displayWidth + x;
 		_displayScreen[offset] = color;
-	}
 
+		int displayOffset = 0;
+
+		switch (_upscaledHires) {
+		case GFX_SCREEN_UPSCALED_320x200_X: {
+
+			for (int yy = 0; yy < g_sci->_enhancementMultiplier; yy++) {
+				for (int xx = 0; xx < g_sci->_enhancementMultiplier; xx++) {
+					displayOffset = (((y * g_sci->_enhancementMultiplier) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier) + xx; // straight 1 pixel -> 2 mapping
+					if (_format.bytesPerPixel == 2) {
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;
+
+					} else {
+						assert(_format.bytesPerPixel == 4);
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;
+					}
+				}
+			}
+			break;
+		}
+		default:
+			break;
+		}
+	}
+	
 	// Upscales a pixel and puts it on display screen only
 	void putScaledPixelOnDisplay(int16 x, int16 y, byte color) {
 		int displayOffset = 0;
@@ -452,6 +545,51 @@ public:
 			}
 			break;
 		}
+		case GFX_SCREEN_UPSCALED_320x200_X: {
+
+			for (int yy = 0; yy < g_sci->_enhancementMultiplier; yy++) {
+				for (int xx = 0; xx < g_sci->_enhancementMultiplier; xx++) {
+					displayOffset = (((y * g_sci->_enhancementMultiplier) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier) + xx; // straight 1 pixel -> 2 mapping
+					if (_format.bytesPerPixel == 2) {
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;
+
+
+					} else if (_format.bytesPerPixel == 4) {
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;	
+						
+					} else {
+
+						byte r;
+						byte g;
+						byte b;
+						_format.colorToRGB(color, r, g, b);
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;
+
+					}
+				}
+			}
+			break;
+		}
 		default:
 			break;
 		}
@@ -474,7 +612,7 @@ public:
 			}
 
 			int offset = actualY * _width + x;
-			_wasEnhanced[offset] = 0;
+
 			_visualScreen[offset] = color;
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:
@@ -492,6 +630,7 @@ public:
 				_displayScreen[displayOffset + 1] = color;
 				break;
 			}
+
 			default:
 				putScaledPixelOnDisplay(x, actualY, color);
 				break;
@@ -500,9 +639,16 @@ public:
 	}
 
 	byte getPixel(byte *screen, int16 x, int16 y) {
+		int offset = y * _width + x;
 		switch (_upscaledHires) {
 		case GFX_SCREEN_UPSCALED_480x300: {
-			int offset = ((y * 3) / 2) * _width + ((y * 3) / 2);
+			offset = ((y * 3) / 2) * _width + ((y * 3) / 2);
+
+			return screen[offset];
+			break;
+		}
+		case GFX_SCREEN_UPSCALED_320x200_X: {
+			offset = (int)((y / g_sci->_enhancementMultiplier) * _width) + ((int)(x / g_sci->_enhancementMultiplier));
 
 			return screen[offset];
 			break;
@@ -510,14 +656,17 @@ public:
 		default:
 			break;
 		}
-		return screen[y * _width + x];
+		return screen[offset];
 	}
 
 	byte getVisual(int16 x, int16 y) {
 		return getPixel(_visualScreen, x, y);
 	}
-	byte getPriority(int16 x, int16 y) {
+	byte getPriorityX(int16 x, int16 y) {
 		return getPixel(_priorityScreen, x, y);
+	}
+	byte getPriority(int16 x, int16 y) {
+		return getPixel(_priorityScreen, x * g_sci->_enhancementMultiplier, y * g_sci->_enhancementMultiplier);
 	}
 	byte getControl(int16 x, int16 y) {
 		return getPixel(_controlScreen, x, y);

@@ -137,7 +137,7 @@ class SciEngine : public Engine {
 public:
 	SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId);
 	~SciEngine() override;
-	uint16 _upscaleFactor = 2;
+
 	// Engine APIs
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
@@ -207,6 +207,8 @@ public:
 	bool checkExportBreakpoint(uint16 script, uint16 pubfunct);
 	bool checkSelectorBreakpoint(BreakpointType breakpointType, reg_t send_obj, int selector);
 	bool checkAddressBreakpoint(const reg_t &address);
+
+	int _enhancementMultiplier;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

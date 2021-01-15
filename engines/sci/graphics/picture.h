@@ -52,7 +52,7 @@ class GfxPicture {
 public:
 	GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuster, GfxPorts *ports, GfxScreen *screen, GfxPalette *palette, GuiResourceId resourceId, bool EGAdrawingVisualize = false);
 	~GfxPicture();
-	int _resourceType = SCI_PICTURE_TYPE_REGULAR;
+
 	GuiResourceId getResourceId();
 	void draw(bool mirroredFlag, bool addToFlag, int16 EGApaletteNo);
 
@@ -83,6 +83,7 @@ private:
 
 	int16 _resourceId;
 	Resource *_resource;
+	int _resourceType;
 
 	bool _mirroredFlag;
 	bool _addToFlag;

@@ -28,10 +28,10 @@
 #include "sci/graphics/coordadjuster.h"
 #include "sci/graphics/view.h"
 
-#include "image/png.h"
 
 #include "sci/graphics/scifx.h"
 #include <common/config-manager.h>
+#include <image/png.h>
 
 namespace Sci {
 
@@ -801,6 +801,7 @@ byte GfxView::getMappedColor(byte color, uint16 scaleSignal, const Palette *pale
 	}
 	return outputColor;
 }
+
 Graphics::Surface *loadCelPNG(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 
@@ -809,12 +810,12 @@ Graphics::Surface *loadCelPNG(Common::SeekableReadStream *s) {
 	d.loadStream(*s);
 	delete s;
 
-	Graphics::Surface *srf = d.getSurface()->convertTo(g_system->getScreenFormat());
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 	return srf;
 }
+
 void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
 			int16 loopNo, int16 celNo, byte priority, uint16 EGAmappingNr, bool upscaledHires, uint16 scaleSignal) {
-
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
 	const SciSpan<const byte> &bitmap = getBitmap(loopNo, celNo);
@@ -846,74 +847,120 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 	int pixelsLength = 0;
 	int enhInit = 0;
 	char loopNoStr[5];
-	sprintf(loopNoStr, "%d", loopNo );
+	sprintf(loopNoStr, "%d", loopNo);
 	char celNoStr[5];
 	sprintf(celNoStr, "%d", celNo);
-	debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded..", (_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").c_str());
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
 			if (!file) {
-				
-				debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded..", fileName.c_str());
-				
-				fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
-				file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					error("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded..", fileName.c_str());
-					//for (int y = 0; y < height; y++, bitmapData += celWidth) {
-						//for (int x = 0; x < width; x++) {
-
-						//}
-					//}
-				} else {
-					debug("Enhanced Bitmap EXISTS and has been loaded..");
-					png = loadCelPNG(file);
+				debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+			} else {
+				debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				png = loadCelPNG(file);
+				if (png) {
 					enh = (const byte *)png->getPixels();
-					enhInit = *enh;
-					pixelsLength = png->w * png->h * png->format.bpp();
-					enhanced = true;
-				}				
+					if (enh) {
+						enhInit = *enh;
+						pixelsLength = png->w * png->h * 4;
+						enhanced = true;
+					}
+				}
 			}
 		}
 	}
 
-	if (_EGAmapping) {
-		const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
-		for (int y = 0; y < height; y++, bitmapData += celWidth) {
-			for (int x = 0; x < width; x++) {
-				const byte color = EGAmapping[bitmapData[x]];
-				const int x2 = clipRectTranslated.left + x;
-				const int y2 = clipRectTranslated.top + y;
-				if (color != clearKey && priority >= _screen->getPriority(x2, y2))
-					_screen->putPixel(x2, y2, drawMask, color, priority, 0);
+	if (!enhanced) {
+		if (_EGAmapping) {
+			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
+			for (int y = 0; y < height; y++, bitmapData += celWidth) {
+				for (int x = 0; x < width; x++) {
+					const byte color = EGAmapping[bitmapData[x]];
+					const int x2 = clipRectTranslated.left + x;
+					const int y2 = clipRectTranslated.top + y;
+					if (color != clearKey && priority >= _screen->getPriority(x2, y2))
+						_screen->putPixel(x2, y2, drawMask, color, priority, 0);
+				}
 			}
-		}
-	} else if (upscaledHires) {
-		// UpscaledHires means view is hires and is supposed to
-		// get drawn onto lowres screen.
-		for (int y = 0; y < height; y++, bitmapData += celWidth) {
-			for (int x = 0; x < width; x++) {
-				const byte color = bitmapData[x];
-				const int x2 = clipRectTranslated.left + x;
-				const int y2 = clipRectTranslated.top + y;
-				_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
+		} else if (upscaledHires) {
+			// UpscaledHires means view is hires and is supposed to
+			// get drawn onto lowres screen.
+			for (int y = 0; y < height; y++, bitmapData += celWidth) {
+				for (int x = 0; x < width; x++) {
+					const byte color = bitmapData[x];
+					const int x2 = clipRectTranslated.left + x;
+					const int y2 = clipRectTranslated.top + y;
+					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
+				}
+			}
+		} else {
+			for (int y = 0; y < height; y++, bitmapData += celWidth) {
+				for (int x = 0; x < width; x++) {
+					const byte color = bitmapData[x];
+					if (color != clearKey) {
+						const int x2 = clipRectTranslated.left + x;
+						const int y2 = clipRectTranslated.top + y;
+						if (priority >= _screen->getPriority(x2, y2)) {
+							_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0);
+						}
+					}
+				}
 			}
 		}
 	} else {
-		for (int y = 0; y < height; y++, bitmapData += celWidth) {
-			for (int x = 0; x < width; x++) {
-				const byte color = bitmapData[x];
-				if (color != clearKey) {
+		if (_EGAmapping) {
+			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
+			for (int y = 0; y < height; y++, bitmapData += celWidth) {
+				for (int x = 0; x < width; x++) {
+					const byte color = EGAmapping[bitmapData[x]];
 					const int x2 = clipRectTranslated.left + x;
 					const int y2 = clipRectTranslated.top + y;
-					if (priority >= _screen->getPriority(x2, y2)) {
-						_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0);
-					}
+					if (color != clearKey && priority >= _screen->getPriority(x2, y2))
+						_screen->putPixel(x2, y2, drawMask, color, priority, 0);
 				}
+			}
+		} else if (upscaledHires) {
+			// UpscaledHires means view is hires and is supposed to
+			// get drawn onto lowres screen.
+			for (int y = 0; y < height; y++, bitmapData += celWidth) {
+				for (int x = 0; x < width; x++) {
+					const byte color = bitmapData[x];
+					const int x2 = clipRectTranslated.left + x;
+					const int y2 = clipRectTranslated.top + y;
+					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
+				}
+			}
+		} else {
+			int offset = (((((clipRect.top - rect.top) * g_sci->_enhancementMultiplier) * (celWidth* g_sci->_enhancementMultiplier) + ((clipRect.left - rect.left)* g_sci->_enhancementMultiplier))) * 4);
+			//int bmpoffset = ((((clipRect.top - rect.top) * celWidth + (clipRect.left - rect.left))));
+			for (int y = 0; y < height * g_sci->_enhancementMultiplier; y++) {
+				for (int x = 0; x < width * g_sci->_enhancementMultiplier; x++) {
+					//const byte color = bitmapData[bmpoffset + (int)(x / g_sci->_enhancementMultiplier)];
+					//if (color != clearKey)
+					{
+						if (offset + (x * 4) + 3 < pixelsLength - 1) {
+
+							if (enh[offset + (x * 4) + 3] > 16)
+							{
+								if (priority >= _screen->getPriorityX((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
+									_screen->putPixelR((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4)], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4)]
+									_screen->putPixelG((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
+									_screen->putPixelB((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
+								}
+							}
+							if (enh[offset + (x * 4) + 3] > 128) {
+								if (priority >= _screen->getPriorityX((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
+									_screen->putPixelEtc(((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x) / g_sci->_enhancementMultiplier, ((clipRectTranslated.top * g_sci->_enhancementMultiplier) + y) / g_sci->_enhancementMultiplier, drawMask, priority, 0);
+								}
+							}
+						}
+					}					
+				}
+				offset += (((celWidth * g_sci->_enhancementMultiplier))) * 4;
+				//if (y % 4 == 0)
+					//bmpoffset += celWidth;
 			}
 		}
 	}
