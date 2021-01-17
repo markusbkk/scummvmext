@@ -61,6 +61,7 @@ private:
 	void reset();
 	void drawSci11Vga();
 	void drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA);
+	void drawEnhancedBackground(const SciSpan<const byte> &data);
 	void drawVectorData(const SciSpan<const byte> &data);
 	bool vectorIsNonOpcode(byte pixel);
 	void vectorGetAbsCoords(const SciSpan<const byte> &data, uint &curPos, int16 &x, int16 &y);

@@ -41,7 +41,10 @@ namespace Sci {
 GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
 	// Scale the screen, if needed
-	_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X;
+	_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_EGA;
+	if (_resMan->getViewType() != kViewEga) {
+		_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_VGA;
+	}
 	ConfMan.setBool("rgb_rendering", true);
 	// we default to scripts running at 320x200
 	_scriptWidth = 320;
@@ -139,7 +142,16 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 		for (int i = 0; i <= _scriptWidth; i++)
 			_upscaledWidthMapping[i] = (i * 2) * g_sci->_enhancementMultiplier;
 		break;
-	case GFX_SCREEN_UPSCALED_320x200_X:
+	case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+		// 320x200 Games Enhanced with ScummVMX
+		_displayWidth = _width * g_sci->_enhancementMultiplier;
+		_displayHeight = _height * g_sci->_enhancementMultiplier;
+		for (int i = 0; i <= _scriptHeight; i++)
+			_upscaledHeightMapping[i] = i * g_sci->_enhancementMultiplier;
+		for (int i = 0; i <= _scriptWidth; i++)
+			_upscaledWidthMapping[i] = i * g_sci->_enhancementMultiplier;
+		break;
+	case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		// 320x200 Games Enhanced with ScummVMX
 		_displayWidth = _width * g_sci->_enhancementMultiplier;
 		_displayHeight = _height * g_sci->_enhancementMultiplier;
@@ -979,6 +991,7 @@ void GfxScreen::dither(bool addToFlag) {
 					switch (_upscaledHires) {
 					case GFX_SCREEN_UPSCALED_DISABLED:
 					case GFX_SCREEN_UPSCALED_480x300:
+					case GFX_SCREEN_UPSCALED_320x200_X_EGA: // ??
 						*displayPtr = color;
 						if (_paletteMapScreen)
 							*paletteMapPtr = _curPaletteMapValue;
@@ -1013,6 +1026,7 @@ void GfxScreen::dither(bool addToFlag) {
 					switch (_upscaledHires) {
 					case GFX_SCREEN_UPSCALED_DISABLED:
 					case GFX_SCREEN_UPSCALED_480x300:
+					case GFX_SCREEN_UPSCALED_320x200_X_EGA: // ??
 						*displayPtr = ditheredColor;
 						if (_paletteMapScreen)
 							*paletteMapPtr = _curPaletteMapValue;
@@ -1149,9 +1163,11 @@ void GfxScreen::adjustBackUpscaledCoordinates(int16 &y, int16 &x) {
 		x /= 2;
 		y = (y * 5) / 12;
 		break;
-	case GFX_SCREEN_UPSCALED_320x200_X:
+	case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+	case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 		x /= g_sci->_enhancementMultiplier;
 		y /= g_sci->_enhancementMultiplier;
+		break;
 	default:
 		break;
 	}

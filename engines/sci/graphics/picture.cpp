@@ -79,7 +79,9 @@ void GfxPicture::draw(bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 	default:
 		// VGA, EGA or Amiga vector data
 		_resourceType = SCI_PICTURE_TYPE_REGULAR;
+		debug(10, "%s\n", _resource->name().c_str());
 		drawVectorData(*_resource);
+		drawEnhancedBackground(*_resource);
 	}
 }
 
@@ -198,9 +200,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 	if (compression) {
 		unpackCelData(inbuffer, *celBitmap, clearColor, rlePos, literalPos, _resMan->getViewType(), width, false);
-	} else
+	} else {
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
+	}
+
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
@@ -211,9 +215,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileName = folder.getChild(_resource->name() + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					error("Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					debug("Enhanced Bitmap %s EXISTS and has been loaded!", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					png = loadPNG(file);
 					if (png) {
 						enh = (const byte *)png->getPixels();
@@ -226,6 +230,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 	}
+
 	Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
 
 	// Horizontal clipping
@@ -289,7 +294,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
 
 						_screen->putPixel(x, y, drawMask, curByte, priority, 0);
-
+						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 					x++;
 
 					if (x >= rightX) {
@@ -305,7 +310,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					curByte = *ptr++;
 					if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
 						_screen->putPixel(x, y, drawMask, curByte, priority, 0);
-
+						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 					if (x == leftX) {
 						ptr += sourcePixelSkipPerRow;
 						x = rightX;
@@ -326,7 +331,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					curByte = *ptr++;
 					if (curByte != clearColor)
 						_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
-
+						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 					x++;
 
 					if (x >= rightX) {
@@ -342,7 +347,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					curByte = *ptr++;
 					if (curByte != clearColor)
 						_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
-
+						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 					if (x == leftX) {
 						ptr += sourcePixelSkipPerRow;
 						x = rightX;
@@ -388,10 +393,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								if (enh[offset + 3] > 128) {
 								_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 								_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-								_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-								
-									_screen->putPixelEtc(x, y, drawMask, priority, 0);
+								_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);		
 								}
+								//_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 							}
 						}
 						x++;
@@ -416,10 +420,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								if (enh[offset + 3] > 128) {
 								_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 								_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-								_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-								
-									_screen->putPixelEtc(x, y, drawMask, priority, 0);
+								_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);								
 								}
+								//_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 							}
 						}
 						if (x == leftX) {
@@ -448,7 +451,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 							
-								_screen->putPixelEtc(x, y, drawMask, priority, 0);
+								//_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 							}
 						}
 						x++;
@@ -471,7 +474,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 							
-								_screen->putPixelEtc(x, y, drawMask, priority, 0);
+								//_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 							}
 						}
 						if (x == leftX) {
@@ -489,7 +492,136 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	}
 }
 
-enum {
+void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
+	byte priority = _priority;
+	byte clearColor;
+	bool compression = true;
+	byte curByte;
+	int16 y, lastY, x, leftX, rightX;
+	int pixelCount;
+	uint16 width = _screen->getScriptWidth();
+	uint16 height = _screen->getScriptHeight();
+	int pixelCountX;
+	const byte *enh;
+	Graphics::Surface *png;
+	bool enhanced = false;
+	Common::FSNode folder;
+	debug(10, "%s\n", _resource->name().c_str());
+	if (ConfMan.hasKey("extrapath")) {
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + ".png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			debug(10, "Enhanced Bitmap %s error\n", fileName.c_str());
+			if (!file) {
+				fileName = folder.getChild(_resource->name() + ".png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					debug(10, "Enhanced Bitmap %s error\n", fileName.c_str());
+				} else {
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					png = loadPNG(file);
+					if (png) {
+						enh = (const byte *)png->getPixels();
+						if (enh) {
+							pixelCountX = png->w * png->h * 4;
+							enhanced = true;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (enhanced) {
+
+		Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
+
+		// Horizontal clipping
+		uint16 skipCelBitmapPixels = 0;
+		int16 displayWidth = width;
+
+		// Vertical clipping
+		uint16 skipCelBitmapLines = 0;
+		int16 displayHeight = height;
+		
+			y = (displayArea.top) * g_sci->_enhancementMultiplier;
+			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
+			leftX = (displayArea.left) * g_sci->_enhancementMultiplier;
+			rightX = MIN<int16>((displayWidth * g_sci->_enhancementMultiplier + leftX), (displayArea.right * g_sci->_enhancementMultiplier));
+
+			uint16 sourcePixelSkipPerRow = 0;
+			if (width * g_sci->_enhancementMultiplier > rightX - leftX)
+				sourcePixelSkipPerRow = (width * g_sci->_enhancementMultiplier) - (rightX - leftX);
+			enh += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+			enh += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+
+			// Change clearcolor to white, if we dont add to an existing picture. That way we will paint everything on screen
+			// but white and that won't matter because the screen is supposed to be already white. It seems that most (if not all)
+			// SCI1.1 games use color 0 as transparency and SCI1 games use color 255 as transparency. Sierra SCI seems to paint
+			// the whole data to screen and wont skip over transparent pixels. So this will actually make it work like Sierra.
+			if (!_addToFlag)
+				clearColor = _screen->getColorWhite();
+
+			byte drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY;
+		// EGA, when priority is above 15
+		//  we don't check priority and also won't set priority at all
+		//  fixes picture 48 of kq5 (island overview). Bug #5182
+		if (!_mirroredFlag) {
+			// EGA+priority>15: Draw bitmap to screen
+			x = leftX;
+			int offset = 0;
+			while (y < lastY) {
+
+				//if (curByte != clearColor)
+				if (offset + 3 < pixelCountX - 1) {
+					if (enh[offset + 3] > 128) {
+						_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+						_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+						_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+
+						
+					}
+					//if (priority >= _screen->getPriorityX(x, y))
+					//_screen->putPixelEtc(x, y, drawMask, priority, 0);
+				}
+				x++;
+				if (x >= rightX) {
+					offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
+					x = leftX;
+					y++;
+				}
+				offset += 4;
+			}
+		} else {
+			// EGA+priority>15: Draw bitmap to screen (mirrored)
+			x = rightX - 1;
+			int offset = 0;
+			while (y < lastY) {
+				if (offset + 3 < pixelCountX - 1) {
+					if (enh[offset + 3] > 128) {
+
+						_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+						_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+						_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+
+						
+					}
+					//if (priority >= _screen->getPriorityX(x, y))
+					//_screen->putPixelEtc(x, y, drawMask, priority, 0);
+				}
+				if (x == leftX) {
+					offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
+					x = rightX;
+					y++;
+				}
+				offset += 4;
+
+				x--;
+			}
+		}
+	}
+}
+
+	enum {
 	PIC_OP_SET_COLOR = 0xf0,
 	PIC_OP_DISABLE_VISUAL = 0xf1,
 	PIC_OP_SET_PRIORITY = 0xf2,
