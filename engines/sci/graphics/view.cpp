@@ -999,24 +999,112 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 		// Merge view palette in...
 		_palette->set(&_viewPalette, false);
 
-	Common::Array<uint16> scalingX, scalingY;
-	createScalingTable(scalingX, celWidth, _screen->getWidth(), scaleX);
-	createScalingTable(scalingY, celHeight, _screen->getHeight(), scaleY);
+	Graphics::Surface *png;
+	const byte *enh;
+	bool enhanced = false;
+	int pixelsLength = 0;
+	int enhInit = 0;
+	char loopNoStr[5];
+	sprintf(loopNoStr, "%d", loopNo);
+	char celNoStr[5];
+	sprintf(celNoStr, "%d", celNo);
+	Common::FSNode folder;
+	if (ConfMan.hasKey("extrapath")) {
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			if (!file) {
+				debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+			} else {
+				debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				png = loadCelPNG(file);
+				if (png) {
+					enh = (const byte *)png->getPixels();
+					if (enh) {
+						enhInit = *enh;
+						pixelsLength = png->w * png->h * 4;
+						enhanced = true;
+					}
+				}
+			}
+		}
+	}
+	if (!enhanced) {
 
-	int16 scaledWidth = MIN(clipRect.width(), (int16)scalingX.size());
-	int16 scaledHeight = MIN(clipRect.height(), (int16)scalingY.size());
+		Common::Array<uint16> scalingX, scalingY;
+		createScalingTable(scalingX, celWidth, _screen->getWidth(), scaleX);
+		createScalingTable(scalingY, celHeight, _screen->getHeight(), scaleY);
 
-	const int16 offsetY = clipRect.top - rect.top;
-	const int16 offsetX = clipRect.left - rect.left;
+		int16 scaledWidth = MIN(clipRect.width(), (int16)scalingX.size());
+		int16 scaledHeight = MIN(clipRect.height(), (int16)scalingY.size());
 
-	const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
-	for (int y = 0; y < scaledHeight; y++) {
-		for (int x = 0; x < scaledWidth; x++) {
-			const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
-			const int x2 = clipRectTranslated.left + x;
-			const int y2 = clipRectTranslated.top + y;
-			if (color != clearKey && priority >= _screen->getPriority(x2, y2)) {
-				_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0);
+		const int16 offsetY = clipRect.top - rect.top;
+		const int16 offsetX = clipRect.left - rect.left;
+
+		const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
+		for (int y = 0; y < scaledHeight; y++) {
+			for (int x = 0; x < scaledWidth; x++) {
+				const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
+				const int x2 = clipRectTranslated.left + x;
+				const int y2 = clipRectTranslated.top + y;
+				if (color != clearKey && priority >= _screen->getPriority(x2, y2)) {
+					_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0);
+				}
+			}
+		}
+	} else {
+		
+		Common::Array<uint16> scalingX, scalingY;
+		createScalingTable(scalingX, celWidth * g_sci->_enhancementMultiplier, _screen->getDisplayWidth(), scaleX);
+		createScalingTable(scalingY, celHeight * g_sci->_enhancementMultiplier, _screen->getDisplayHeight(), scaleY);
+
+		int16 scaledWidth = (int)(MIN((int16)(clipRect.width() * g_sci->_enhancementMultiplier), (int16)(scalingX.size() * g_sci->_enhancementMultiplier)));
+		int16 scaledHeight = (int)(MIN((int16)(clipRect.height() * g_sci->_enhancementMultiplier), (int16)(scalingY.size() * g_sci->_enhancementMultiplier)));
+
+		const int16 offsetY = (clipRect.top - rect.top) * g_sci->_enhancementMultiplier;
+		const int16 offsetX = (clipRect.left - rect.left) * g_sci->_enhancementMultiplier;
+
+		//const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
+		for (int y = 0; y < scaledHeight; y++) {
+			for (int x = 0; x < scaledWidth; x++) {
+				const int x2 = (clipRectTranslated.left * g_sci->_enhancementMultiplier) + x;
+				const int y2 = (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
+				if ((int)(scalingX[(x + offsetX)]) < (int)(scalingX[(scaledWidth - 1 + offsetX)])) {
+
+					int offset = (((int)(scalingY[y + offsetY]) * (celWidth * g_sci->_enhancementMultiplier) + (int)(scalingX[(x + offsetX)] / g_sci->_enhancementMultiplier))) * 4;
+					///const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
+					const byte colorR = enh[offset + (x * 4)];
+					const byte colorG = enh[offset + (x * 4) + 1];
+					const byte colorB = enh[offset + (x * 4) + 2];
+					const byte colorA = enh[offset + (x * 4) + 3];
+					if (getMappedColor(colorA, scaleSignal, palette, x2, y2) > 128 && priority >= _screen->getPriorityX(x2, y2)) {
+						_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
+						_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
+						_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+						//_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+					}
+				}
+			}
+		}
+		Common::Array<uint16> scalingXPriority, scalingYPriority;
+		createScalingTable(scalingXPriority, celWidth, _screen->getWidth(), scaleX);
+		createScalingTable(scalingYPriority, celHeight, _screen->getHeight(), scaleY);
+
+		int16 scaledWidthPriority = MIN(clipRect.width(), (int16)scalingXPriority.size());
+		int16 scaledHeightPriority = MIN(clipRect.height(), (int16)scalingYPriority.size());
+
+		const int16 offsetYPriority = clipRect.top - rect.top;
+		const int16 offsetXPriority = clipRect.left - rect.left;
+
+		const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
+		for (int y = 0; y < scaledHeightPriority; y++) {
+			for (int x = 0; x < scaledWidthPriority; x++) {
+				const byte color = bitmapData[scalingYPriority[y + offsetYPriority] * celWidth + scalingXPriority[x + offsetXPriority]];
+				const int x2 = clipRectTranslated.left + x;
+				const int y2 = clipRectTranslated.top + y;
+				if (color != clearKey && priority >= _screen->getPriority(x2, y2)) {
+					_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
+				}
 			}
 		}
 	}
