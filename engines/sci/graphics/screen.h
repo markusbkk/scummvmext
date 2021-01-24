@@ -406,7 +406,7 @@ public:
 		switch (_upscaledHires) {
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 			// Set pixel for visual, priority and control map directly, those are not upscaled
-			const int offset = (y / g_sci->_enhancementMultiplier) * _width + (x * g_sci->_enhancementMultiplier);
+			const int offset = ((int)(y / g_sci->_enhancementMultiplier) * _width) + (int)(x / g_sci->_enhancementMultiplier);
 
 			if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
 				_priorityScreen[offset] = priority;
