@@ -321,7 +321,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
 							if (!enhanced)
 								_screen->putPixel(x, y, drawMask, curByte, priority, 0);
-						_screen->putPixelEtc(x, y, drawMask, priority, 0);
+						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						x++;
 
 						if (x >= rightX) {
@@ -338,7 +338,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
 							if (!enhanced)
 								_screen->putPixel(x, y, drawMask, curByte, priority, 0);
-						_screen->putPixelEtc(x, y, drawMask, priority, 0);
+						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						if (x == leftX) {
 							ptr += sourcePixelSkipPerRow;
 							x = rightX;
@@ -360,7 +360,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						if (curByte != clearColor)
 							if (!enhanced)
 								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
-						_screen->putPixelEtc(x, y, drawMask, priority, 0);
+						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						x++;
 
 						if (x >= rightX) {
@@ -377,7 +377,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						if (curByte != clearColor)
 							if (!enhanced)
 								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
-						_screen->putPixelEtc(x, y, drawMask, priority, 0);
+						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						if (x == leftX) {
 							ptr += sourcePixelSkipPerRow;
 							x = rightX;

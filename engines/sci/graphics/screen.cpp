@@ -173,20 +173,12 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
 	// Allocate visual, priority, control and display screen
 	_visualScreen = (byte *)calloc(_pixels, 1);
-	_priorityScreen = (byte *)calloc(_pixels, 1);
-	_controlScreen = (byte *)calloc(_pixels, 1);
 
 	_visualScreenR = (byte *)calloc(_pixels, 1);
-	_priorityScreenR = (byte *)calloc(_pixels, 1);
-	_controlScreenR = (byte *)calloc(_pixels, 1);
-
 	_visualScreenG = (byte *)calloc(_pixels, 1);
-	_priorityScreenG = (byte *)calloc(_pixels, 1);
-	_controlScreenG = (byte *)calloc(_pixels, 1);
-
 	_visualScreenB = (byte *)calloc(_pixels, 1);
-	_priorityScreenB = (byte *)calloc(_pixels, 1);
-	_controlScreenB = (byte *)calloc(_pixels, 1);
+
+	_controlScreen = (byte *)calloc(_pixels, 1);
 
 	_displayScreen = (byte *)calloc(_displayPixels, 1);
 	_displayScreenR = (byte *)calloc(_displayPixels, 1);
@@ -277,17 +269,10 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
 GfxScreen::~GfxScreen() {
 	free(_visualScreen);
-	free(_priorityScreen);
 	free(_controlScreen);
 	free(_visualScreenR);
-	free(_priorityScreenR);
-	free(_controlScreenR);
 	free(_visualScreenG);
-	free(_priorityScreenG);
-	free(_controlScreenG);
 	free(_visualScreenB);
-	free(_priorityScreenB);
-	free(_controlScreenB);
 	free(_priorityScreenX);
 	free(_displayScreen);
 	free(_displayScreenR);
@@ -438,17 +423,10 @@ void GfxScreen::displayRect(const Common::Rect &rect, int x, int y) {
 void GfxScreen::clearForRestoreGame() {
 	// reset all screen data
 	memset(_visualScreen, 0, _pixels);
-	memset(_priorityScreen, 0, _pixels);
 	memset(_controlScreen, 0, _pixels);
 	memset(_visualScreenR, 0, _pixels);
-	memset(_priorityScreenR, 0, _pixels);
-	memset(_controlScreenR, 0, _pixels);
 	memset(_visualScreenG, 0, _pixels);
-	memset(_priorityScreenG, 0, _pixels);
-	memset(_controlScreenG, 0, _pixels);
 	memset(_visualScreenB, 0, _pixels);
-	memset(_priorityScreenB, 0, _pixels);
-	memset(_controlScreenB, 0, _pixels);
 	memset(_displayScreen, 0, _displayPixels);
 	memset(_displayScreenR, 0, _displayPixels);
 	memset(_displayScreenG, 0, _displayPixels);
@@ -599,7 +577,7 @@ void GfxScreen::vectorPutLinePixel(int16 x, int16 y, byte drawMask, byte color, 
 // Special 480x300 Mac putPixel for vector line drawing, also draws an additional pixel below the actual one
 void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 	int offset = y * _width + x;
-
+	int offsetPrio = ((y * g_sci->_enhancementMultiplier) * _displayWidth) + (x * g_sci->_enhancementMultiplier);
 	if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 		// also set pixel below actual pixel
 		_visualScreen[offset] = color;
@@ -608,8 +586,8 @@ void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte 
 		_displayScreen[offset + _displayWidth] = color;
 	}
 	if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-		_priorityScreen[offset] = priority;
-		_priorityScreen[offset + _width] = priority;
+		_priorityScreenX[offsetPrio] = priority;
+		_priorityScreenX[offsetPrio + _displayWidth] = priority;
 	}
 	if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 		_controlScreen[offset] = control;
@@ -619,6 +597,7 @@ void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte 
 
 byte GfxScreen::vectorIsFillMatch(int16 x, int16 y, byte screenMask, byte checkForColor, byte checkForPriority, byte checkForControl, bool isEGA) {
 	int offset = y * _width + x;
+	int offsetPrio = ((y * g_sci->_enhancementMultiplier) * _displayWidth) + (x * g_sci->_enhancementMultiplier);
 	byte match = 0;
 
 	if (screenMask & GFX_SCREEN_MASK_VISUAL) {
@@ -640,7 +619,7 @@ byte GfxScreen::vectorIsFillMatch(int16 x, int16 y, byte screenMask, byte checkF
 				match |= GFX_SCREEN_MASK_VISUAL;
 		}
 	}
-	if ((screenMask & GFX_SCREEN_MASK_PRIORITY) && *(_priorityScreen + offset) == checkForPriority)
+	if ((screenMask & GFX_SCREEN_MASK_PRIORITY) && *(_priorityScreenX + offsetPrio) == checkForPriority)
 		match |= GFX_SCREEN_MASK_PRIORITY;
 	if ((screenMask & GFX_SCREEN_MASK_CONTROL) && *(_controlScreen + offset) == checkForControl)
 		match |= GFX_SCREEN_MASK_CONTROL;
@@ -763,10 +742,6 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 		}
 	}
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
-		byteCount += pixels; // _priorityScreen
-		byteCount += pixels; // _priorityScreenR
-		byteCount += pixels; // _priorityScreenG
-		byteCount += pixels; // _priorityScreenB
 		if (!_upscaledHires) {
 			byteCount += pixels; // _priorityScreenX
 		} else {
@@ -777,9 +752,6 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		byteCount += pixels; // _controlScreen
-		byteCount += pixels; // _controlScreenR
-		byteCount += pixels; // _controlScreenG
-		byteCount += pixels; // _controlScreenB
 	}
 	if (mask & GFX_SCREEN_MASK_DISPLAY) {
 		if (!_upscaledHires)
@@ -811,17 +783,10 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 			bitsSaveDisplayScreen(rect, _paletteMapScreen, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
-		bitsSaveScreen(rect, _priorityScreen, _width, memoryPtr);
-		bitsSaveScreen(rect, _priorityScreenR, _width, memoryPtr);
-		bitsSaveScreen(rect, _priorityScreenG, _width, memoryPtr);
-		bitsSaveScreen(rect, _priorityScreenB, _width, memoryPtr);
 		bitsSaveDisplayScreen(rect, _priorityScreenX, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		bitsSaveScreen(rect, _controlScreen, _width, memoryPtr);
-		bitsSaveScreen(rect, _controlScreenR, _width, memoryPtr);
-		bitsSaveScreen(rect, _controlScreenG, _width, memoryPtr);
-		bitsSaveScreen(rect, _controlScreenB, _width, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_DISPLAY) {
 		if (!_upscaledHires)
@@ -891,17 +856,10 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 			bitsRestoreDisplayScreen(rect, memoryPtr, _paletteMapScreen);
 	}
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
-		bitsRestoreScreen(rect, memoryPtr, _priorityScreen, _width);
-		bitsRestoreScreen(rect, memoryPtr, _priorityScreenR, _width);
-		bitsRestoreScreen(rect, memoryPtr, _priorityScreenG, _width);
-		bitsRestoreScreen(rect, memoryPtr, _priorityScreenB, _width);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _priorityScreenX);
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		bitsRestoreScreen(rect, memoryPtr, _controlScreen, _width);
-		bitsRestoreScreen(rect, memoryPtr, _controlScreenR, _width);
-		bitsRestoreScreen(rect, memoryPtr, _controlScreenG, _width);
-		bitsRestoreScreen(rect, memoryPtr, _controlScreenB, _width);
 	}
 	if (mask & GFX_SCREEN_MASK_DISPLAY) {
 		if (!_upscaledHires)
@@ -1084,16 +1042,10 @@ void GfxScreen::debugShowMap(int mapNo) {
 		_activeScreenB = _visualScreenB;
 		break;
 	case 1:
-		_activeScreen = _priorityScreen;
-		_activeScreenR = _priorityScreenR;
-		_activeScreenG = _priorityScreenG;
-		_activeScreenB = _priorityScreenB;
+		_activeScreen = _priorityScreenX;
 		break;
 	case 2:
 		_activeScreen = _controlScreen;
-		_activeScreenR = _controlScreenR;
-		_activeScreenG = _controlScreenG;
-		_activeScreenB = _controlScreenB;
 		break;
 	case 3:
 		_activeScreen = _displayScreen;

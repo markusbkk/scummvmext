@@ -922,7 +922,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const int y2 = clipRectTranslated.top + y;
 					if (color != clearKey && priority >= _screen->getPriorityX(x2, y2))
 						_screen->putPixel(x2, y2, drawMask, color, priority, 0);
-						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
+						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 				}
 			}
 		} else if (upscaledHires) {
@@ -934,7 +934,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const int x2 = clipRectTranslated.left + x;
 					const int y2 = clipRectTranslated.top + y;
 					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
-					//_screen->putPixelEtc(x, y, drawMask, priority, 0);
+					_screen->putPixelEtc(x, y, drawMask, priority, 0);
 				}
 			}
 		} else {
@@ -955,7 +955,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 									_screen->putPixelG((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
 									_screen->putPixelB((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
 
-									//_screen->putPixelXEtc(((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((clipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
+									_screen->putPixelXEtc(((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((clipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 								}
 									
 								
@@ -965,6 +965,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 				}
 				
 				offset += (((celWidth * g_sci->_enhancementMultiplier))) * 4;
+
 				//if (y % 4 == 0)
 					//bmpoffset += celWidth;
 				int bmpoffset = ((((clipRect.top - rect.top) * celWidth + (clipRect.left - rect.left))));
@@ -976,12 +977,13 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 							const int x2 = clipRectTranslated.left + x;
 							const int y2 = clipRectTranslated.top + y;
 							if (priority >= _screen->getPriority(x2, y2)) {
-								_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
+								//_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
 							}
 						}
 					}
 					bmpplus += celWidth;
 				}
+				
 			}
 		}
 	}
@@ -1093,7 +1095,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 									_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
 									_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 									_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									//_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+									_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 								}
 							}
 						}
@@ -1118,7 +1120,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 								_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
 								_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 								_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-								//_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+								_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 							}
 						}
 					}
@@ -1143,7 +1145,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 				const int x2 = clipRectTranslated.left + x;
 				const int y2 = clipRectTranslated.top + y;
 				if (color != clearKey && priority >= _screen->getPriority(x2, y2)) {
-					_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
+					//_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
 				}
 			}
 		}

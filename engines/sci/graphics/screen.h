@@ -30,6 +30,7 @@
 #include "graphics/sjis.h"
 #include "graphics/korfont.h"
 #include "graphics/pixelformat.h"
+#include <engines/sci/graphics/picture.h>
 
 namespace Sci {
 
@@ -191,20 +192,11 @@ private:
 	// SCI0/SCI1/SCI11 games, 640x480 for SCI2 games). SCI0 games will be
 	// dithered in here at any time.
 	byte *_visualScreen;
-	byte *_priorityScreen;
 	byte *_controlScreen;
 
 	byte *_visualScreenR;
-	byte *_priorityScreenR;
-	byte *_controlScreenR;
-
 	byte *_visualScreenG;
-	byte *_priorityScreenG;
-	byte *_controlScreenG;
-
 	byte *_visualScreenB;
-	byte *_priorityScreenB;
-	byte *_controlScreenB;
 
 	byte *_priorityScreenX;
 	/**
@@ -302,7 +294,7 @@ public:
 			}
 		}
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			_priorityScreen[offset] = priority;
+			putScaledPixelInPriority(x, y, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 			_controlScreen[offset] = control;
@@ -314,7 +306,7 @@ public:
 		const int offset = y * _width + x;
 
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			_priorityScreen[offset] = priority;
+			putScaledPixelInPriority(x, y, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 			_controlScreen[offset] = control;
@@ -404,22 +396,28 @@ public:
 		}
 	}
 	void putPixelXEtc(int16 x, int16 y, byte drawMask, byte priority, byte control) {
-		switch (_upscaledHires) {
-		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
-			// Set pixel for visual, priority and control map directly, those are not upscaled
-			const int offset = ((int)(y / g_sci->_enhancementMultiplier) * _width) + (int)(x / g_sci->_enhancementMultiplier);
 
-			if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-				_priorityScreen[offset] = priority;
+		// Set pixel for visual, priority and control map directly, those are not upscaled
+		const int offset = ((int)(y / g_sci->_enhancementMultiplier) * _width) + (int)(x / g_sci->_enhancementMultiplier);
+
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x440:
+			case GFX_SCREEN_UPSCALED_640x480:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+				_priorityScreenX[(y * _displayWidth) + x] = priority;
+				break;
+			default:
+				_priorityScreenX[(y * _displayWidth) + x] = priority;
+				break;
 			}
-			if (drawMask & GFX_SCREEN_MASK_CONTROL) {
-				_controlScreen[offset] = control;
-			}
-			break;
 		}
-		default:
-			break;
+		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
+			_controlScreen[offset] = control;
 		}
+		
 	}
 	void putPixel480x300(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 		const int offset = ((y * 3) / 2 * _width) + ((x * 3) / 2);
@@ -431,7 +429,7 @@ public:
 			putPixel480x300Worker(x, y, offset, _displayScreen, color);
 		}
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			putPixel480x300Worker(x, y, offset, _priorityScreen, priority);
+			putPixel480x300Worker(x, y, offset, _priorityScreenX, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 			putPixel480x300Worker(x, y, offset, _controlScreen, control);
@@ -475,7 +473,7 @@ public:
 
 		}
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			_priorityScreen[offset] = priority;
+			putScaledPixelInPriority(x, y, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 			_controlScreen[offset] = control;
@@ -621,6 +619,61 @@ public:
 		}
 	}
 
+	// Upscales a pixel and puts it on display screen only
+	void putScaledPixelInPriority(int16 x, int16 y, byte priority) {
+		int priorityOffset = 0;
+
+		switch (_upscaledHires) {
+		case GFX_SCREEN_UPSCALED_640x400:
+			priorityOffset = (y * 2) * _displayWidth + x * 2; // straight 1 pixel -> 2 mapping
+
+			_priorityScreenX[priorityOffset] = priority;
+			_priorityScreenX[priorityOffset + 1] = priority;
+			_priorityScreenX[priorityOffset + _displayWidth] = priority;
+			_priorityScreenX[priorityOffset + _displayWidth + 1] = priority;
+			break;
+
+		case GFX_SCREEN_UPSCALED_640x440: {
+			int16 startY = (y * 11) / 5;
+			int16 endY = ((y + 1) * 11) / 5;
+			priorityOffset = (startY * _displayWidth) + x * 2;
+
+			for (int16 curY = startY; curY < endY; curY++) {
+				_priorityScreenX[priorityOffset] = priority;
+				_priorityScreenX[priorityOffset + 1] = priority;
+				priorityOffset += _displayWidth;
+			}
+			break;
+		}
+		case GFX_SCREEN_UPSCALED_640x480: {
+			int16 startY = (y * 12) / 5;
+			int16 endY = ((y + 1) * 12) / 5;
+			priorityOffset = (startY * _displayWidth) + x * 2;
+
+			for (int16 curY = startY; curY < endY; curY++) {
+				_priorityScreenX[priorityOffset] = priority;
+				_priorityScreenX[priorityOffset + 1] = priority;
+				priorityOffset += _displayWidth;
+			}
+			break;
+		}
+		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+			for (int yy = 0; yy < g_sci->_enhancementMultiplier; yy++) {
+				for (int xx = 0; xx < g_sci->_enhancementMultiplier; xx++) {
+					priorityOffset = (((y * g_sci->_enhancementMultiplier) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier) + xx;
+					
+						_priorityScreenX[priorityOffset] = priority;
+				}
+			}
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
 	/**
 	 * This is used to put font pixels onto the screen - we adjust differently, so that we won't
 	 *  do triple pixel lines in any case on upscaled hires. That way the font will not get distorted
@@ -686,14 +739,35 @@ public:
 		return screen[offset];
 	}
 
+	byte getPixelX(byte *screen, int16 x, int16 y) {
+		int offset = y * _displayWidth + x;
+		switch (_upscaledHires) {
+		case GFX_SCREEN_UPSCALED_480x300: {
+			offset = ((y * 3) / 2) * _width + ((y * 3) / 2);
+
+			return screen[offset];
+			break;
+		}
+
+		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+			offset = (int)((y)*_displayWidth) + ((int)(x));
+
+			return screen[offset];
+			break;
+		}
+		default:
+			break;
+		}
+		return screen[offset];
+	}
 	byte getVisual(int16 x, int16 y) {
 		return getPixel(_visualScreen, x, y);
 	}
 	byte getPriorityX(int16 x, int16 y) {
-		return getPixel(_priorityScreen, (int)(x / g_sci->_enhancementMultiplier), (int)(y / g_sci->_enhancementMultiplier));
+		return getPixelX(_priorityScreenX, (int)(x), (int)(y)); //
 	}
 	byte getPriority(int16 x, int16 y) {
-		return getPixel(_priorityScreen, x, y);
+		return getPixelX(_priorityScreenX, x * g_sci->_enhancementMultiplier, y * g_sci->_enhancementMultiplier);
 	}
 	byte getControl(int16 x, int16 y) {
 		return getPixel(_controlScreen, x, y);
@@ -708,7 +782,7 @@ public:
 		return vectorGetPixel(_visualScreen, x, y);
 	}
 	byte vectorGetPriority(int16 x, int16 y) {
-		return vectorGetPixel(_priorityScreen, x, y);
+		return vectorGetPixel(_priorityScreenX, x * g_sci->_enhancementMultiplier, y * g_sci->_enhancementMultiplier);
 	}
 	byte vectorGetControl(int16 x, int16 y) {
 		return vectorGetPixel(_controlScreen, x, y);
