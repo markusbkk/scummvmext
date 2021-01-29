@@ -325,12 +325,12 @@ public:
 						displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
 						if (_format.bytesPerPixel == 2) {
 			
-							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (r * ((1.0 / 255.0) * a));
+							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 
 						} else {
 							//assert(_format.bytesPerPixel == 4);
 
-							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (r * ((1.0 / 255.0) * a));
+							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 						}
 				break;
 			}
@@ -353,12 +353,12 @@ public:
 				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
 				if (_format.bytesPerPixel == 2) {
 
-					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (g * ((1.0 / 255.0) * a));
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 
-					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (g * ((1.0 / 255.0) * a));
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 				}
 				break;
 			}
@@ -381,12 +381,12 @@ public:
 				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
 				if (_format.bytesPerPixel == 2) {
 
-					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (b * ((1.0 / 255.0) * a));
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 
-					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((1.0 / 255.0) * (255.0 - a))) + (b * ((1.0 / 255.0) * a));
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
 				break;
 			}
