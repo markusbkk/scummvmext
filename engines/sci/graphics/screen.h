@@ -206,6 +206,7 @@ private:
 	byte *_priorityScreenB;
 	byte *_controlScreenB;
 
+	byte *_priorityScreenX;
 	/**
 	 * This screen is the one, where pixels are copied out of into the frame buffer.
 	 * It may be 640x400 for japanese SCI1 games. SCI0 games may be undithered in here.

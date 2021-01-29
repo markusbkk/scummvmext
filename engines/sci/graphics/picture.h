@@ -56,6 +56,9 @@ public:
 	GuiResourceId getResourceId();
 	void draw(bool mirroredFlag, bool addToFlag, int16 EGApaletteNo);
 
+	bool enhanced;
+	bool enhancedPrio;
+
 private:
 	void initData(GuiResourceId resourceId);
 	void reset();

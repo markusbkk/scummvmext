@@ -47,6 +47,9 @@ GfxView::~GfxView() {
 	_resMan->unlockResource(_resource);
 }
 
+extern bool enhanced;
+extern bool enhancedPrio;
+
 static const byte EGAmappingStraight[SCI_VIEW_EGAMAPPING_SIZE] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 };

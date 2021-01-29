@@ -59,6 +59,9 @@ GuiResourceId GfxPicture::getResourceId() {
 	return _resourceId;
 }
 
+	extern bool enhanced = false;
+	extern bool enhancedPrio = false;
+
 // differentiation between various picture formats can NOT get done using sci-version checks.
 //  Games like PQ1 use the "old" vector data picture format, but are actually SCI1.1
 //  We should leave this that way to decide the format on-the-fly instead of hardcoding it in any way
@@ -171,12 +174,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	uint16 width, height;
 	Graphics::Surface *png;
 	Graphics::Surface *pngPrio;
-	bool enhanced = false;
-	bool enhancedPrio = false;
 	int pixelCountX;
 	const byte *enh;
 	const byte *enhPrio;
-
+	enhanced = false;
+	enhancedPrio = false;
 	// if the picture is not an overlay and we are also not in EGA mode, use priority 0
 	if (!isEGA && !_addToFlag)
 		priority = 0;
@@ -669,8 +671,8 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	uint16 height = _screen->getScriptHeight();
 	Graphics::Surface *png;
 	Graphics::Surface *pngPrio;
-	bool enhanced = false;
-	bool enhancedPrio = false;
+	enhanced = false;
+	enhancedPrio = false;
 	int pixelCountX;
 	const byte *enh;
 	const byte *enhPrio;
