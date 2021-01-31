@@ -421,7 +421,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						if (offset + 3 < pixelCountX - 1) {
 
-							//if (priority >= _screen->getPriorityX(x, y))
+							if (priority >= _screen->getPriorityX(x, y))
 							{
 								//if (enh[offset + 3] == 255)
 								{
@@ -485,7 +485,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						if (offset + 3 < pixelCountX - 1) {
 
-							//if (priority >= _screen->getPriorityX(x, y))
+							if (priority >= _screen->getPriorityX(x, y))
 							{
 								//if (enh[offset + 3] == 255)
 								{

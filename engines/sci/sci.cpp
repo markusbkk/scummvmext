@@ -111,7 +111,8 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 
 	_forceHiresGraphics = false;
 	_enhancementMultiplier = 4;
-
+	enhanced = false;
+	enhancedPrio = false;
 	// Set up the engine specific debug levels
 	DebugMan.addDebugChannel(kDebugLevelError, "Error", "Script error debugging");
 	DebugMan.addDebugChannel(kDebugLevelNodes, "Lists", "Lists and nodes debugging");

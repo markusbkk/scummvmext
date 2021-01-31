@@ -210,6 +210,9 @@ public:
 
 	int _enhancementMultiplier;
 
+	bool enhanced;
+	bool enhancedPrio;
+
 public:
 	bool checkKernelBreakpoint(const Common::String &name);
 

@@ -30,8 +30,7 @@
 #include "graphics/sjis.h"
 #include "graphics/korfont.h"
 #include "graphics/pixelformat.h"
-#include <engines/sci/graphics/picture.h>
-
+#include "sci/graphics/picture.h"
 namespace Sci {
 
 enum {
@@ -159,6 +158,7 @@ public:
 	void setCurPaletteMapValue(byte val) { _curPaletteMapValue = val; }
 	void setPaletteMods(const PaletteMod *mods, unsigned int count);
 	bool paletteModsEnabled() const { return _paletteModsEnabled; }
+	
 
 private:
 	uint16 _width;
@@ -294,6 +294,7 @@ public:
 			}
 		}
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			
 			putScaledPixelInPriority(x, y, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
@@ -498,9 +499,11 @@ public:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+				if (!g_sci->enhancedPrio)
 				_priorityScreenX[(y * _displayWidth) + x] = priority;
 				break;
 			default:
+				if (!g_sci->enhancedPrio)
 				_priorityScreenX[(y * _displayWidth) + x] = priority;
 				break;
 			}
@@ -754,7 +757,7 @@ public:
 			for (int yy = 0; yy < g_sci->_enhancementMultiplier; yy++) {
 				for (int xx = 0; xx < g_sci->_enhancementMultiplier; xx++) {
 					priorityOffset = (((y * g_sci->_enhancementMultiplier) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier) + xx;
-					
+					if (!g_sci->enhancedPrio)
 						_priorityScreenX[priorityOffset] = priority;
 				}
 			}

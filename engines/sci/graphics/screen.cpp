@@ -35,11 +35,13 @@
 #include "sci/graphics/view.h"
 #include "sci/graphics/palette.h"
 #include "sci/graphics/scifx.h"
+#include "sci/graphics/picture.h"
 
 namespace Sci {
 
 GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
+	extern bool enhancedPrio;
 	// Scale the screen, if needed
 	_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_EGA;
 	if (_resMan->getViewType() != kViewEga) {

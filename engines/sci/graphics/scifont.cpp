@@ -326,6 +326,42 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			}
 		}
 	}
+	/*
+	if (greyedOutput)
+	debug("%d", (color));
+	
+	bool invert = false;
+	SciSpan<const byte> charData = getCharData(chr);
+	bool exportFontToPNG = false;
+	Common::String exportFileName;
+
+	for (int y = 0; y < charHeight; y++) {
+		if (greyedOutput)
+			mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
+		
+		for (int x = 0; x < charWidth; x++) {
+			byte bd = 0;
+			if ((x & 7) == 0) { // fetching next data byte
+				bd = *(charData++);
+				b = bd & mask;
+				
+			}
+			
+			
+			if (b & 0x80) { // if MSB is set - paint it
+				debug("%d", (x));
+				int screenX = left + x;
+				int screenY = top + y;
+				if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
+					_screen->putFontPixel(top, screenX, y, color);
+				} else {
+					warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);
+				}
+			}
+			b = b << 1;
+		}
+	}
+	*/
 	if (!enhancedFont)
 	{
 		SciSpan<const byte> charData = getCharData(chr);
@@ -352,27 +388,34 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 		}
 
 	}
-	if (enhancedFont) {
+	if (enhancedFont) { ///UNDO TO HERE IF MESSED UPP!!!
 		extern byte *_palette;
 		left *= g_sci->_enhancementMultiplier;
 		top *= g_sci->_enhancementMultiplier;
 		for (int y = 0; y < charHeight * g_sci->_enhancementMultiplier; y++) {
+			if (greyedOutput) {				
+				if (y % 2 == 0) {
+					mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
+				}
+			}
+				for (int x = 0; x < charWidth * g_sci->_enhancementMultiplier; x++) {
+				if (greyedOutput)
+				mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
+				b = enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3] & mask;
+					if (b & 0x80) {
+						int screenX = (left) + x;
+						int screenY = (top) + y;
+						if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
 
-			for (int x = 0; x < charWidth * g_sci->_enhancementMultiplier; x++) {
-				
-				int screenX = (left) + x;
-				int screenY = (top) + y;
-				//if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
-				
-					//_screen->putFontPixelX(top, screenX, y, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4)], enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 1], enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 2], enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3]);
-				_screen->putFontPixelR(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
-				    _screen->putFontPixelG(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
-				_screen->putFontPixelB(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelR(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelG(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelB(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
 
-					//} else {
-					//warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);
-				//}
-				   
+						} else {
+							warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);
+						}
+				    }
+				    b = b << 1;
 			}
 		}
 	}
