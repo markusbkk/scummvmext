@@ -42,7 +42,7 @@
 #include "sci/graphics/scifx.h"
 
 namespace Sci {
-
+Common::Rect _currentViewPort;
 GfxPaint16::GfxPaint16(ResourceManager *resMan, SegManager *segMan, GfxCache *cache, GfxPorts *ports, GfxCoordAdjuster16 *coordAdjuster, GfxScreen *screen, GfxPalette *palette, GfxTransitions *transitions, AudioPlayer *audio)
 	: _resMan(resMan), _segMan(segMan), _cache(cache), _ports(ports),
 	  _coordAdjuster(coordAdjuster), _screen(screen), _palette(palette),
@@ -120,6 +120,7 @@ void GfxPaint16::drawCel(GuiResourceId viewId, int16 loopNo, int16 celNo, const 
 void GfxPaint16::drawCel(GfxView *view, int16 loopNo, int16 celNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	Common::Rect clipRect = celRect;
 	clipRect.clip(_ports->_curPort->rect);
+	_currentViewPort = _ports->_curPort->rect;
 	if (clipRect.isEmpty()) // nothing to draw
 		return;
 
@@ -300,7 +301,7 @@ void GfxPaint16::frameRect(const Common::Rect &rect) {
 }
 
 void GfxPaint16::bitsShow(const Common::Rect &rect) {
-	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
+	Common::Rect workerRect(rect.left - (5 * g_sci->_enhancementMultiplier), rect.top - (5 * g_sci->_enhancementMultiplier), rect.right + (5 * g_sci->_enhancementMultiplier), rect.bottom + (5 * g_sci->_enhancementMultiplier));
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to show
 		return;
@@ -323,7 +324,7 @@ reg_t GfxPaint16::bitsSave(const Common::Rect &rect, byte screenMask) {
 	byte *memoryPtr;
 	int size;
 
-	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
+	Common::Rect workerRect(rect.left - (5 * g_sci->_enhancementMultiplier), rect.top - (5 * g_sci->_enhancementMultiplier), rect.right + (5 * g_sci->_enhancementMultiplier), rect.bottom + (5 * g_sci->_enhancementMultiplier));
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to save
 		return NULL_REG;

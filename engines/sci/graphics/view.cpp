@@ -32,6 +32,7 @@
 #include "sci/graphics/scifx.h"
 #include <common/config-manager.h>
 #include <image/png.h>
+#include "sci/graphics/ports.h"
 
 namespace Sci {
 
@@ -49,6 +50,8 @@ GfxView::~GfxView() {
 
 extern bool enhanced;
 extern bool enhancedPrio;
+GfxPorts *_ports;
+extern Common::Rect _currentViewPort;
 
 static const byte EGAmappingStraight[SCI_VIEW_EGAMAPPING_SIZE] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -831,8 +834,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 		// Merge view palette in...
 		_palette->set(&_viewPalette, false);
 
-	const int16 width = MIN(clipRect.width(), celWidth);
-	const int16 height = MIN(clipRect.height(), celHeight);
+	int16 width = MIN(clipRect.width(), celWidth);
+	int16 height = MIN(clipRect.height(), celHeight);
 
 	if (!width || !height) {
 		return;
@@ -846,7 +849,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 
 	Graphics::Surface *png;
 	const byte *enh;
-	bool enhanced = false;
+	enhanced = false;
 	int pixelsLength = 0;
 	int enhInit = 0;
 	char loopNoStr[5];
@@ -913,13 +916,50 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 			}
 		}
 	} else {
+
+		Common::Rect celRect = rect;
+		Common::Rect newClipRect = clipRect;
+		Common::Rect newClipRectTranslated = clipRectTranslated;
+		if (png->w != celWidth * g_sci->_enhancementMultiplier && png->h != celHeight * g_sci->_enhancementMultiplier) {
+
+			celRect.left -= (((png->w / g_sci->_enhancementMultiplier) - (celWidth)) / 2);
+			celRect.top -= (((png->h / g_sci->_enhancementMultiplier) - (celHeight)) / 2);
+			celRect.right += (((png->w / g_sci->_enhancementMultiplier) - (celWidth)) / 2);
+			celRect.bottom += (((png->h / g_sci->_enhancementMultiplier) - (celHeight)) / 2);
+
+			newClipRect = celRect;
+			newClipRect.clip(_currentViewPort);
+
+			if (newClipRect.isEmpty()) // nothing to draw
+				return;
+
+			newClipRectTranslated = clipRectTranslated;
+			newClipRectTranslated.top += _currentViewPort.top;
+			newClipRectTranslated.bottom += _currentViewPort.top;
+			newClipRectTranslated.left += _currentViewPort.left;
+			newClipRectTranslated.right += _currentViewPort.left;
+			width = MIN(newClipRect.width(), (int16)(png->w / g_sci->_enhancementMultiplier));
+			height = MIN(newClipRect.height(), (int16)(png->h / g_sci->_enhancementMultiplier));
+			debug("rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
+			debug("newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
+			debug("rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
+			debug("newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
+			debug("clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
+			debug("newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
+			debug("clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
+			debug("newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
+			debug("clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
+			debug("newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
+			debug("clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
+			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);
+		}
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
 			for (int y = 0; y < height; y++, bitmapData += celWidth) {
 				for (int x = 0; x < width; x++) {
 					const byte color = EGAmapping[bitmapData[x]];
-					const int x2 = clipRectTranslated.left + x;
-					const int y2 = clipRectTranslated.top + y;
+					const int x2 = newClipRectTranslated.left + x;
+					const int y2 = newClipRectTranslated.top + y;
 					if (color != clearKey && priority >= _screen->getPriorityX(x2, y2)) {
 						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						_screen->putPixel(x2, y2, drawMask, color, priority, 0);
@@ -932,14 +972,14 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 			for (int y = 0; y < height; y++, bitmapData += celWidth) {
 				for (int x = 0; x < width; x++) {
 					const byte color = bitmapData[x];
-					const int x2 = clipRectTranslated.left + x;
-					const int y2 = clipRectTranslated.top + y;
+					const int x2 = newClipRectTranslated.left + x;
+					const int y2 = newClipRectTranslated.top + y;
 					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
 					_screen->putPixelEtc(x, y, drawMask, priority, 0);
 				}
 			}
 		} else {
-			int offset = (((((clipRect.top - rect.top) * g_sci->_enhancementMultiplier) * (celWidth * g_sci->_enhancementMultiplier) + ((clipRect.left - rect.left) * g_sci->_enhancementMultiplier))) * 4);
+			int offset = (((((newClipRect.top - celRect.top) * g_sci->_enhancementMultiplier) * (png->w) + ((newClipRect.left - celRect.left) * g_sci->_enhancementMultiplier))) * 4);
 
 			for (int y = 0; y < height * g_sci->_enhancementMultiplier; y++) {
 				for (int x = 0; x < width * g_sci->_enhancementMultiplier; x++) {
@@ -948,20 +988,21 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					{
 						if (offset + (x * 4) + 3 <= pixelsLength - 6) {
 
-							if (priority >= _screen->getPriorityX((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
-								_screen->putPixelR((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4)], enh[offset + (x * 4) + 3], priority, 0);     //enh[offset + (x * 4)]
-								_screen->putPixelG((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
-								_screen->putPixelB((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
-							}
-							if (enh[offset + (x * 4) + 3] == 255) {
-								_screen->putPixelXEtc(((clipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((clipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
+							if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
+								_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4)], enh[offset + (x * 4) + 3], priority, 0);     //enh[offset + (x * 4)]
+								_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
+								_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
+
+								if (enh[offset + (x * 4) + 3] > 0) {
+									_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
+								}
 							}
 						}
 					}
 				}
 
-				offset += (((celWidth * g_sci->_enhancementMultiplier))) * 4;
-
+				offset += (((png->w))) * 4;
+				/*
 				//if (y % 4 == 0)
 				//bmpoffset += celWidth;
 				int bmpoffset = ((((clipRect.top - rect.top) * celWidth + (clipRect.left - rect.left))));
@@ -979,6 +1020,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					}
 					bmpplus += celWidth;
 				}
+				*/
 			}
 		}
 	}
