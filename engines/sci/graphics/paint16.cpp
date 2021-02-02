@@ -301,7 +301,11 @@ void GfxPaint16::frameRect(const Common::Rect &rect) {
 }
 
 void GfxPaint16::bitsShow(const Common::Rect &rect) {
-	Common::Rect workerRect(rect.left - (5 * g_sci->_enhancementMultiplier), rect.top - (5 * g_sci->_enhancementMultiplier), rect.right + (5 * g_sci->_enhancementMultiplier), rect.bottom + (5 * g_sci->_enhancementMultiplier));
+	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
+	workerRect.left -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.top -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.right += (1 * g_sci->_enhancementMultiplier);
+	workerRect.bottom += (1 * g_sci->_enhancementMultiplier);
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to show
 		return;
@@ -324,7 +328,11 @@ reg_t GfxPaint16::bitsSave(const Common::Rect &rect, byte screenMask) {
 	byte *memoryPtr;
 	int size;
 
-	Common::Rect workerRect(rect.left - (5 * g_sci->_enhancementMultiplier), rect.top - (5 * g_sci->_enhancementMultiplier), rect.right + (5 * g_sci->_enhancementMultiplier), rect.bottom + (5 * g_sci->_enhancementMultiplier));
+	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
+	workerRect.left -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.top -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.right += (1 * g_sci->_enhancementMultiplier);
+	workerRect.bottom += (1 * g_sci->_enhancementMultiplier);
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to save
 		return NULL_REG;

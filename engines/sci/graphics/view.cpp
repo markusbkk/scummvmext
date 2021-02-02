@@ -1108,91 +1108,124 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 		//scaledHeight -= scaledHeight % g_sci->_enhancementMultiplier;
 		const int16 offsetY = (clipRect.top - rect.top) * g_sci->_enhancementMultiplier;
 		const int16 offsetX = (clipRect.left - rect.left) * g_sci->_enhancementMultiplier;
+		Common::Rect celRect = rect;
+		Common::Rect newClipRect = clipRect;
+		Common::Rect newClipRectTranslated = clipRectTranslated;
+		if (png->w != celWidth * g_sci->_enhancementMultiplier && png->h != celHeight * g_sci->_enhancementMultiplier) {
 
-		//const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
+			celRect.left -= (((png->w / g_sci->_enhancementMultiplier) - (celWidth)) / 2);
+			celRect.top -= (((png->h / g_sci->_enhancementMultiplier) - (celHeight)) / 2);
+			celRect.right += (((png->w / g_sci->_enhancementMultiplier) - (celWidth)) / 2);
+			celRect.bottom += (((png->h / g_sci->_enhancementMultiplier) - (celHeight)) / 2);
 
-		if (scaledWidth * g_sci->_enhancementMultiplier > png->w * 0.5) {
-			for (int y = 0; y < (scaledHeight)*g_sci->_enhancementMultiplier; y++) {
-				for (int x = 0; x < (scaledWidth)*g_sci->_enhancementMultiplier; x++) {
-					const int x2 = (clipRectTranslated.left * g_sci->_enhancementMultiplier) + x;
-					const int y2 = (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
-					int offset = (((int)(scalingY[y + offsetY]) * (celWidth * g_sci->_enhancementMultiplier) + (int)(scalingX[(x + offsetX)] / g_sci->_enhancementMultiplier))) * 4;
-					if (offset + (x * 4) + 3 <= pixelsLength - 6)
-					{
-					if ((int)(x + offsetX) < ((int)(((png->w * ((1 - (1.00000 / scaleX)) * 0.80)) + offsetX))) - 2) {
-						
+			newClipRect = celRect;
+			newClipRect.clip(_currentViewPort);
 
+			if (newClipRect.isEmpty()) // nothing to draw
+				return;
+
+			newClipRectTranslated = clipRectTranslated;
+			newClipRectTranslated.top += _currentViewPort.top;
+			newClipRectTranslated.bottom += _currentViewPort.top;
+			newClipRectTranslated.left += _currentViewPort.left;
+			newClipRectTranslated.right += _currentViewPort.left;
+			scaledWidth = MIN((int16)newClipRect.width(), (int16)(scalingX.size() / g_sci->_enhancementMultiplier));
+			scaledHeight = MIN((int16)newClipRect.height(), (int16)(scalingY.size() / g_sci->_enhancementMultiplier));
+			debug("rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
+			debug("newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
+			debug("rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
+			debug("newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
+			debug("clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
+			debug("newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
+			debug("clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
+			debug("newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
+			debug("clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
+			debug("newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
+			debug("clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
+			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);
+			//const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
+
+			if (scaledWidth * g_sci->_enhancementMultiplier > png->w * 0.5) {
+				for (int y = 0; y < (scaledHeight)*g_sci->_enhancementMultiplier; y++) {
+					for (int x = 0; x < (scaledWidth)*g_sci->_enhancementMultiplier; x++) {
+						const int x2 = (newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x;
+						const int y2 = (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
+						int offset = (((int)(scalingY[y + offsetY]) * (png->w) + (int)(scalingX[(x + offsetX)] / g_sci->_enhancementMultiplier))) * 4;
+						if (offset + (x * 4) + 3 <= pixelsLength - 6) {
+							if ((int)(x + offsetX) < ((int)(((png->w * ((1 - (1.00000 / scaleX)) * 0.80)) + offsetX))) - 2) {
+
+								///const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
+								const byte colorR = enh[offset + (x * 4)];
+								const byte colorG = enh[offset + (x * 4) + 1];
+								const byte colorB = enh[offset + (x * 4) + 2];
+								const byte colorA = enh[offset + (x * 4) + 3];
+								if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
+
+									if (priority >= _screen->getPriorityX(x2, y2)) {
+										_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+
+										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			} else {
+				for (int y = 0; y < (scaledHeight)*g_sci->_enhancementMultiplier; y++) {
+					for (int x = 0; x < (scaledWidth)*g_sci->_enhancementMultiplier; x++) {
+						const int x2 = (newClipRectTranslated.left * g_sci->_enhancementMultiplier) + (x);
+						const int y2 = (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
+						int offset = (((int)(scalingY[y + offsetY]) * (png->w) + (int)(scalingX[(x + offsetX)] / g_sci->_enhancementMultiplier))) * 4;
+						if (offset + (x * 2 * 4) + 3 <= pixelsLength - 6) {
 							///const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
-							const byte colorR = enh[offset + (x * 4)];
-							const byte colorG = enh[offset + (x * 4) + 1];
-							const byte colorB = enh[offset + (x * 4) + 2];
-							const byte colorA = enh[offset + (x * 4) + 3];
+							const byte colorR = enh[offset + (x * 2 * 4)];
+							const byte colorG = enh[offset + (x * 2 * 4) + 1];
+							const byte colorB = enh[offset + (x * 2 * 4) + 2];
+							const byte colorA = enh[offset + (x * 2 * 4) + 3];
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
+								if (priority >= _screen->getPriorityX(x2, y2)) {
 
-								if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255 && priority >= _screen->getPriorityX(x2, y2)) {
 									_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
 									_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 									_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-								}
-								if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
-									_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+
+									if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+										_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+									}
 								}
 							}
 						}
 					}
 				}
 			}
-		} else {
-			for (int y = 0; y < (scaledHeight)*g_sci->_enhancementMultiplier; y++) {
-				for (int x = 0; x < (scaledWidth)*g_sci->_enhancementMultiplier; x++) {
-					const int x2 = (clipRectTranslated.left * g_sci->_enhancementMultiplier) + (x);
-					const int y2 = (clipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
-					int offset = (((int)(scalingY[y + offsetY]) * (celWidth * g_sci->_enhancementMultiplier) + (int)(scalingX[(x + offsetX)] / g_sci->_enhancementMultiplier))) * 4;
-					if (offset + (x * 2 * 4) + 3 <= pixelsLength - 6)
-					{
-						///const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
-						const byte colorR = enh[offset + (x * 2 * 4)];
-						const byte colorG = enh[offset + (x * 2 * 4) + 1];
-						const byte colorB = enh[offset + (x * 2 * 4) + 2];
-						const byte colorA = enh[offset + (x * 2 * 4) + 3];
-						if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
-							if (priority >= _screen->getPriorityX(x2, y2)) {
 
-								_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
-								_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-								_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-							}
-							if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
-								_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
-							}
-						}
+			Common::Array<uint16> scalingXPriority, scalingYPriority;
+			createScalingTable(scalingXPriority, celWidth, _screen->getWidth(), scaleX);
+			createScalingTable(scalingYPriority, celHeight, _screen->getHeight(), scaleY);
+
+			int16 scaledWidthPriority = MIN(clipRect.width(), (int16)scalingXPriority.size());
+			int16 scaledHeightPriority = MIN(clipRect.height(), (int16)scalingYPriority.size());
+
+			const int16 offsetYPriority = clipRect.top - rect.top;
+			const int16 offsetXPriority = clipRect.left - rect.left;
+
+			const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
+			for (int y = 0; y < scaledHeightPriority; y++) {
+				for (int x = 0; x < scaledWidthPriority; x++) {
+					const byte color = bitmapData[scalingYPriority[y + offsetYPriority] * celWidth + scalingXPriority[x + offsetXPriority]];
+					const int x2 = clipRectTranslated.left + x;
+					const int y2 = clipRectTranslated.top + y;
+					if (color != clearKey && priority >= _screen->getPriority(x2, y2)) {
+						//_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
 					}
 				}
 			}
 		}
-		
-		Common::Array<uint16> scalingXPriority, scalingYPriority;
-		createScalingTable(scalingXPriority, celWidth, _screen->getWidth(), scaleX);
-		createScalingTable(scalingYPriority, celHeight, _screen->getHeight(), scaleY);
-
-		int16 scaledWidthPriority = MIN(clipRect.width(), (int16)scalingXPriority.size());
-		int16 scaledHeightPriority = MIN(clipRect.height(), (int16)scalingYPriority.size());
-
-		const int16 offsetYPriority = clipRect.top - rect.top;
-		const int16 offsetXPriority = clipRect.left - rect.left;
-
-		const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
-		for (int y = 0; y < scaledHeightPriority; y++) {
-			for (int x = 0; x < scaledWidthPriority; x++) {
-				const byte color = bitmapData[scalingYPriority[y + offsetYPriority] * celWidth + scalingXPriority[x + offsetXPriority]];
-				const int x2 = clipRectTranslated.left + x;
-				const int y2 = clipRectTranslated.top + y;
-				if (color != clearKey && priority >= _screen->getPriority(x2, y2)) {
-					//_screen->putPixelEtc(x2, y2, drawMask, priority, 0);
-				}
-			}
-		}
-		
 	}
 }
 
