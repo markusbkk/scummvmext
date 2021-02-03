@@ -387,7 +387,7 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 			return NULL;
 		}
 	}
-
+	
 	byte audioFlags;
 	uint32 audioCompressionType = audioRes->getAudioCompressionType();
 
