@@ -312,9 +312,9 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			Common::String fileName = folder.getChild(_resource->name() + '.' + charNoStr + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
-				debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				//debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 			} else {
-				debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 				png = loadFontPNG(file);
 				if (png) {
 					enh = (const byte *)png->getPixels();

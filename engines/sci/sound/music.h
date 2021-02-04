@@ -249,6 +249,7 @@ public:
 	Common::Mutex _mutex;
 	Audio::SoundHandle _audioHandle;
 	Audio::Mixer *_mixer;
+
 	int wavID;
 	bool isPlayingWav;
 	bool muteMidi;
@@ -269,6 +270,7 @@ protected:
 	void remapChannels(bool mainThread = true);
 	ChannelRemapping *determineChannelMap();
 	void resetDeviceChannel(int devChannel, bool mainThread);
+	
 
 private:
 	MusicList _playList;

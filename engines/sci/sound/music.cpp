@@ -420,7 +420,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			pSnd->overridePriority = false;
 			pSnd->isSample = true;
 		} else {
-		
+
 			// play MIDI track
 			Common::StackLock lock(_mutex);
 			debug("MUSIC RESOURCE = %d", pSnd->resourceId);
@@ -448,7 +448,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 
 					if (audioStream) {
 						
-
+						
 						Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
 						// We only support one audio handle
 						if (g_system->getMixer() && &_audioHandle != nullptr) {

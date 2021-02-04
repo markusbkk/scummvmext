@@ -862,9 +862,9 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
-				debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 			} else {
-				debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 				png = loadCelPNG(file);
 				if (png) {
 					enh = (const byte *)png->getPixels();
@@ -940,6 +940,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 			newClipRectTranslated.right += _currentViewPort.left;
 			width = MIN(newClipRect.width(), (int16)(png->w / g_sci->_enhancementMultiplier));
 			height = MIN(newClipRect.height(), (int16)(png->h / g_sci->_enhancementMultiplier));
+			/*
 			debug("rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
 			debug("newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
 			debug("rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
@@ -951,7 +952,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 			debug("clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
 			debug("newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
 			debug("clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
-			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);
+			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
 		}
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
@@ -1058,9 +1059,9 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
-				debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 			} else {
-				debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 				png = loadCelPNG(file);
 				if (png) {
 					enh = (const byte *)png->getPixels();
@@ -1131,6 +1132,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 			newClipRectTranslated.right += _currentViewPort.left;
 			scaledWidth = MIN((int16)newClipRect.width(), (int16)(scalingX.size() / g_sci->_enhancementMultiplier));
 			scaledHeight = MIN((int16)newClipRect.height(), (int16)(scalingY.size() / g_sci->_enhancementMultiplier));
+			/*
 			debug("rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
 			debug("newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
 			debug("rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
@@ -1142,7 +1144,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 			debug("clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
 			debug("newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
 			debug("clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
-			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);
+			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
 			//const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
 
 			if (scaledWidth * g_sci->_enhancementMultiplier > png->w * 0.5) {

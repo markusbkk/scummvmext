@@ -220,9 +220,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileName = folder.getChild(_resource->name() + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					png = loadPNG(file);
 					if (png) {
 						enh = (const byte *)png->getPixels();
@@ -242,9 +242,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileNamePrio = folder.getChild(_resource->name() + "_p.png").getName();
 				filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 				if (!filePrio) {
-					debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
 				} else {
-					debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+					//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
 					pngPrio = loadPNG(filePrio);
 					if (pngPrio) {
 						enhPrio = (const byte *)pngPrio->getPixels();
