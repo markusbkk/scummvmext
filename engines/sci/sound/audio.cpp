@@ -194,7 +194,8 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 		Common::String fnStr = "text.";
 		fnStr += fileName;
 		debug((fnStr + " = " + text + ".mp3").c_str());
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr + ".mp3").c_str()).exists()) {
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
+			if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
 			Common::File *sciAudioFile = new Common::File();
 			// Replace backwards slashes
 
@@ -220,30 +221,31 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
 				}
 			}
-		} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr + ".wav").c_str()).exists()) {
-			Common::File *sciAudioFile = new Common::File();
-			// Replace backwards slashes
+			} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr + ".wav").c_str()).exists()) {
+				Common::File *sciAudioFile = new Common::File();
+				// Replace backwards slashes
 
-			Common::String fileName = folder.getChild((fnStr).c_str()).getName();
-			for (uint i = 0; i < fileName.size(); i++) {
-				if (fileName[i] == '\\')
-					fileName.setChar('/', i);
-			}
-			sciAudioFile->open(fileName);
+				Common::String fileName = folder.getChild((fnStr).c_str()).getName();
+				for (uint i = 0; i < fileName.size(); i++) {
+					if (fileName[i] == '\\')
+						fileName.setChar('/', i);
+				}
+				sciAudioFile->open(fileName);
 
-			Audio::RewindableAudioStream *audioStream = nullptr;
-			audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+				Audio::RewindableAudioStream *audioStream = nullptr;
+				audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
 
-			if (audioStream) {
+				if (audioStream) {
 
-				Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
-				// We only support one audio handle
-				if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
+					Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
+					// We only support one audio handle
+					if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
 
-					if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-						g_system->getMixer()->stopID(INT_MAX - 1983);
+						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
+							g_system->getMixer()->stopID(INT_MAX - 1983);
 
-					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
+						g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
+					}
 				}
 			}
 		}
