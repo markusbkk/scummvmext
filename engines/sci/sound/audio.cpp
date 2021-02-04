@@ -217,8 +217,8 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 					
 						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
 						g_system->getMixer()->stopID(INT_MAX - 1983);
-					
-					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
+
+					    g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)audioStream, 0), INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
 				}
 			}
 		}
