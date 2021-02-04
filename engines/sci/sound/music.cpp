@@ -456,7 +456,8 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 
 								g_system->getMixer()->stopID(wavID);
 							}
-							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
+							
+							g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)audioStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
 							wavID = pSnd->resourceId;
 							muteMidi = true;
 							isPlayingWav = true;
