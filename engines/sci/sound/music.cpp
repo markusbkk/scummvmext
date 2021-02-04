@@ -36,6 +36,7 @@
 #include "sci/sound/music.h"
 #include <audio/decoders/wave.h>
 #include <engines/sci/sound/audio.h>
+#include <audio/decoders/mp3.h>
 
 //#define DEBUG_REMAP
 
@@ -431,7 +432,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 				sprintf(resIdStr, "%d", pSnd->resourceId);
 				Common::String fnStr = "music.";
 				fnStr += resIdStr;
-				fnStr += ".wav";
+				fnStr += ".mp3";
 				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr).c_str()).exists()) {
 					Common::File *sciAudioFile = new Common::File();
 					// Replace backwards slashes
@@ -444,7 +445,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 					sciAudioFile->open(fileName);
 
 					Audio::RewindableAudioStream *audioStream = nullptr;
-					audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+					audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 
 					if (audioStream) {
 						

@@ -193,7 +193,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 	if (ConfMan.hasKey("extrapath")) {
 		Common::String fnStr = "text.";
 		fnStr += fileName;
-		fnStr += ".wav";
+		fnStr += ".mp3";
 		debug((fnStr + " = " + text).c_str());
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr).c_str()).exists()) {
 			Common::File *sciAudioFile = new Common::File();
@@ -207,7 +207,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 			sciAudioFile->open(fileName);
 
 			Audio::RewindableAudioStream *audioStream = nullptr;
-			audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+			audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 
 			if (audioStream) {
 
