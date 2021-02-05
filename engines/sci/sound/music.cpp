@@ -424,20 +424,18 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 
 			// play MIDI track
 			Common::StackLock lock(_mutex);
-			debug("MUSIC RESOURCE = %d", pSnd->resourceId);
-			
 			Common::FSNode folder;
-			if (ConfMan.hasKey("extrapath")) {
-				char resIdStr[5];
-				sprintf(resIdStr, "%d", pSnd->resourceId);
-				Common::String fnStr = "music.";
-				fnStr += resIdStr;
+			Common::String fnStr = "music.";
+			char resIdStr[5];
+			sprintf(resIdStr, "%d", pSnd->resourceId);
+			fnStr += resIdStr;
+			if (ConfMan.hasKey("extrapath")) {		
 				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
 					if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
 						Common::File *sciAudioFile = new Common::File();
 						// Replace backwards slashes
 
-						Common::String fileName = folder.getChild((fnStr).c_str()).getName();
+						Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
 						for (uint i = 0; i < fileName.size(); i++) {
 							if (fileName[i] == '\\')
 								fileName.setChar('/', i);
@@ -448,7 +446,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 						audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 
 						if (audioStream) {
-
+							debug(("Found : " + fnStr + ".mp3").c_str());
 							Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
 							// We only support one audio handle
 							if (g_system->getMixer() && &_audioHandle != nullptr) {
@@ -523,11 +521,11 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 						} else {
 							muteMidi = false;
 						}
-					} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr + ".wav").c_str()).exists()) {
+					} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
 						Common::File *sciAudioFile = new Common::File();
 						// Replace backwards slashes
 
-						Common::String fileName = folder.getChild((fnStr).c_str()).getName();
+						Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
 						for (uint i = 0; i < fileName.size(); i++) {
 							if (fileName[i] == '\\')
 								fileName.setChar('/', i);
@@ -538,7 +536,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 						audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
 
 						if (audioStream) {
-
+							debug(("Found : " + fnStr + ".wav").c_str());
 							Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
 							// We only support one audio handle
 							if (g_system->getMixer() && &_audioHandle != nullptr) {
@@ -624,6 +622,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			}
 			if (!muteMidi || !isPlayingWav)
 			{
+				debug(("Didn't Find : " + fnStr + ".mp3").c_str());
 				if (g_system->getMixer()) {
 					if (isPlayingWav) {
 

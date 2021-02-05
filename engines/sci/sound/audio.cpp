@@ -190,16 +190,16 @@ void AudioPlayer::handleFanmadeSciAudio(reg_t sciAudioObject, SegManager *segMan
 }
 void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 	Common::FSNode folder;
+	bool foundAudio = false;
+	Common::String fnStr = "text.";
+	fnStr += fileName;
 	if (ConfMan.hasKey("extrapath")) {
-		Common::String fnStr = "text.";
-		fnStr += fileName;
-		debug((fnStr + " = " + text + ".mp3").c_str());
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
 			if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
 			Common::File *sciAudioFile = new Common::File();
 			// Replace backwards slashes
 
-			Common::String fileName = folder.getChild((fnStr).c_str()).getName();
+			Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
 			for (uint i = 0; i < fileName.size(); i++) {
 				if (fileName[i] == '\\')
 					fileName.setChar('/', i);
@@ -210,7 +210,8 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 			audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 
 			if (audioStream) {
-
+				foundAudio = true;
+				debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
 				Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
 				// We only support one audio handle
 				if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -221,11 +222,11 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
 				}
 			}
-			} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild((fnStr + ".wav").c_str()).exists()) {
+			} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
 				Common::File *sciAudioFile = new Common::File();
 				// Replace backwards slashes
 
-				Common::String fileName = folder.getChild((fnStr).c_str()).getName();
+				Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
 				for (uint i = 0; i < fileName.size(); i++) {
 					if (fileName[i] == '\\')
 						fileName.setChar('/', i);
@@ -236,7 +237,8 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 				audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
 
 				if (audioStream) {
-
+					foundAudio = true;
+					debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
 					Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
 					// We only support one audio handle
 					if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -249,6 +251,9 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 				}
 			}
 		}
+	}
+	if (foundAudio == false) {
+		debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
 	}
 }
 
