@@ -56,7 +56,6 @@
 #endif
 #include <common/config-manager.h>
 #include <audio/audiostream.h>
-#include <audio/decoders/wave.h>
 #include <sci/sound/audio.h>
 #include <sci/sound/music.h>
 

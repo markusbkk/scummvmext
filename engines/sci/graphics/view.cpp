@@ -33,6 +33,7 @@
 #include <common/config-manager.h>
 #include <image/png.h>
 #include "sci/graphics/ports.h"
+#include <sci/sound/audio.h>
 
 namespace Sci {
 
@@ -829,6 +830,17 @@ Graphics::Surface *loadCelPNGCLUT(Common::SeekableReadStream *s) {
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
 	return srf;
 }
+unsigned long
+hashit(const char *str) {
+	unsigned long hash = 5381;
+	int c;
+
+	while (c = *str++)
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+	return hash;
+}
+
 void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
 			int16 loopNo, int16 celNo, byte priority, uint16 EGAmappingNr, bool upscaledHires, uint16 scaleSignal) {
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
@@ -1069,6 +1081,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 
 	// Reset custom per-view palette mod
 	_screen->setCurPaletteMapValue(oldpalvalue);
+	Common::String fn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
+	g_sci->_audio->PlayEnhancedViewCelAudio(fn, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }
 
 void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
@@ -1305,6 +1319,8 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 			}
 		}
 	}
+	Common::String fn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
+	g_sci->_audio->PlayEnhancedViewCelAudio(fn, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }
 
 void GfxView::createScalingTable(Common::Array<uint16> &table, int16 celSize, uint16 maxSize, int16 scale) {

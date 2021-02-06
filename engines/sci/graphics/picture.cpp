@@ -180,13 +180,13 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	bool compression = true;
 	byte curByte;
 	int16 y, lastY, x, leftX, rightX;
-	int pixelCount;
+	int pixelCount = 0;
 	uint16 width, height;
 	Graphics::Surface *png;
 	Graphics::Surface *pngPal;
 	Graphics::Surface *pngPrio;
 	Graphics::Surface *pngOverlay;
-	int pixelCountX;
+	int pixelCountX = 0;
 	const byte *enh;
 	const byte *enhPal;
 	const byte *enhPrio;
@@ -265,7 +265,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
-							//pixelCountX = png->w * png->h * 4;
+							pixelCountX = pngPal->w * pngPal->h * 4;
 							paletted = true;
 						}
 					}
@@ -288,6 +288,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					if (pngOverlay) {
 						enhOverlay = (const byte *)pngOverlay->getPixels();
 						if (enhOverlay) {
+							pixelCountX = pngOverlay->w * pngOverlay->h * 4;
 							overlay = true;
 						}
 					}

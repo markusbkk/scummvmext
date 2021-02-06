@@ -257,6 +257,75 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 	}
 }
 
+void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, unsigned long hashId) {
+	if (!g_system->getMixer()->isSoundIDActive(hashId)) {
+
+		Common::FSNode folder;
+		bool foundAudio = false;
+		Common::String fnStr = fileName.c_str();
+		if (ConfMan.hasKey("extrapath")) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
+				if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
+					Common::File *sciAudioFile = new Common::File();
+					// Replace backwards slashes
+
+					Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
+					for (uint i = 0; i < fileName.size(); i++) {
+						if (fileName[i] == '\\')
+							fileName.setChar('/', i);
+					}
+					sciAudioFile->open(fileName);
+
+					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
+
+					if (audioStream) {
+						foundAudio = true;
+						debug(("Found : " + fnStr + ".mp3").c_str());
+						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
+						// We only support one audio handle
+						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
+
+							if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
+								g_system->getMixer()->stopID(hashId);
+
+							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
+						}
+					}
+				} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
+					Common::File *sciAudioFile = new Common::File();
+					// Replace backwards slashes
+
+					Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
+					for (uint i = 0; i < fileName.size(); i++) {
+						if (fileName[i] == '\\')
+							fileName.setChar('/', i);
+					}
+					sciAudioFile->open(fileName);
+
+					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+
+					if (audioStream) {
+						foundAudio = true;
+						debug(("Found : " + fnStr + ".wav").c_str());
+						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
+						// We only support one audio handle
+						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
+
+							if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
+								g_system->getMixer()->stopID(hashId);
+
+							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
+						}
+					}
+				}
+			}
+		}
+		debug(("view : " + fnStr).c_str());
+	}
+}
+
 	int AudioPlayer::startAudio(uint16 module, uint32 number) {
 	int sampleLen;
 	Audio::AudioStream *audioStream = getAudioStream(number, module, &sampleLen);
