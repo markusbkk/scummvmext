@@ -961,7 +961,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const byte color = EGAmapping[bitmapData[x]];
 					const int x2 = newClipRectTranslated.left + x;
 					const int y2 = newClipRectTranslated.top + y;
-					if (color != clearKey && priority >= _screen->getPriorityX(x2, y2)) {
+					if (priority >= _screen->getPriorityX(x2, y2)) {
 						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						_screen->putPixel(x2, y2, drawMask, color, priority, 0);
 					}
@@ -988,13 +988,13 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					//if (color != clearKey)
 					{
 						if (offset + (x * 4) + 3 <= pixelsLength - 6) {
-
+							if (enh[offset + (x * 4) + 3] == 255) {
 							if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 								_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4)], enh[offset + (x * 4) + 3], priority, 0);     //enh[offset + (x * 4)]
 								_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
 								_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
 
-								if (enh[offset + (x * 4) + 3] > 0) {
+								
 									_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 								}
 							}

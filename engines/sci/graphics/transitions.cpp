@@ -119,6 +119,7 @@ void GfxTransitions::setup(int16 number, bool blackoutFlag) {
 #else
 		_number = SCI_TRANSITIONS_NONE;
 #endif
+		_number = SCI_TRANSITIONS_NONE;
 		_blackoutFlag = blackoutFlag;
 		debugC(kDebugLevelGraphics, "Transition %d, blackout %d", number, blackoutFlag);
 	}

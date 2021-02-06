@@ -214,6 +214,7 @@ private:
 	byte *_displayScreenB;
 	byte *_displayedScreenB;
 
+	byte *_enhancedMatte;
 	// Screens for RGB mode support
 	byte *_displayedScreen;
 	byte *_rgbScreen;
@@ -280,6 +281,7 @@ public:
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:
 				_displayScreen[offset] = color;
+				_enhancedMatte[offset] = 0;
 				break;
 
 			case GFX_SCREEN_UPSCALED_640x400:
@@ -327,11 +329,12 @@ public:
 						if (_format.bytesPerPixel == 2) {
 			
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-
+					        _enhancedMatte[displayOffset] = 255;
 						} else {
 							//assert(_format.bytesPerPixel == 4);
 
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					        _enhancedMatte[displayOffset] = 255;
 						}
 				break;
 			}
@@ -412,14 +415,16 @@ public:
 					byte i = r;
 					byte ir = _palette[3 * i + 0];
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
-
+					_enhancedMatte[displayOffset] = 255;
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 					byte i = r;
 					byte ir = _palette[3 * i + 0];
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
+					_enhancedMatte[displayOffset] = 255;
 				}
+
 				break;
 			}
 			default:
@@ -521,6 +526,7 @@ public:
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 			putPixel480x300Worker(x, y, offset, _visualScreen, color);
 			putPixel480x300Worker(x, y, offset, _displayScreen, color);
+			putPixel480x300Worker(x, y, offset, _enhancedMatte, color);	
 		}
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
 			putPixel480x300Worker(x, y, offset, _priorityScreenX, priority);
@@ -562,6 +568,7 @@ public:
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 			_visualScreen[offset] = color;
 			_displayScreen[offset] = color;
+			_enhancedMatte[offset] = 0;
 			if (_paletteMapScreen)
 				_paletteMapScreen[offset] = _curPaletteMapValue;
 
@@ -582,7 +589,7 @@ public:
 	void putPixelOnDisplay(int16 x, int16 y, byte color) {
 		int offset = y * _displayWidth + x;
 		_displayScreen[offset] = color;
-
+		_enhancedMatte[offset] = 0;
 		int displayOffset = 0;
 
 		switch (_upscaledHires) {
@@ -602,7 +609,7 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;
-
+						_enhancedMatte[displayOffset] = 0;
 					} else {
 						assert(_format.bytesPerPixel == 4);
 
@@ -614,6 +621,7 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;
+						_enhancedMatte[displayOffset] = 0;
 					}
 				}
 			}
@@ -636,6 +644,11 @@ public:
 			_displayScreen[displayOffset + 1] = color;
 			_displayScreen[displayOffset + _displayWidth] = color;
 			_displayScreen[displayOffset + _displayWidth + 1] = color;
+			
+			_enhancedMatte[displayOffset] = 0;
+			_enhancedMatte[displayOffset + 1] = 0;
+			_enhancedMatte[displayOffset + _displayWidth] = 0;
+			_enhancedMatte[displayOffset + _displayWidth + 1] = 0;
 			break;
 
 		case GFX_SCREEN_UPSCALED_640x440: {
@@ -646,6 +659,8 @@ public:
 			for (int16 curY = startY; curY < endY; curY++) {
 				_displayScreen[displayOffset] = color;
 				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset] = 0;
+				_enhancedMatte[displayOffset + 1] = 0;
 				displayOffset += _displayWidth;
 			}
 			break;
@@ -658,6 +673,8 @@ public:
 			for (int16 curY = startY; curY < endY; curY++) {
 				_displayScreen[displayOffset] = color;
 				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset] = 0;
+				_enhancedMatte[displayOffset + 1] = 0;
 				displayOffset += _displayWidth;
 			}
 			break;
@@ -679,7 +696,7 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;
-
+						_enhancedMatte[displayOffset] = 0;
 
 					} else if (_format.bytesPerPixel == 4) {
 
@@ -691,7 +708,7 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;	
-						
+						_enhancedMatte[displayOffset] = 0;
 					} else {
 
 						byte r;
@@ -702,7 +719,7 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;
-
+						_enhancedMatte[displayOffset] = 0;
 					}
 				}
 			}
@@ -801,6 +818,8 @@ public:
 				displayOffset += _displayWidth;
 				_displayScreen[displayOffset] = color;
 				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset] = color;
+				_enhancedMatte[displayOffset + 1] = color;
 				break;
 			}
 
@@ -839,6 +858,11 @@ public:
 				displayOffset += _displayWidth;
 				_displayScreen[displayOffset] = color;
 				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset] = 0;
+				_enhancedMatte[displayOffset + 1] = 0;
+				displayOffset += _displayWidth;
+				_enhancedMatte[displayOffset] = 255;
+				_enhancedMatte[displayOffset + 1] = 255;
 				break;
 			}
 
@@ -852,7 +876,8 @@ public:
 				_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
 				_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
 				_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
-	
+				_displayScreen[displayOffset] = color;
+				_enhancedMatte[displayOffset] = 255;
 				break;
 			}
 		}

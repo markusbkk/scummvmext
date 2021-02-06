@@ -178,6 +178,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	const byte *enh;
 	const byte *enhPrio;
 	enhanced = false;
+	bool overlay = false;
 	enhancedPrio = false;
 	// if the picture is not an overlay and we are also not in EGA mode, use priority 0
 	if (!isEGA && !_addToFlag)
@@ -234,7 +235,30 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_p.png").exists()) {
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
+				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_o.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(_resource->name() + "_o.png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					} else {
+						//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						png = loadPNG(file);
+						if (png) {
+							enh = (const byte *)png->getPixels();
+							if (enh) {
+								pixelCountX = png->w * png->h * 4;
+								enhanced = true;
+								overlay = true;
+							}
+						}
+					}
+				}
+			}
 			Common::String fileNamePrio = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_p.png").getName();
 			Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
@@ -310,7 +334,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 		ptr += skipCelBitmapPixels;
 		ptr += skipCelBitmapLines * width;
-		if (!enhanced) {
+		if (!enhanced || overlay)
+		{
 			if ((!isEGA) || (priority < 16)) {
 				// VGA + EGA, EGA only checks priority, when given priority is below 16
 				if (!_mirroredFlag) {
@@ -319,7 +344,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					while (y < lastY) {
 						curByte = *ptr++;
 						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
-							if (!enhanced)
+							
 								_screen->putPixel(x, y, drawMask, curByte, priority, 0);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						x++;
@@ -336,7 +361,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					while (y < lastY) {
 						curByte = *ptr++;
 						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
-							if (!enhanced)
+							
 								_screen->putPixel(x, y, drawMask, curByte, priority, 0);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						if (x == leftX) {
@@ -358,7 +383,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					while (y < lastY) {
 						curByte = *ptr++;
 						if (curByte != clearColor)
-							if (!enhanced)
+							
 								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						x++;
@@ -375,7 +400,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					while (y < lastY) {
 						curByte = *ptr++;
 						if (curByte != clearColor)
-							if (!enhanced)
+							
 								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						if (x == leftX) {
@@ -425,13 +450,21 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 							if (priority >= _screen->getPriorityX(x, y))
 							{
-								//if (enh[offset + 3] == 255)
-								{
-									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								if (overlay) {
+									if (enh[offset + 3] == 255) {
+										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+									}
+								} else {
+									if (enh[offset + 3] != 0) {
+										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+									}
 								}
 							}
+							
 								if (enhancedPrio) {
 									if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 										_screen->putPixelXEtc(x, y, drawMask, 0, 0);
@@ -489,11 +522,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 							if (priority >= _screen->getPriorityX(x, y))
 							{
-								//if (enh[offset + 3] == 255)
-								{
-									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								if (overlay) {
+									if (enh[offset + 3] == 255) {
+										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+									}
+								} else {
+									if (enh[offset + 3] != 0) {
+										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+									}
 								}
 							}
 								if (enhancedPrio) {
@@ -553,11 +593,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						//if (curByte != clearColor)
 						if (offset + 3 < pixelCountX - 1) {
-							//if (enh[offset + 3] == 255)
-							{
-								_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-								_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-								_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+							if (overlay) {
+								if (enh[offset + 3] == 255) {
+									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								}
+							} else {
+								if (enh[offset + 3] != 0) {
+									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								}
 							}
 							if (enhancedPrio) {
 								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
@@ -608,12 +655,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					int offset = 0;
 					while (y < lastY) {
 						if (offset + 3 < pixelCountX - 1) {
-							//if (enh[offset + 3] == 255)
-							{
-
-								_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-								_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-								_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+							if (overlay) {
+								if (enh[offset + 3] == 255) {
+									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								}
+							} else {
+								if (enh[offset + 3] != 0) {
+									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								}
 							}
 							if (enhancedPrio) {
 								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
@@ -773,7 +826,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 
 				//if (curByte != clearColor)
 				if (offset + 3 < pixelCountX - 1) {
-					//if (enh[offset + 3] > 128)
+					if (enh[offset + 3] > 128)
 					{
 						_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 						_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
@@ -828,7 +881,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			int offset = 0;
 			while (y < lastY) {
 				if (offset + 3 < pixelCountX - 1) {
-					//if (enh[offset + 3] > 128)
+					if (enh[offset + 3] > 128)
 					{
 
 						_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
