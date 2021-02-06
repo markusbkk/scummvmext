@@ -159,6 +159,16 @@ Graphics::Surface *loadPNG(Common::SeekableReadStream *s) {
 	return srf;
 }
 
+Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	return srf;
+}
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
 	const SciSpan<const byte> rlePtr = inbuffer.subspan(rlePos);
@@ -173,12 +183,17 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	int pixelCount;
 	uint16 width, height;
 	Graphics::Surface *png;
+	Graphics::Surface *pngPal;
 	Graphics::Surface *pngPrio;
+	Graphics::Surface *pngOverlay;
 	int pixelCountX;
 	const byte *enh;
+	const byte *enhPal;
 	const byte *enhPrio;
+	const byte *enhOverlay;
 	enhanced = false;
 	bool overlay = false;
+	bool paletted = false;
 	enhancedPrio = false;
 	// if the picture is not an overlay and we are also not in EGA mode, use priority 0
 	if (!isEGA && !_addToFlag)
@@ -235,30 +250,51 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
-			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
-				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_o.png").getName();
-				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
+			if (!file) {
+				fileName = folder.getChild(_resource->name() + "_256.png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					fileName = folder.getChild(_resource->name() + "_o.png").getName();
-					file = SearchMan.createReadStreamForMember(fileName);
-					if (!file) {
-						//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-					} else {
-						//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						png = loadPNG(file);
-						if (png) {
-							enh = (const byte *)png->getPixels();
-							if (enh) {
-								pixelCountX = png->w * png->h * 4;
-								enhanced = true;
-								overlay = true;
-							}
+					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					pngPal = loadPNGCLUT(file);
+					if (pngPal) {
+						enhPal = (const byte *)pngPal->getPixels();
+						if (enhPal) {
+							//pixelCountX = png->w * png->h * 4;
+							paletted = true;
 						}
 					}
 				}
 			}
+		}
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
+
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_o.png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+			if (!file) {
+				fileName = folder.getChild(_resource->name() + "_o.png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					pngOverlay = loadPNG(file);
+					if (pngOverlay) {
+						enhOverlay = (const byte *)pngOverlay->getPixels();
+						if (enhOverlay) {
+							overlay = true;
+						}
+					}
+				}
+			}
+		}
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_p.png").exists()) {
 			Common::String fileNamePrio = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_p.png").getName();
 			Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
@@ -414,7 +450,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if (enhanced) {
+		if (enhanced || overlay || paletted) {
 			y = (displayArea.top + drawY) * g_sci->_enhancementMultiplier;
 			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
 			leftX = (displayArea.left + drawX) * g_sci->_enhancementMultiplier;
@@ -423,8 +459,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			uint16 sourcePixelSkipPerRow = 0;
 			if (width * g_sci->_enhancementMultiplier > rightX - leftX)
 				sourcePixelSkipPerRow = (width * g_sci->_enhancementMultiplier) - (rightX - leftX);
-			enh += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-			enh += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+			if (enhanced) {
+				enh += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+				enh += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+			}
+			if (overlay) {
+				enhOverlay += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+				enhOverlay += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+			}
+			if (paletted) {
+				enhPal += (skipCelBitmapPixels * g_sci->_enhancementMultiplier);
+				enhPal += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier);
+			}
 			if (enhancedPrio) {
 				enhPrio += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
 				enhPrio += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
@@ -443,6 +489,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				if (!_mirroredFlag) {
 					// Draw bitmap to screen
 					x = leftX;
+					int offsetPal = 0;
 					int offset = 0;
 					while (y < lastY) {
 
@@ -450,17 +497,21 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 							if (priority >= _screen->getPriorityX(x, y))
 							{
-								if (overlay) {
-									if (enh[offset + 3] == 255) {
-										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-									}
-								} else {
+								if (paletted) {
+									_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+								}
+								if (enhanced) {
 									if (enh[offset + 3] != 0) {
 										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+									}
+								}
+								if (overlay) {
+									if (enhOverlay[offset + 3] == 255) {
+										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+										_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
+										_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 									}
 								}
 							}
@@ -505,16 +556,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						x++;
 
 						if (x >= rightX) {
+							offsetPal += sourcePixelSkipPerRow;
 							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
 							x = leftX;
 							y++;
 						}
-
+						offsetPal += 1;
 						offset += 4;
 					}
 				} else {
 					// Draw bitmap to screen (mirrored)
 					x = rightX - 1;
+					int offsetPal = 0;
 					int offset = 0;
 					while (y < lastY) {
 
@@ -522,17 +575,21 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 							if (priority >= _screen->getPriorityX(x, y))
 							{
-								if (overlay) {
-									if (enh[offset + 3] == 255) {
-										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-									}
-								} else {
+								if (paletted) {
+									_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+								}
+								if (enhanced) {
 									if (enh[offset + 3] != 0) {
 										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+									}
+								}
+								if (overlay) {
+									if (enhOverlay[offset + 3] == 255) {
+										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+										_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
+										_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 									}
 								}
 							}
@@ -573,10 +630,12 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							
 						}
 						if (x == leftX) {
+							offsetPal += sourcePixelSkipPerRow;
 							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
 							x = rightX;
 							y++;
 						}
+						offsetPal += 1;
 						offset += 4;
 						x--;
 					}
@@ -588,24 +647,31 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				if (!_mirroredFlag) {
 					// EGA+priority>15: Draw bitmap to screen
 					x = leftX;
+					int offsetPal = 0;
 					int offset = 0;
 					while (y < lastY) {
 
 						//if (curByte != clearColor)
+
 						if (offset + 3 < pixelCountX - 1) {
-							if (overlay) {
-								if (enh[offset + 3] == 255) {
-									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-								}
-							} else {
+							if (paletted) {
+								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+							}
+							if (enhanced) {
 								if (enh[offset + 3] != 0) {
 									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 								}
 							}
+							if (overlay) {
+								if (enhOverlay[offset + 3] == 255) {
+									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+									_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
+									_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
+								}
+							}
+							
 							if (enhancedPrio) {
 								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 									_screen->putPixelXEtc(x, y, drawMask, 0, 0);
@@ -643,29 +709,36 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 						x++;
 						if (x >= rightX) {
+							offsetPal += sourcePixelSkipPerRow;
 							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
 							x = leftX;
 							y++;
 						}
+						offsetPal += 1;
 						offset += 4;
 					}
 				} else {
 					// EGA+priority>15: Draw bitmap to screen (mirrored)
 					x = rightX - 1;
+					int offsetPal = 0;
 					int offset = 0;
 					while (y < lastY) {
 						if (offset + 3 < pixelCountX - 1) {
-							if (overlay) {
-								if (enh[offset + 3] == 255) {
-									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
-									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-								}
-							} else {
+							if (paletted) {
+								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+							}
+							if (enhanced) {
 								if (enh[offset + 3] != 0) {
 									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
 									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+								}
+							}
+							if (overlay) {
+								if (enhOverlay[offset + 3] == 255) {
+									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+									_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
+									_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 								}
 							}
 							if (enhancedPrio) {
@@ -704,10 +777,12 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							}
 						}
 						if (x == leftX) {
+							offsetPal += sourcePixelSkipPerRow;
 							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
 							x = rightX;
 							y++;
 						}
+						offsetPal += 1;
 						offset += 4;
 
 						x--;

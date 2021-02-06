@@ -819,7 +819,16 @@ Graphics::Surface *loadCelPNG(Common::SeekableReadStream *s) {
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 	return srf;
 }
+Graphics::Surface *loadCelPNGCLUT(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
 
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	return srf;
+}
 void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
 			int16 loopNo, int16 celNo, byte priority, uint16 EGAmappingNr, bool upscaledHires, uint16 scaleSignal) {
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
@@ -849,7 +858,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 
 	Graphics::Surface *png;
 	const byte *enh;
-	enhanced = false;
+	bool viewEnhanced = false;
+	bool enhancedIs256 = false;
 	int pixelsLength = 0;
 	int enhInit = 0;
 	char loopNoStr[5];
@@ -871,14 +881,34 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					if (enh) {
 						enhInit = *enh;
 						pixelsLength = png->w * png->h * 4;
-						enhanced = true;
+						viewEnhanced = true;
+						enhancedIs256 = false;
+					}
+				}
+			}
+		}
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256.png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256.png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			if (!file) {
+				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+			} else {
+				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				png = loadCelPNGCLUT(file);
+				if (png) {
+					enh = (const byte *)png->getPixels();
+					if (enh) {
+						enhInit = *enh;
+						pixelsLength = png->w * png->h * 4;
+						viewEnhanced = true;
+						enhancedIs256 = true;
 					}
 				}
 			}
 		}
 	}
 
-	if (!enhanced) {
+	if (!viewEnhanced) {
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
 			for (int y = 0; y < height; y++, bitmapData += celWidth) {
@@ -962,8 +992,10 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const int x2 = newClipRectTranslated.left + x;
 					const int y2 = newClipRectTranslated.top + y;
 					if (priority >= _screen->getPriorityX(x2, y2)) {
-						_screen->putPixelEtc(x, y, drawMask, priority, 0);
-						_screen->putPixel(x2, y2, drawMask, color, priority, 0);
+						if (!enhancedIs256) {
+							_screen->putPixelEtc(x, y, drawMask, priority, 0);
+							_screen->putPixel(x2, y2, drawMask, color, priority, 0);
+						}
 					}
 				}
 			}
@@ -975,27 +1007,35 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const byte color = bitmapData[x];
 					const int x2 = newClipRectTranslated.left + x;
 					const int y2 = newClipRectTranslated.top + y;
-
-					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
-					_screen->putPixelEtc(x, y, drawMask, priority, 0);
+					if (!enhancedIs256) {
+						_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
+						_screen->putPixelEtc(x, y, drawMask, priority, 0);
+					}
 				}
 			}
 		} else {
 			int offset = (((((newClipRect.top - celRect.top) * g_sci->_enhancementMultiplier) * (png->w) + ((newClipRect.left - celRect.left) * g_sci->_enhancementMultiplier))) * 4);
-
+			int offset256 = (((((newClipRect.top - celRect.top) * g_sci->_enhancementMultiplier) * (png->w) + ((newClipRect.left - celRect.left) * g_sci->_enhancementMultiplier))));
 			for (int y = 0; y < height * g_sci->_enhancementMultiplier; y++) {
 				for (int x = 0; x < width * g_sci->_enhancementMultiplier; x++) {
 					//const byte color = bitmapData[bmpoffset + (int)(x / g_sci->_enhancementMultiplier)];
 					//if (color != clearKey)
 					{
 						if (offset + (x * 4) + 3 <= pixelsLength - 6) {
-							if (enh[offset + (x * 4) + 3] == 255) {
-							if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
-								_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4)], enh[offset + (x * 4) + 3], priority, 0);     //enh[offset + (x * 4)]
-								_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
-								_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
+							if (!enhancedIs256) {
+								if (enh[offset + (x * 4) + 3] == 255) {
+									if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
+										_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4)], enh[offset + (x * 4) + 3], priority, 0);     //enh[offset + (x * 4)]
+										_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 1], enh[offset + (x * 4) + 3], priority, 0); //enh[offset + (x * 4) + 1]
+										_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x * 4) + 2], enh[offset + (x * 4) + 3], priority, 0);
 
-								
+										_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
+									}
+								}
+							} else {
+								if (enh[offset256 + (x)] != clearKey)
+								if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
+									_screen->putPixelPaletted((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x)], priority, 0);
 									_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 								}
 							}
@@ -1047,7 +1087,8 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 
 	Graphics::Surface *png;
 	const byte *enh;
-	bool enhanced = false;
+	bool viewEnhanced = false;
+	bool enhancedIs256 = false;
 	int pixelsLength = 0;
 	int enhInit = 0;
 	char loopNoStr[5];
@@ -1069,13 +1110,32 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 					if (enh) {
 						enhInit = *enh;
 						pixelsLength = png->w * png->h * 4;
-						enhanced = true;
+						viewEnhanced = true;
+					}
+				}
+			}
+		}
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256.png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256.png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			if (!file) {
+				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+			} else {
+				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				png = loadCelPNGCLUT(file);
+				if (png) {
+					enh = (const byte *)png->getPixels();
+					if (enh) {
+						enhInit = *enh;
+						pixelsLength = png->w * png->h * 4;
+						viewEnhanced = true;
+						enhancedIs256 = true;
 					}
 				}
 			}
 		}
 	}
-	if (!enhanced) {
+	if (!viewEnhanced) {
 
 		Common::Array<uint16> scalingX, scalingY;
 		createScalingTable(scalingX, celWidth, _screen->getWidth(), scaleX);
@@ -1155,6 +1215,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 						const int x2 = (newClipRectTranslated.left * g_sci->_enhancementMultiplier) + (x);
 						const int y2 = (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
 						int offset = (((int)(scalingY[y + offsetY]) * (png->w))) * 4;
+						int offset256 = (((int)(scalingY[y + offsetY]) * (png->w)));
 						if (offset + (x * 2 * 4) + 3 <= pixelsLength - 6) {
 							///const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
 							const byte colorR = enh[offset + (scalingX[(x + offsetX)] * 4)];
@@ -1163,14 +1224,21 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 							const byte colorA = enh[offset + (scalingX[(x + offsetX)] * 4) + 3];
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 								if (priority >= _screen->getPriorityX(x2, y2)) {
-									if (colorA == 255) {
+									if (!enhancedIs256) {
+										if (colorA == 255) {
 
-										_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
-										_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-										_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									}
-									if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
-										_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+											_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										}
+										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+										}
+									} else {
+										if (enh[offset + (scalingX[(x + offsetX)])] != clearKey) {
+											_screen->putPixelPaletted(x2, y2, drawMask, getMappedColor(enh[offset + (scalingX[(x + offsetX)])], scaleSignal, palette, x2, y2), priority, 0);								
+											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+										}
 									}
 								}
 							}
@@ -1183,6 +1251,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 						const int x2 = (newClipRectTranslated.left * g_sci->_enhancementMultiplier) + (x);
 						const int y2 = (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y;
 						int offset = (((int)(scalingY[y + offsetY]) * (png->w))) * 4;
+						int offset256 = (((int)(scalingY[y + offsetY]) * (png->w)));
 						if (offset + (x * 2 * 4) + 3 <= pixelsLength - 6) {
 							///const byte color = bitmapData[scalingY[y + offsetY] * celWidth + scalingX[x + offsetX]];
 							const byte colorR = enh[offset + (scalingX[(x + offsetX)] * 4)];
@@ -1191,13 +1260,20 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 							const byte colorA = enh[offset + (scalingX[(x + offsetX)] * 4) + 3];
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 								if (priority >= _screen->getPriorityX(x2, y2)) {
-									if (colorA == 255) {
-										_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
-										_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-										_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									}
-									if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
-										_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+									if (!enhancedIs256) {
+										if (colorA == 255) {
+											_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										}
+										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+										}
+									} else {
+										if (enh[offset + (scalingX[(x + offsetX)])] != clearKey) {
+											_screen->putPixelPaletted(x2, y2, drawMask, getMappedColor(enh[offset + (scalingX[(x + offsetX)])], scaleSignal, palette, x2, y2), priority, 0);
+											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
+										}
 									}
 								}
 							}

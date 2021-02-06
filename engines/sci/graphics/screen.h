@@ -315,6 +315,34 @@ public:
 			_controlScreen[offset] = control;
 		}
 	}
+	void putPixelPaletted(int16 x, int16 y, byte drawMask, byte c, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreen[displayOffset] = c;
+					_enhancedMatte[displayOffset] = 0;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreen[displayOffset] = c;
+					_enhancedMatte[displayOffset] = 0;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
 	void putPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
