@@ -975,6 +975,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const byte color = bitmapData[x];
 					const int x2 = newClipRectTranslated.left + x;
 					const int y2 = newClipRectTranslated.top + y;
+
 					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
 					_screen->putPixelEtc(x, y, drawMask, priority, 0);
 				}
@@ -1162,11 +1163,12 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 							const byte colorA = enh[offset + (scalingX[(x + offsetX)] * 4) + 3];
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 								if (priority >= _screen->getPriorityX(x2, y2)) {
+									if (colorA == 255) {
 
-									_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-
+										_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+									}
 									if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
 										_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 									}
@@ -1189,11 +1191,11 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 							const byte colorA = enh[offset + (scalingX[(x + offsetX)] * 4) + 3];
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 								if (priority >= _screen->getPriorityX(x2, y2)) {
-
-									_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-									_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
-
+									if (colorA == 255) {
+										_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
+										_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+									}
 									if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
 										_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 									}
