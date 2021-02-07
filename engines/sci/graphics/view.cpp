@@ -42,6 +42,7 @@ GfxView::GfxView(ResourceManager *resMan, GfxScreen *screen, GfxPalette *palette
 	assert(resourceId != -1);
 	_coordAdjuster = g_sci->_gfxCoordAdjuster;
 	initData(resourceId);
+	
 }
 
 GfxView::~GfxView() {

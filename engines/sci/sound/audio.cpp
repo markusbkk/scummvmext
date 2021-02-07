@@ -48,6 +48,7 @@ AudioPlayer::AudioPlayer(ResourceManager *resMan) : _resMan(resMan), _audioRate(
 
 	_mixer = g_system->getMixer();
 	_wPlayFlag = false;
+
 }
 
 AudioPlayer::~AudioPlayer() {
@@ -258,7 +259,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 }
 
 void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, unsigned long hashId) {
-	if (!g_system->getMixer()->isSoundIDActive(hashId)) {
+	if (!g_system->getMixer()->isSoundIDActive(hashId) && g_sci->_audio->lastPlayedCustomSound != (hashId) || g_sci->_audio->lastPlayedCustomSound == 0) {
 
 		Common::FSNode folder;
 		bool foundAudio = false;
@@ -290,6 +291,8 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, unsigned lon
 								g_system->getMixer()->stopID(hashId);
 
 							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
+							if (g_system->getMixer()->isSoundIDActive(hashId))
+							g_sci->_audio->lastPlayedCustomSound = hashId;
 						}
 					}
 				} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
@@ -317,6 +320,8 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, unsigned lon
 								g_system->getMixer()->stopID(hashId);
 
 							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
+							if (g_system->getMixer()->isSoundIDActive(hashId))
+							g_sci->_audio->lastPlayedCustomSound = hashId;
 						}
 					}
 				}

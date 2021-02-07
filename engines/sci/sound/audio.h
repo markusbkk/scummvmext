@@ -80,7 +80,7 @@ public:
 	int audioCdPosition();
 
 	void stopAllAudio();
-
+	unsigned long lastPlayedCustomSound;
 	
 	
 
