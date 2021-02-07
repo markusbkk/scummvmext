@@ -188,6 +188,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	_displayScreenB = (byte *)calloc(_displayPixels, 1);
 	_enhancedMatte = (byte *)calloc(_displayPixels, 1);
 	_priorityScreenX = (byte *)calloc(_displayPixels, 1);
+	_surfaceScreen = (byte *)calloc(_displayPixels, 1);
 
 	memset(&_ditheredPicColors, 0, sizeof(_ditheredPicColors));
 
@@ -277,6 +278,7 @@ GfxScreen::~GfxScreen() {
 	free(_visualScreenB);
 	free(_priorityScreenX);
 	free(_enhancedMatte);
+	free(_surfaceScreen);
 	free(_displayScreen);
 	free(_displayScreenR);
 	free(_displayScreenG);
@@ -457,6 +459,7 @@ void GfxScreen::clearForRestoreGame() {
 	memset(_visualScreenG, 0, _pixels);
 	memset(_visualScreenB, 0, _pixels);
 	memset(_enhancedMatte, 0, _displayPixels);
+	memset(_surfaceScreen, 0, _displayPixels);
 	memset(_displayScreen, 0, _displayPixels);
 	memset(_displayScreenR, 0, _displayPixels);
 	memset(_displayScreenG, 0, _displayPixels);
@@ -760,6 +763,7 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 		byteCount += pixels; // _visualScreenB
 		if (!_upscaledHires) {
 			byteCount += pixels; // _enhancedMatte
+			byteCount += pixels; // _surfaceScreen
 			byteCount += pixels; // _displayScreen
 			byteCount += pixels; // _displayScreenR
 			byteCount += pixels; // _displayScreenG
@@ -770,6 +774,7 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 			int rectHeight = _upscaledHeightMapping[rect.bottom] - _upscaledHeightMapping[rect.top];
 			int rectWidth = _upscaledWidthMapping[rect.right] - _upscaledWidthMapping[rect.left];
 			byteCount += rectHeight * rectWidth; // _enhancedMatte (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _surfaceScreen (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreen (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenR (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenG (upscaled hires)
@@ -813,6 +818,7 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		bitsSaveScreen(rect, _visualScreenG, _width, memoryPtr);
 		bitsSaveScreen(rect, _visualScreenB, _width, memoryPtr);
 		bitsSaveDisplayScreen(rect, _enhancedMatte, memoryPtr);
+		bitsSaveDisplayScreen(rect, _surfaceScreen, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreen, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenR, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenG, memoryPtr);
@@ -830,6 +836,7 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		if (!_upscaledHires)
 			error("bitsSave() called w/o being in upscaled hires mode");
 		bitsSaveScreen(rect, _enhancedMatte, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _surfaceScreen, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreen, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenR, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenG, _displayWidth, memoryPtr);
@@ -888,6 +895,7 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		bitsRestoreScreen(rect, memoryPtr, _visualScreenG, _width);
 		bitsRestoreScreen(rect, memoryPtr, _visualScreenB, _width);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _enhancedMatte);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _surfaceScreen);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreen);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG);
@@ -905,6 +913,7 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		if (!_upscaledHires)
 			error("bitsRestore() called w/o being in upscaled hires mode");
 		bitsRestoreScreen(rect, memoryPtr, _enhancedMatte, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _surfaceScreen, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreen, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenR, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenG, _displayWidth);

@@ -199,6 +199,8 @@ private:
 	byte *_visualScreenB;
 
 	byte *_priorityScreenX;
+
+	byte *_surfaceScreen;
 	/**
 	 * This screen is the one, where pixels are copied out of into the frame buffer.
 	 * It may be 640x400 for japanese SCI1 games. SCI0 games may be undithered in here.
@@ -545,6 +547,28 @@ public:
 			_controlScreen[offset] = control;
 		}
 		
+	}
+	void putPixelSurface(int16 x, int16 y, byte drawMask, byte surface) {
+
+		// Set pixel for visual, priority and control map directly, those are not upscaled
+		const int offset = ((int)(y / g_sci->_enhancementMultiplier) * _width) + (int)(x / g_sci->_enhancementMultiplier);
+
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x440:
+			case GFX_SCREEN_UPSCALED_640x480:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+				
+					_surfaceScreen[(y * _displayWidth) + x] = surface;
+				break;
+			default:
+				
+					_surfaceScreen[(y * _displayWidth) + x] = surface;
+				break;
+			}
+		}
 	}
 	void putPixel480x300(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 		const int offset = ((y * 3) / 2 * _width) + ((x * 3) / 2);
@@ -959,6 +983,9 @@ public:
 	}
 	byte getPriorityX(int16 x, int16 y) {
 		return getPixelX(_priorityScreenX, (int)(x), (int)(y)); //
+	}
+	byte getSurface(int16 x, int16 y) {
+		return getPixelX(_surfaceScreen, (int)(x), (int)(y)); //
 	}
 	byte getPriority(int16 x, int16 y) {
 		return getPixelX(_priorityScreenX, x * g_sci->_enhancementMultiplier, y * g_sci->_enhancementMultiplier);

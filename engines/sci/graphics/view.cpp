@@ -851,7 +851,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 	const int16 celWidth = celInfo->width;
 	const byte clearKey = celInfo->clearKey;
 	const byte drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY;
-
+	int surfaceNumber = 0;
 	if (_embeddedPal)
 		// Merge view palette in...
 		_palette->set(&_viewPalette, false);
@@ -1005,7 +1005,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const int x2 = newClipRectTranslated.left + x;
 					const int y2 = newClipRectTranslated.top + y;
 					if (priority >= _screen->getPriorityX(x2, y2)) {
-						if (!enhancedIs256) {
+						//if (!enhancedIs256)
+						{
 							_screen->putPixelEtc(x, y, drawMask, priority, 0);
 							_screen->putPixel(x2, y2, drawMask, color, priority, 0);
 						}
@@ -1020,7 +1021,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 					const byte color = bitmapData[x];
 					const int x2 = newClipRectTranslated.left + x;
 					const int y2 = newClipRectTranslated.top + y;
-					if (!enhancedIs256) {
+					//if (!enhancedIs256)
+					{
 						_screen->putPixelOnDisplay(x2, y2, palette->mapping[color]);
 						_screen->putPixelEtc(x, y, drawMask, priority, 0);
 					}
@@ -1051,6 +1053,9 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 									_screen->putPixelPaletted((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset + (x)], priority, 0);
 									_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 								}
+							}
+							if (y == (height - 1) * g_sci->_enhancementMultiplier && (x == (int)((width * g_sci->_enhancementMultiplier) / 2))) {
+								surfaceNumber = _screen->getSurface(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y));
 							}
 						}
 					}
@@ -1083,7 +1088,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 	// Reset custom per-view palette mod
 	_screen->setCurPaletteMapValue(oldpalvalue);
 	Common::String fn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
-	g_sci->_audio->PlayEnhancedViewCelAudio(fn, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
+	g_sci->_audio->PlayEnhancedViewCelAudio(fn, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }
 
 void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
@@ -1104,6 +1109,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 	const byte *enh;
 	bool viewEnhanced = false;
 	bool enhancedIs256 = false;
+	int surfaceNumber = 0;
 	int pixelsLength = 0;
 	int enhInit = 0;
 	char loopNoStr[5];
@@ -1256,6 +1262,9 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 										}
 									}
 								}
+								if (y2 == (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y - 1 && (x2 == (int)((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + (x)/2))) {
+									surfaceNumber = _screen->getSurface(x2, y2);
+								}
 							}
 						}
 					}
@@ -1291,6 +1300,9 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 										}
 									}
 								}
+								if (y2 == (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y - 1 && (x2 == (int)((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + (x) / 2))) {
+									surfaceNumber = _screen->getSurface(x2, y2);
+								}
 							}
 						}
 					}
@@ -1321,7 +1333,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 		}
 	}
 	Common::String fn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
-	g_sci->_audio->PlayEnhancedViewCelAudio(fn, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
+	g_sci->_audio->PlayEnhancedViewCelAudio(fn, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }
 
 void GfxView::createScalingTable(Common::Array<uint16> &table, int16 celSize, uint16 maxSize, int16 scale) {

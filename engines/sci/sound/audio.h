@@ -66,7 +66,7 @@ public:
 	int getAudioPosition();
 	int startAudio(uint16 module, uint32 tuple);
 	void PlayEnhancedTextAudio(char *fileName, Common::String text);
-	void PlayEnhancedViewCelAudio(Common::String fileName, unsigned long hashId);
+	void PlayEnhancedViewCelAudio(Common::String fileName, int surfaceNumber, unsigned long hashId);
 	int wPlayAudio(uint16 module, uint32 tuple);
 	void stopAudio();
 	void pauseAudio();
