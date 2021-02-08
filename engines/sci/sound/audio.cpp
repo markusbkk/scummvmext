@@ -218,9 +218,9 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 				if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
 					
 						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-						g_system->getMixer()->stopID(INT_MAX - 1983);
+						g_system->getMixer()->stopID(2147483646 - 1983);
 					
-					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
+					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
 				}
 			}
 			} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
@@ -245,9 +245,9 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 					if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
 
 						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-							g_system->getMixer()->stopID(INT_MAX - 1983);
+							g_system->getMixer()->stopID(2147483646 - 1983);
 
-						g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, INT_MAX - 1983, 127, 0, DisposeAfterUse::YES);
+						g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
 					}
 				}
 			}
