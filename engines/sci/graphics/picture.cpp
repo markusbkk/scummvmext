@@ -583,11 +583,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									}
 								}
 								if (overlay) {
-									if (enhOverlay[offset + 3] == 255) {
+									
 										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
 										_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-									}
+									
 								}
 							}
 							
@@ -697,11 +697,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									}
 								}
 								if (overlay) {
-									if (enhOverlay[offset + 3] == 255) {
+									
 										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
 										_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-									}
+									
 								}
 							}
 								if (enhancedPrio) {
@@ -812,11 +812,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								}
 							}
 							if (overlay) {
-								if (enhOverlay[offset + 3] == 255) {
+								
 									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
 									_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-								}
+								
 							}
 							
 							if (enhancedPrio) {
@@ -918,11 +918,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								}
 							}
 							if (overlay) {
-								if (enhOverlay[offset + 3] == 255) {
+								
 									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
 									_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-								}
+								
 							}
 							if (enhancedPrio) {
 								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)

@@ -215,7 +215,7 @@ private:
 	byte *_displayedScreenG;
 	byte *_displayScreenB;
 	byte *_displayedScreenB;
-
+	byte *_displayScreenA;
 	byte *_enhancedMatte;
 	// Screens for RGB mode support
 	byte *_displayedScreen;
@@ -359,11 +359,13 @@ public:
 						if (_format.bytesPerPixel == 2) {
 			
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
 					        _enhancedMatte[displayOffset] = 255;
 						} else {
 							//assert(_format.bytesPerPixel == 4);
 
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
 					        _enhancedMatte[displayOffset] = 255;
 						}
 				break;
@@ -747,6 +749,7 @@ public:
 						_displayScreenR[displayOffset] = r;
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
+						_displayScreenA[displayOffset] = 0;
 						_displayScreen[displayOffset] = color;
 						_enhancedMatte[displayOffset] = 0;
 
@@ -759,6 +762,7 @@ public:
 						_displayScreenR[displayOffset] = r;
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
+						_displayScreenA[displayOffset] = 0;
 						_displayScreen[displayOffset] = color;	
 						_enhancedMatte[displayOffset] = 0;
 					} else {
@@ -770,6 +774,7 @@ public:
 						_displayScreenR[displayOffset] = r;
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
+						_displayScreenA[displayOffset] = 0;
 						_displayScreen[displayOffset] = color;
 						_enhancedMatte[displayOffset] = 0;
 					}
