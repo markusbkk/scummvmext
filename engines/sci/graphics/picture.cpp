@@ -159,18 +159,27 @@ Graphics::Surface *loadPNG(Common::SeekableReadStream *s) {
 	return srf;
 }
 
-Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s) {
+Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
 	Image::PNGDecoder d;
-
+	
 	if (!s)
 		return nullptr;
 	d.loadStream(*s);
 	delete s;
-	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), d.getPalette());
+	
+	for (int16 i = 0; i < 256; i++) {
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].r = d.getPalette()[i * 3];
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].g = d.getPalette()[(i * 3) + 1];
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].b = d.getPalette()[(i * 3) + 2];
+	}
+	g_sci->_gfxPalette16->_sysPalette = g_sci->_gfxPalette16->_paletteOverride;
+	//memcpy((void *)g_sci->_gfxPalette16->_paletteOverride, d.getPalette(), sizeof(d.getPalette()));
+	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
-	
+	g_sci->_gfxPalette16->overridePalette = false;
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
 	const SciSpan<const byte> rlePtr = inbuffer.subspan(rlePos);
 	// displaceX, displaceY fields are ignored, and may contain garbage
@@ -265,12 +274,36 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUT(file);
+					pngPal = loadPNGCLUT(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
 							pixelCountX = pngPal->w * pngPal->h * 4;
 							paletted = true;
+							g_sci->_gfxPalette16->overridePalette = false;
+						}
+					}
+				}
+			}
+		}
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256o.png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256o.png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+			if (!file) {
+				fileName = folder.getChild(_resource->name() + "_256o.png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					pngPal = loadPNGCLUT(file, _screen);
+					if (pngPal) {
+						enhPal = (const byte *)pngPal->getPixels();
+						if (enhPal) {
+							pixelCountX = pngPal->w * pngPal->h * 4;
+							paletted = true;
+							g_sci->_gfxPalette16->overridePalette = true;
 						}
 					}
 				}
@@ -969,7 +1002,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 }
 
 void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
-
+	g_sci->_gfxPalette16->overridePalette = false;
 	byte priority = _priority;
 	byte clearColor;
 	bool compression = true;
@@ -1030,12 +1063,13 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUT(file);
+					pngPal = loadPNGCLUT(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
 							pixelCountX = pngPal->w * pngPal->h * 4;
 							paletted = true;
+							g_sci->_gfxPalette16->overridePalette = true;
 						}
 					}
 				}

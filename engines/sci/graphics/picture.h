@@ -81,7 +81,7 @@ private:
 	GfxPorts *_ports;
 	GfxScreen *_screen;
 	GfxPalette *_palette;
-
+	
 	int16 _resourceId;
 	Resource *_resource;
 	int _resourceType;
