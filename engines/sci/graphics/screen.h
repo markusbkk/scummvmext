@@ -447,6 +447,7 @@ public:
 					byte i = r;
 					byte ir = _palette[3 * i + 0];
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
 					_enhancedMatte[displayOffset] = 255;
 				} else {
 					//assert(_format.bytesPerPixel == 4);
@@ -454,6 +455,7 @@ public:
 					byte ir = _palette[3 * i + 0];
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
 					_enhancedMatte[displayOffset] = 255;
 				}
 
