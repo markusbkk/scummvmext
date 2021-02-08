@@ -166,8 +166,19 @@ Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s, GfxScreen *_tehScr
 		return nullptr;
 	d.loadStream(*s);
 	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	return srf;
+}
+
+Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), d.getPalette());
-	
+
 	for (int16 i = 0; i < 256; i++) {
 		g_sci->_gfxPalette16->_paletteOverride.colors[i].r = d.getPalette()[i * 3];
 		g_sci->_gfxPalette16->_paletteOverride.colors[i].g = d.getPalette()[(i * 3) + 1];
@@ -297,7 +308,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUT(file, _screen);
+					pngPal = loadPNGCLUTOverride(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
@@ -1064,6 +1075,29 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				} else {
 					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngPal = loadPNGCLUT(file, _screen);
+					if (pngPal) {
+						enhPal = (const byte *)pngPal->getPixels();
+						if (enhPal) {
+							pixelCountX = pngPal->w * pngPal->h * 4;
+							paletted = true;
+							g_sci->_gfxPalette16->overridePalette = false;
+						}
+					}
+				}
+			}
+		}
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256o.png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256o.png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+			if (!file) {
+				fileName = folder.getChild(_resource->name() + "_256o.png").getName();
+				file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					pngPal = loadPNGCLUTOverride(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
