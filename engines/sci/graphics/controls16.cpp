@@ -380,7 +380,7 @@ void GfxControls16::kernelDrawTextEdit(Common::Rect rect, reg_t obj, const char 
 
 void GfxControls16::kernelDrawIcon(Common::Rect rect, reg_t obj, GuiResourceId viewId, int16 loopNo, int16 celNo, int16 priority, int16 style, bool hilite) {
 	if (!hilite) {
-		_paint16->drawCelAndShow(viewId, loopNo, celNo, rect.left, rect.top, priority, 0);
+		_paint16->drawCelAndShow(viewId, loopNo, celNo, 0, rect.left, rect.top, priority, 0);
 		if (style & 0x20) {
 			_paint16->frameRect(rect);
 		}

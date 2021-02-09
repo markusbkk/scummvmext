@@ -194,11 +194,7 @@ void GfxAnimate::makeSortedList(List *list) {
 	reg_t curAddress = list->first;
 	Node *curNode = _s->_segMan->lookupNode(curAddress);
 	int16 listNr;
-
-	// Clear lists
-	_list.clear();
-	_lastCastData.clear();
-
+	AnimateList _newList;
 	// Fill the list
 	for (listNr = 0; curNode != 0; listNr++) {
 		AnimateEntry listEntry;
@@ -234,13 +230,36 @@ void GfxAnimate::makeSortedList(List *list) {
 		}
 		// listEntry.celRect is filled in AnimateFill()
 		listEntry.showBitsFlag = false;
-
-		_list.push_back(listEntry);
+		AnimateList::iterator it;
+		bool found = false;
+		for (it = _list.begin(); it != _list.end(); ++it) {
+			if (it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && it->signal == listEntry.signal) {
+				if (it->tweenNo < 4) {
+					listEntry.tweenNo = it->tweenNo++;
+				} else {
+					listEntry.tweenNo = 4;
+				}
+				_newList.push_back(listEntry);
+				found = true;
+			}
+		}
+		if (found == false)
+		{
+			listEntry.tweenNo = 0;
+			_newList.push_back(listEntry);
+		}
 
 		curAddress = curNode->succ;
 		curNode = _s->_segMan->lookupNode(curAddress);
 	}
-
+	// Clear lists
+	_list.clear();
+	AnimateList::iterator it2;
+	for (it2 = _newList.begin(); it2 != _newList.end(); ++it2) {
+		_list.push_back(*it2);
+	}
+	_lastCastData.clear();
+	
 	// Possible TODO: As noted in the comment in sortHelper we actually
 	// require a stable sorting algorithm here. Since Common::sort is not stable
 	// at the time of writing this comment, we work around that in our ordering
@@ -417,7 +436,7 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalAlwaysUpdate) {
 			// draw corresponding cel
-			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
 			it->signal &= ~(kSignalStopUpdate | kSignalViewUpdated | kSignalNoUpdate | kSignalForceUpdate);
@@ -449,7 +468,7 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
-			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
 			if (!(it->signal & kSignalIgnoreActor)) {
@@ -472,9 +491,8 @@ void GfxAnimate::drawCels() {
 			// Save background
 			bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
 			writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
-
 			// draw corresponding cel
-			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
+			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
 			it->showBitsFlag = true;
 
 			if (it->signal & kSignalRemoveView)
@@ -561,7 +579,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 		AnimateArray::iterator end = _lastCastData.end();
 		for (it = _lastCastData.begin(); it != end; ++it) {
 			it->castHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
-			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 		}
 		_paint16->bitsShow(rect);
 		// restoring
@@ -609,7 +627,7 @@ void GfxAnimate::addToPicDrawCels() {
 		}
 
 		// draw corresponding cel
-		_paint16->drawCel(view, it->loopNo, it->celNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+		_paint16->drawCel(view, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 		if (!(it->signal & kSignalIgnoreActor)) {
 			it->celRect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, it->celRect.top, it->celRect.bottom - 1);
 			_paint16->fillRect(it->celRect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
@@ -626,7 +644,7 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 loopNo, int16 celN
 
 	// Create rect according to coordinates and given cel
 	view->getCelRect(loopNo, celNo, x, y, 0, celRect);
-	_paint16->drawCel(view, loopNo, celNo, celRect, priority, 0);
+	_paint16->drawCel(view, loopNo, celNo, 0, celRect, priority, 0);
 
 	if (control != -1) {
 		celRect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(priority) - 1, celRect.top, celRect.bottom - 1);

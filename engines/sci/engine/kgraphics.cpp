@@ -1150,7 +1150,7 @@ reg_t kDrawCel(EngineState *s, int argc, reg_t *argv) {
 		}
 	}
 
-	g_sci->_gfxPaint16->kernelDrawCel(viewId, loopNo, celNo, x, y, priority, paletteNo, scaleX, scaleY, hiresMode, upscaledHiresHandle);
+	g_sci->_gfxPaint16->kernelDrawCel(viewId, loopNo, celNo, 0, x, y, priority, paletteNo, scaleX, scaleY, hiresMode, upscaledHiresHandle);
 
 	return s->r_acc;
 }

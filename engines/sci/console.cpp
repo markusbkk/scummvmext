@@ -1973,11 +1973,11 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 	uint16 celNo = atoi(argv[3]);
 
 	if (_engine->_gfxPaint16) {
-		_engine->_gfxPaint16->kernelDrawCel(resourceId, loopNo, celNo, 50, 50, 0, 0, 128, 128, false, NULL_REG);
+		_engine->_gfxPaint16->kernelDrawCel(resourceId, loopNo, celNo, 0, 50, 50, 0, 0, 128, 128, false, NULL_REG);
 	} else {
 		GfxView *view = _engine->_gfxCache->getView(resourceId);
 		Common::Rect celRect(50, 50, 50 + view->getWidth(loopNo, celNo), 50 + view->getHeight(loopNo, celNo));
-		view->draw(celRect, celRect, celRect, loopNo, celNo, 255, 0, false);
+		view->draw(celRect, celRect, celRect, loopNo, celNo, 0, 255, 0, false);
 		_engine->_gfxScreen->copyRectToScreen(celRect);
 	}
 	return true;
