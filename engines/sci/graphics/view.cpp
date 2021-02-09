@@ -828,8 +828,8 @@ Graphics::Surface *loadCelPNGCLUT(Common::SeekableReadStream *s) {
 		return nullptr;
 	d.loadStream(*s);
 	delete s;
-	Graphics::Surface srf = *d.getSurface();
-	return &srf;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	return srf;
 }
 
 Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
@@ -839,7 +839,7 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s, GfxScre
 		return nullptr;
 	d.loadStream(*s);
 	delete s;
-	Graphics::Surface srf = *d.getSurface();
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), d.getPalette());
 
 	for (int16 i = 0; i < 256; i++) {
 		g_sci->_gfxPalette16->_paletteOverride.colors[i].r = d.getPalette()[i * 3];
@@ -849,7 +849,7 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s, GfxScre
 	g_sci->_gfxPalette16->_sysPalette = g_sci->_gfxPalette16->_paletteOverride;
 	//memcpy((void *)g_sci->_gfxPalette16->_paletteOverride, d.getPalette(), sizeof(d.getPalette()));
 	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
-	return &srf;
+	return srf;
 }
 
 unsigned long
@@ -895,7 +895,6 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 	bool viewEnhanced = false;
 	bool enhancedIs256 = false;
 	int pixelsLength = 0;
-	int enhInit = 0;
 	char loopNoStr[5];
 	sprintf(loopNoStr, "%d", loopNo);
 	char celNoStr[5];
@@ -913,7 +912,6 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 				if (png) {
 					enh = (const byte *)png->getPixels();
 					if (enh) {
-						enhInit = *enh;
 						pixelsLength = png->w * png->h * 4;
 						viewEnhanced = true;
 						enhancedIs256 = false;
@@ -932,7 +930,6 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 				if (png) {
 					enh = (const byte *)png->getPixels();
 					if (enh) {
-						enhInit = *enh;
 						pixelsLength = png->w * png->h;
 						viewEnhanced = true;
 						enhancedIs256 = true;
@@ -951,7 +948,6 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 				if (png) {
 					enh = (const byte *)png->getPixels();
 					if (enh) {
-						enhInit = *enh;
 						pixelsLength = png->w * png->h;
 						viewEnhanced = true;
 						enhancedIs256 = true;
@@ -1089,9 +1085,9 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 								}
 							} else {
 
-							    //if (offset256 + (x) < (png->w * y) + png->w)
+							    if (offset256 + (x) < (png->w * y) + png->w)
 								{
-								    //if (enh[offset256 + (x)] != clearKey)
+								    if (enh[offset256 + (x)] != clearKey)
 									{
 									    if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 										    _screen->putPixelPaletted((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, enh[offset256 + (x)], priority, 0);
@@ -1159,7 +1155,6 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 	bool enhancedIs256 = false;
 	int surfaceNumber = 0;
 	int pixelsLength = 0;
-	int enhInit = 0;
 	char loopNoStr[5];
 	sprintf(loopNoStr, "%d", loopNo);
 	char celNoStr[5];
@@ -1177,7 +1172,6 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 				if (png) {
 					enh = (const byte *)png->getPixels();
 					if (enh) {
-						enhInit = *enh;
 						pixelsLength = png->w * png->h * 4;
 						viewEnhanced = true;
 					}
@@ -1195,7 +1189,6 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 				if (png) {
 					enh = (const byte *)png->getPixels();
 					if (enh) {
-						enhInit = *enh;
 						pixelsLength = png->w * png->h * 4;
 						viewEnhanced = true;
 						enhancedIs256 = true;
