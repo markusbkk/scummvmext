@@ -194,7 +194,7 @@ void GfxAnimate::makeSortedList(List *list) {
 	reg_t curAddress = list->first;
 	Node *curNode = _s->_segMan->lookupNode(curAddress);
 	int16 listNr;
-	AnimateList _newList;
+	
 	// Fill the list
 	for (listNr = 0; curNode != 0; listNr++) {
 		AnimateEntry listEntry;
@@ -207,6 +207,7 @@ void GfxAnimate::makeSortedList(List *list) {
 		listEntry.viewId = readSelectorValue(_s->_segMan, curObject, SELECTOR(view));
 		listEntry.loopNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(loop));
 		listEntry.celNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(cel));
+		listEntry.processed = false;
 		listEntry.paletteNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(palette));
 		listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
 		listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
@@ -230,22 +231,21 @@ void GfxAnimate::makeSortedList(List *list) {
 		}
 		// listEntry.celRect is filled in AnimateFill()
 		listEntry.showBitsFlag = false;
-		AnimateList::iterator it;
-		bool found = false;
-		for (it = _list.begin(); it != _list.end(); ++it) {
-			if (it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && it->signal == listEntry.signal) {
-				if (it->tweenNo < 4) {
+		foundInList = false;
+		if (_list.size() > 0) {
+			for (it = _list.begin(); it != _list.end(); ++it) {
+				if (it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && listEntry.processed == false) {
 					listEntry.tweenNo = it->tweenNo;
-				} else {
-					listEntry.tweenNo = 4;
+					listEntry.processed = true;
+					_newList.push_back(listEntry);
+					foundInList = true;
 				}
-				_newList.push_back(listEntry);
-				found = true;
 			}
 		}
-		if (found == false)
+		if (foundInList == false)
 		{
 			listEntry.tweenNo = 0;
+			listEntry.processed = true;
 			_newList.push_back(listEntry);
 		}
 
@@ -254,11 +254,45 @@ void GfxAnimate::makeSortedList(List *list) {
 	}
 	// Clear lists
 	_list.clear();
-	AnimateList::iterator it2;
-	for (it2 = _newList.begin(); it2 != _newList.end(); ++it2) {
-		_list.push_back(*it2);
-	}
 	_lastCastData.clear();
+	for (itb = _newList.begin(); itb != _newList.end(); ++itb) {
+		AnimateEntry listEntry;
+		listEntry.object = itb->object;
+		listEntry.castHandle = itb->castHandle;
+
+		// Get data from current object
+		listEntry.givenOrderNo = itb->givenOrderNo;
+		listEntry.viewId = itb->viewId;
+		listEntry.loopNo = itb->loopNo;
+		listEntry.celNo = itb->celNo;
+		listEntry.tweenNo = itb->tweenNo;
+		listEntry.processed = false;
+		listEntry.paletteNo = itb->paletteNo;
+		listEntry.x = itb->x;
+		listEntry.y = itb->y;
+		listEntry.z = itb->z;
+		listEntry.priority = itb->priority;
+		listEntry.signal = itb->signal;
+		if (getSciVersion() >= SCI_VERSION_1_1) {
+			// Cel scaling
+			listEntry.scaleSignal = itb->scaleSignal;
+			if (listEntry.scaleSignal & kScaleSignalDoScaling) {
+				listEntry.scaleX = itb->scaleX;
+				listEntry.scaleY = itb->scaleY;
+			} else {
+				listEntry.scaleX = 128;
+				listEntry.scaleY = 128;
+			}
+		} else {
+			listEntry.scaleSignal = 0;
+			listEntry.scaleX = 128;
+			listEntry.scaleY = 128;
+		}
+		// listEntry.celRect is filled in AnimateFill()
+		listEntry.showBitsFlag = false;
+		_list.push_back(listEntry);
+	}
+	
 	
 	// Possible TODO: As noted in the comment in sortHelper we actually
 	// require a stable sorting algorithm here. Since Common::sort is not stable
@@ -271,6 +305,7 @@ void GfxAnimate::makeSortedList(List *list) {
 
 	// Now sort the list according y and z (descending)
 	Common::sort(_list.begin(), _list.end(), sortHelper);
+	_newList.clear();
 }
 
 void GfxAnimate::fill(byte &old_picNotValid) {

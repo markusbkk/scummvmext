@@ -60,6 +60,7 @@ struct AnimateEntry {
 	int16 loopNo;
 	int16 celNo;
 	int16 tweenNo;
+	bool processed;
 	int16 paletteNo;
 	int16 x, y, z;
 	int16 priority;
@@ -133,10 +134,12 @@ private:
 	GfxPalette *_palette;
 	GfxCursor *_cursor;
 	GfxTransitions *_transitions;
-
+	AnimateList _newList;
 	AnimateList _list;
 	AnimateArray _lastCastData;
-
+	AnimateList::iterator it;
+	AnimateList::iterator itb;
+	bool foundInList = false;
 	bool _fastCastEnabled;
 };
 
