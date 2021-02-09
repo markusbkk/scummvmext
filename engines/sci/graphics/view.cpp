@@ -943,8 +943,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256o.png").exists()) {
-			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256o.png").getName();
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256RP.png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
 				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -997,8 +997,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256o.png").exists()) {
-			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256o.png").getName();
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256RP.png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
 				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -1263,8 +1263,8 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256o.png").exists()) {
-			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256o.png").getName();
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256RP.png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
 				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -1316,8 +1316,8 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256o.png").exists()) {
-			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256o.png").getName();
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256RP.png").exists()) {
+			Common::String fileName = folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".t." + tweenNoStr + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
 				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());

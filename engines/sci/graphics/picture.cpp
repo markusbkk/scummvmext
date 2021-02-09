@@ -297,12 +297,12 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256o.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256o.png").getName();
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256RP.png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_256o.png").getName();
+				fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -521,7 +521,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if (enhanced || overlay || paletted) {
+		if (enhanced || overlay || paletted || enhancedPrio || surface) {
 			y = (displayArea.top + drawY) * g_sci->_enhancementMultiplier;
 			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
 			leftX = (displayArea.left + drawX) * g_sci->_enhancementMultiplier;
@@ -782,8 +782,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							x = rightX;
 							y++;
 						}
-						offsetPal += 1;
-						offset += 4;
+						offsetPal -= 1;
+						offset -= 4;
 						x--;
 					}
 				}
@@ -1001,8 +1001,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							x = rightX;
 							y++;
 						}
-						offsetPal += 1;
-						offset += 4;
+						offsetPal -= 1;
+						offset -= 4;
 
 						x--;
 					}
