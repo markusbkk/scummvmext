@@ -235,7 +235,7 @@ void GfxAnimate::makeSortedList(List *list) {
 		for (it = _list.begin(); it != _list.end(); ++it) {
 			if (it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && it->signal == listEntry.signal) {
 				if (it->tweenNo < 4) {
-					listEntry.tweenNo = it->tweenNo++;
+					listEntry.tweenNo = it->tweenNo;
 				} else {
 					listEntry.tweenNo = 4;
 				}
@@ -436,6 +436,7 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalAlwaysUpdate) {
 			// draw corresponding cel
+			it->tweenNo++;
 			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
@@ -468,6 +469,7 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
+			it->tweenNo++;
 			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
@@ -492,6 +494,7 @@ void GfxAnimate::drawCels() {
 			bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
 			writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 			// draw corresponding cel
+			it->tweenNo++;
 			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
 			it->showBitsFlag = true;
 
@@ -579,6 +582,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 		AnimateArray::iterator end = _lastCastData.end();
 		for (it = _lastCastData.begin(); it != end; ++it) {
 			it->castHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
+			it->tweenNo++;
 			_paint16->drawCel(it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 		}
 		_paint16->bitsShow(rect);

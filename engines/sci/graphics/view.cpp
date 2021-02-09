@@ -865,8 +865,9 @@ hashit(const char *str) {
 
 void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
 			int16 loopNo, int16 celNo, int16 tweenNo, byte priority, uint16 EGAmappingNr, bool upscaledHires, uint16 scaleSignal) {
-	if (tweenNo > 4) {
-		tweenNo = 4;
+	int16 tn = tweenNo;
+	if (tn > 4) {
+		tn = 4;
 	}
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
@@ -903,7 +904,7 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 	char celNoStr[5];
 	sprintf(celNoStr, "%d", celNo);
 	char tweenNoStr[5];
-	sprintf(tweenNoStr, "%d", tweenNo);
+	sprintf(tweenNoStr, "%d", tn);
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").exists()) {
@@ -1197,8 +1198,9 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 
 void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
                          int16 loopNo, int16 celNo, int16 tweenNo, byte priority, int16 scaleX, int16 scaleY, uint16 scaleSignal) {
-	if (tweenNo > 4) {
-		tweenNo = 4;
+	int16 tn = tweenNo;
+	if (tn > 4) {
+		tn = 4;
 	}
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
@@ -1223,7 +1225,7 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 	char celNoStr[5];
 	sprintf(celNoStr, "%d", celNo);
 	char tweenNoStr[5];
-	sprintf(tweenNoStr, "%d", tweenNo);
+	sprintf(tweenNoStr, "%d", tn);
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + loopNoStr + '.' + celNoStr + ".png").exists()) {
