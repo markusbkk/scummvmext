@@ -265,7 +265,12 @@ Common::Error SciEngine::run() {
 	assert(_resMan);
 	_resMan->addAppropriateSources();
 	_resMan->init();
-
+	ConfMan.setBool("rgb_rendering", true);
+	ConfMan.getBool("rgb_rendering");
+	ConfMan.setBool("rgb_rendering", false);
+	ConfMan.getBool("rgb_rendering");
+	ConfMan.setBool("rgb_rendering", true);
+	ConfMan.getBool("rgb_rendering");
 	// TODO: Add error handling. Check return values of addAppropriateSources
 	// and init. We first have to *add* sensible return values, though ;).
 /*

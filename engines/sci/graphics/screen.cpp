@@ -41,13 +41,11 @@ namespace Sci {
 
 GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
-	extern bool enhancedPrio;
 	// Scale the screen, if needed
 	_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_EGA;
 	if (_resMan->getViewType() != kViewEga) {
 		_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_VGA;
 	}
-	ConfMan.setBool("rgb_rendering", true);
 	// we default to scripts running at 320x200
 	_scriptWidth = 320;
 	_scriptHeight = 200;
@@ -223,52 +221,100 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 		setupCustomPaletteMods(this);
 		ConfMan.setBool("rgb_rendering", true);
 	}
-
-	// Initialize the actual screen
-	Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
-	const Graphics::PixelFormat *format = &format8;
-	if (ConfMan.getBool("rgb_rendering"))
+	ConfMan.setBool("rgb_rendering", true);
+	if (ConfMan.getBool("rgb_rendering")) {
+		// Initialize the actual screen
+		Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
+		const Graphics::PixelFormat *format = &format8;
 		format = 0; // Backend's preferred mode; RGB if available
 
-	if (g_sci->hasMacIconBar()) {
-		// For SCI1.1 Mac games with the custom icon bar, we need to expand the screen
-		// to accommodate for the icon bar. Of course, both KQ6 and QFG1 VGA differ in size.
-		// We add 2 to the height of the icon bar to add a buffer between the screen and the
-		// icon bar (as did the original interpreter).
-		if (g_sci->getGameId() == GID_KQ6)
-			initGraphics(_displayWidth, _displayHeight + 26 + 2, format);
-		else if (g_sci->getGameId() == GID_FREDDYPHARKAS)
-			initGraphics(_displayWidth, _displayHeight + 28 + 2, format);
-		else
-			error("Unknown SCI1.1 Mac game");
-	} else
-		initGraphics(_displayWidth, _displayHeight, format);
+		if (g_sci->hasMacIconBar()) {
+			// For SCI1.1 Mac games with the custom icon bar, we need to expand the screen
+			// to accommodate for the icon bar. Of course, both KQ6 and QFG1 VGA differ in size.
+			// We add 2 to the height of the icon bar to add a buffer between the screen and the
+			// icon bar (as did the original interpreter).
+			if (g_sci->getGameId() == GID_KQ6)
+				initGraphics(_displayWidth, _displayHeight + 26 + 2, format);
+			else if (g_sci->getGameId() == GID_FREDDYPHARKAS)
+				initGraphics(_displayWidth, _displayHeight + 28 + 2, format);
+			else
+				error("Unknown SCI1.1 Mac game");
+		} else
+			initGraphics(_displayWidth, _displayHeight, format);
 
-	_format = g_system->getScreenFormat();
-	
-	// If necessary, allocate buffers for RGB mode
-	if (_format.bytesPerPixel != 1) {
-		_displayedScreen = (byte *)calloc(_displayPixels, 1);
-		_displayedScreenR = (byte *)calloc(_displayPixels, 1);
-		_displayedScreenG = (byte *)calloc(_displayPixels, 1);
-		_displayedScreenB = (byte *)calloc(_displayPixels, 1);
-		_rgbScreen = (byte *)calloc(_format.bytesPerPixel*_displayPixels, 1);
-		_palette = new byte[3*256];
+		_format = g_system->getScreenFormat();
 
-		if (_paletteModsEnabled)
-			_paletteMapScreen = (byte *)calloc(_displayPixels, 1);
-		else
+		// If necessary, allocate buffers for RGB mode
+		if (_format.bytesPerPixel != 1) {
+			_displayedScreen = (byte *)calloc(_displayPixels, 1);
+			_displayedScreenR = (byte *)calloc(_displayPixels, 1);
+			_displayedScreenG = (byte *)calloc(_displayPixels, 1);
+			_displayedScreenB = (byte *)calloc(_displayPixels, 1);
+			_rgbScreen = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+			_palette = new byte[3 * 256];
+
+			if (_paletteModsEnabled)
+				_paletteMapScreen = (byte *)calloc(_displayPixels, 1);
+			else
+				_paletteMapScreen = 0;
+		} else {
+			_displayedScreen = 0;
+			_displayedScreenR = 0;
+			_displayedScreenG = 0;
+			_displayedScreenB = 0;
+			_palette = 0;
+			_rgbScreen = 0;
 			_paletteMapScreen = 0;
+		}
+		_backupScreen = 0;
 	} else {
-		_displayedScreen = 0;
-		_displayedScreenR = 0;
-		_displayedScreenG = 0;
-		_displayedScreenB = 0;
-		_palette = 0;
-		_rgbScreen = 0;
-		_paletteMapScreen = 0;
+		ConfMan.setBool("rgb_rendering", true);
+		// Initialize the actual screen
+		Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
+		const Graphics::PixelFormat *format = &format8;
+		format = 0; // Backend's preferred mode; RGB if available
+
+		if (g_sci->hasMacIconBar()) {
+			// For SCI1.1 Mac games with the custom icon bar, we need to expand the screen
+			// to accommodate for the icon bar. Of course, both KQ6 and QFG1 VGA differ in size.
+			// We add 2 to the height of the icon bar to add a buffer between the screen and the
+			// icon bar (as did the original interpreter).
+			if (g_sci->getGameId() == GID_KQ6)
+				initGraphics(_displayWidth, _displayHeight + 26 + 2, format);
+			else if (g_sci->getGameId() == GID_FREDDYPHARKAS)
+				initGraphics(_displayWidth, _displayHeight + 28 + 2, format);
+			else
+				error("Unknown SCI1.1 Mac game");
+		} else
+			initGraphics(_displayWidth, _displayHeight, format);
+
+		_format = g_system->getScreenFormat();
+
+		// If necessary, allocate buffers for RGB mode
+		if (_format.bytesPerPixel != 1) {
+			_displayedScreen = (byte *)calloc(_displayPixels, 1);
+			_displayedScreenR = (byte *)calloc(_displayPixels, 1);
+			_displayedScreenG = (byte *)calloc(_displayPixels, 1);
+			_displayedScreenB = (byte *)calloc(_displayPixels, 1);
+			_rgbScreen = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+			_palette = new byte[3 * 256];
+
+			if (_paletteModsEnabled)
+				_paletteMapScreen = (byte *)calloc(_displayPixels, 1);
+			else
+				_paletteMapScreen = 0;
+		} else {
+			_displayedScreen = 0;
+			_displayedScreenR = 0;
+			_displayedScreenG = 0;
+			_displayedScreenB = 0;
+			_palette = 0;
+			_rgbScreen = 0;
+			_paletteMapScreen = 0;
+		}
+		_backupScreen = 0;
 	}
-	_backupScreen = 0;
+	
 }
 
 GfxScreen::~GfxScreen() {

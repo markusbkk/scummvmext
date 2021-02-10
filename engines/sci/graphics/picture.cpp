@@ -59,9 +59,6 @@ GuiResourceId GfxPicture::getResourceId() {
 	return _resourceId;
 }
 
-	extern bool enhanced = false;
-	extern bool enhancedPrio = false;
-
 // differentiation between various picture formats can NOT get done using sci-version checks.
 //  Games like PQ1 use the "old" vector data picture format, but are actually SCI1.1
 //  We should leave this that way to decide the format on-the-fly instead of hardcoding it in any way
@@ -215,9 +212,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	const byte *enhOverlay;
 	const byte *enhSurface;
 	enhanced = false;
-	bool overlay = false;
-	bool paletted = false;
-	bool surface = false;
+	overlay = false;
+	paletted = false;
+	surface = false;
 	enhancedPrio = false;
 	// if the picture is not an overlay and we are also not in EGA mode, use priority 0
 	if (!isEGA && !_addToFlag)
@@ -527,7 +524,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			leftX = (displayArea.left + drawX) * g_sci->_enhancementMultiplier;
 			rightX = MIN<int16>((displayWidth * g_sci->_enhancementMultiplier + leftX), (displayArea.right * g_sci->_enhancementMultiplier));
 
-			uint16 sourcePixelSkipPerRow = 0;
+			sourcePixelSkipPerRow = 0;
 			if (width * g_sci->_enhancementMultiplier > rightX - leftX)
 				sourcePixelSkipPerRow = (width * g_sci->_enhancementMultiplier) - (rightX - leftX);
 			if (enhanced) {
@@ -557,7 +554,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			if (!_addToFlag)
 				clearColor = _screen->getColorWhite();
 
-			byte drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY;
+			drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY;
 
 			if ((!isEGA) || (priority < 16)) {
 				// VGA + EGA, EGA only checks priority, when given priority is below 16
@@ -1034,9 +1031,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	const byte *enhOverlay;
 	const byte *enhSurface;
 	enhanced = false;
-	bool overlay = false;
-	bool paletted = false;
-	bool surface = false;
+	overlay = false;
+	paletted = false;
+	surface = false;
 	enhancedPrio = false;
 
 	Common::FSNode folder;
@@ -1086,12 +1083,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256o.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256o.png").getName();
+		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256RP.png").exists()) {
+			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_256o.png").getName();
+				fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());

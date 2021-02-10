@@ -85,7 +85,11 @@ private:
 	int16 _resourceId;
 	Resource *_resource;
 	int _resourceType;
-
+	bool enhanced;
+	bool overlay;
+	bool paletted;
+	bool surface;
+	bool enhancedPrio;
 	bool _mirroredFlag;
 	bool _addToFlag;
 	int16 _EGApaletteNo;
