@@ -41,6 +41,11 @@ namespace Sci {
 GfxPicture::GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuster, GfxPorts *ports, GfxScreen *screen, GfxPalette *palette, GuiResourceId resourceId, bool EGAdrawingVisualize)
 	: _resMan(resMan), _coordAdjuster(coordAdjuster), _ports(ports), _screen(screen), _palette(palette), _resourceId(resourceId), _EGAdrawingVisualize(EGAdrawingVisualize) {
 	assert(resourceId != -1);
+	enhanced = true;
+	overlay = true;
+	paletted = true;
+	surface = true;
+	enhancedPrio = true;
 	initData(resourceId);
 }
 
@@ -200,17 +205,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	int16 y, lastY, x, leftX, rightX;
 	int pixelCount = 0;
 	uint16 width, height;
-	Graphics::Surface *png;
-	Graphics::Surface *pngPal;
-	Graphics::Surface *pngPrio;
-	Graphics::Surface *pngOverlay;
-	Graphics::Surface *pngSurface;
 	int pixelCountX = 0;
-	const byte *enh;
-	const byte *enhPal;
-	const byte *enhPrio;
-	const byte *enhOverlay;
-	const byte *enhSurface;
 	enhanced = false;
 	overlay = false;
 	paletted = false;
@@ -1019,17 +1014,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	int pixelCount;
 	uint16 width = _screen->getScriptWidth();
 	uint16 height = _screen->getScriptHeight();
-	Graphics::Surface *png;
-	Graphics::Surface *pngPal;
-	Graphics::Surface *pngPrio;
-	Graphics::Surface *pngOverlay;
-	Graphics::Surface *pngSurface;
 	int pixelCountX = 0;
-	const byte *enh;
-	const byte *enhPal;
-	const byte *enhPrio;
-	const byte *enhOverlay;
-	const byte *enhSurface;
 	enhanced = false;
 	overlay = false;
 	paletted = false;

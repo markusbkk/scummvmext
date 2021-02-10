@@ -34,9 +34,6 @@
 #include "sci/engine/state.h"
 #include "sci/sound/midiparser_sci.h"
 #include "sci/sound/music.h"
-#include <audio/decoders/wave.h>
-#include <engines/sci/sound/audio.h>
-#include <audio/decoders/mp3.h>
 
 //#define DEBUG_REMAP
 
@@ -57,8 +54,6 @@ SciMusic::SciMusic(SciVersion soundVersion, bool useDigitalSFX)
 	}
 
 	_queuedCommands.reserve(1000);
-
-	isPlayingWav = false;
 }
 
 SciMusic::~SciMusic() {
@@ -421,270 +416,62 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			pSnd->overridePriority = false;
 			pSnd->isSample = true;
 		} else {
-
 			// play MIDI track
 			Common::StackLock lock(_mutex);
-			Common::FSNode folder;
-			Common::String fnStr = "music.";
-			char resIdStr[5];
-			sprintf(resIdStr, "%d", pSnd->resourceId);
-			fnStr += resIdStr;
-			if (ConfMan.hasKey("extrapath")) {		
-				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
-					if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
-						Common::File *sciAudioFile = new Common::File();
-						// Replace backwards slashes
-
-						Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
-						for (uint i = 0; i < fileName.size(); i++) {
-							if (fileName[i] == '\\')
-								fileName.setChar('/', i);
-						}
-						sciAudioFile->open(fileName);
-
-						Audio::RewindableAudioStream *audioStream = nullptr;
-						audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
-
-						if (audioStream) {
-							debug(("Found : " + fnStr + ".mp3").c_str());
-							Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
-							// We only support one audio handle
-							if (g_system->getMixer() && &_audioHandle != nullptr) {
-								if (isPlayingWav) {
-
-									g_system->getMixer()->stopID(wavID);
-								}
-
-								g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)audioStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
-								wavID = pSnd->resourceId;
-								muteMidi = true;
-								isPlayingWav = true;
-								//debug("VOLUME = %d", g_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kMusicSoundType));
-								//g_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, 1);
-
-								pSnd->soundType = Audio::Mixer::kMusicSoundType;
-
-								if (pSnd->pMidiParser == NULL) {
-									pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-									pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-									pSnd->pMidiParser->setTimerRate(_dwTempo);
-									pSnd->pMidiParser->setMasterVolume(_masterVolume);
-								}
-								pSnd->pauseCounter = 0;
-
-								// Find out what channels to filter for SCI0
-								channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
-
-								for (int i = 0; i < 16; ++i)
-									pSnd->_usedChannels[i] = 0xFF;
-								for (int i = 0; i < track->channelCount; ++i) {
-									SoundResource::Channel &chan = track->channels[i];
-
-									pSnd->_usedChannels[i] = 0xFF;
-									pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-									pSnd->_chan[chan.number]._prio = chan.prio;
-									pSnd->_chan[chan.number]._voices = chan.poly;
-
-									// CHECKME: Some SCI versions use chan.flags & 1 for this:
-									pSnd->_chan[chan.number]._dontMap = false;
-
-									// FIXME: Most MIDI tracks use the first 10 bytes for
-									// fixed MIDI commands. SSCI skips those the first iteration,
-									// but _does_ update channel state (including volume) with
-									// them. Specifically, prio/voices, patch, volume, pan.
-									// This should probably be implemented in
-									// MidiParser_SCI::loadMusic.
-								}
-
-								pSnd->pMidiParser->mainThreadBegin();
-								// loadMusic() below calls jumpToTick.
-								// Disable sound looping and hold before jumpToTick is called,
-								// otherwise the song may keep looping forever when it ends in
-								// jumpToTick (e.g. LSL3, when going left from room 210).
-								uint16 prevLoop = pSnd->loop;
-								int16 prevHold = pSnd->hold;
-								pSnd->loop = 0;
-								pSnd->hold = -1;
-								pSnd->playBed = false;
-								pSnd->overridePriority = false;
-
-								pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-								pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-								// Restore looping and hold
-								pSnd->loop = prevLoop;
-								pSnd->hold = prevHold;
-								pSnd->pMidiParser->mainThreadEnd();
-							} else {
-								muteMidi = false;
-							}
-						} else {
-							muteMidi = false;
-						}
-					} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
-						Common::File *sciAudioFile = new Common::File();
-						// Replace backwards slashes
-
-						Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
-						for (uint i = 0; i < fileName.size(); i++) {
-							if (fileName[i] == '\\')
-								fileName.setChar('/', i);
-						}
-						sciAudioFile->open(fileName);
-
-						Audio::RewindableAudioStream *audioStream = nullptr;
-						audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
-
-						if (audioStream) {
-							debug(("Found : " + fnStr + ".wav").c_str());
-							Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
-							// We only support one audio handle
-							if (g_system->getMixer() && &_audioHandle != nullptr) {
-								if (isPlayingWav) {
-
-									g_system->getMixer()->stopID(wavID);
-								}
-
-								g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)audioStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
-								wavID = pSnd->resourceId;
-								muteMidi = true;
-								isPlayingWav = true;
-								//debug("VOLUME = %d", g_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kMusicSoundType));
-								//g_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, 1);
-
-								pSnd->soundType = Audio::Mixer::kMusicSoundType;
-
-								if (pSnd->pMidiParser == NULL) {
-									pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-									pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-									pSnd->pMidiParser->setTimerRate(_dwTempo);
-									pSnd->pMidiParser->setMasterVolume(_masterVolume);
-								}
-								pSnd->pauseCounter = 0;
-
-								// Find out what channels to filter for SCI0
-								channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
-
-								for (int i = 0; i < 16; ++i)
-									pSnd->_usedChannels[i] = 0xFF;
-								for (int i = 0; i < track->channelCount; ++i) {
-									SoundResource::Channel &chan = track->channels[i];
-
-									pSnd->_usedChannels[i] = 0xFF;
-									pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-									pSnd->_chan[chan.number]._prio = chan.prio;
-									pSnd->_chan[chan.number]._voices = chan.poly;
-
-									// CHECKME: Some SCI versions use chan.flags & 1 for this:
-									pSnd->_chan[chan.number]._dontMap = false;
-
-									// FIXME: Most MIDI tracks use the first 10 bytes for
-									// fixed MIDI commands. SSCI skips those the first iteration,
-									// but _does_ update channel state (including volume) with
-									// them. Specifically, prio/voices, patch, volume, pan.
-									// This should probably be implemented in
-									// MidiParser_SCI::loadMusic.
-								}
-
-								pSnd->pMidiParser->mainThreadBegin();
-								// loadMusic() below calls jumpToTick.
-								// Disable sound looping and hold before jumpToTick is called,
-								// otherwise the song may keep looping forever when it ends in
-								// jumpToTick (e.g. LSL3, when going left from room 210).
-								uint16 prevLoop = pSnd->loop;
-								int16 prevHold = pSnd->hold;
-								pSnd->loop = 0;
-								pSnd->hold = -1;
-								pSnd->playBed = false;
-								pSnd->overridePriority = false;
-
-								pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-								pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-								// Restore looping and hold
-								pSnd->loop = prevLoop;
-								pSnd->hold = prevHold;
-								pSnd->pMidiParser->mainThreadEnd();
-							} else {
-								muteMidi = false;
-							}
-						} else {
-							muteMidi = false;
-						}
-					} else {
-						muteMidi = false;
-					}
-				} else {
-					muteMidi = false;
-				}
-			} else {
-				muteMidi = false;
+			pSnd->soundType = Audio::Mixer::kMusicSoundType;
+			if (pSnd->pMidiParser == NULL) {
+				pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
+				pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
+				pSnd->pMidiParser->setTimerRate(_dwTempo);
+				pSnd->pMidiParser->setMasterVolume(_masterVolume);
 			}
-			if (!muteMidi || !isPlayingWav)
-			{
-				debug(("Didn't Find : " + fnStr + ".mp3").c_str());
-				if (g_system->getMixer()) {
-					if (isPlayingWav) {
 
-						g_system->getMixer()->stopID(wavID);
-					}
-				}
-				isPlayingWav = false;
-				pSnd->soundType = Audio::Mixer::kMusicSoundType;
-					
-					if (pSnd->pMidiParser == NULL) {
-						pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-						pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-						pSnd->pMidiParser->setTimerRate(_dwTempo);
-						pSnd->pMidiParser->setMasterVolume(_masterVolume);
-					}
-					pSnd->pauseCounter = 0;
+			pSnd->pauseCounter = 0;
 
-					// Find out what channels to filter for SCI0
-					channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
+			// Find out what channels to filter for SCI0
+			channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
 
-					for (int i = 0; i < 16; ++i)
-						pSnd->_usedChannels[i] = 0xFF;
-					for (int i = 0; i < track->channelCount; ++i) {
-						SoundResource::Channel &chan = track->channels[i];
+			for (int i = 0; i < 16; ++i)
+				pSnd->_usedChannels[i] = 0xFF;
+			for (int i = 0; i < track->channelCount; ++i) {
+				SoundResource::Channel &chan = track->channels[i];
 
-						pSnd->_usedChannels[i] = chan.number;
-						pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-						pSnd->_chan[chan.number]._prio = chan.prio;
-						pSnd->_chan[chan.number]._voices = chan.poly;
+				pSnd->_usedChannels[i] = chan.number;
+				pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
+				pSnd->_chan[chan.number]._prio = chan.prio;
+				pSnd->_chan[chan.number]._voices = chan.poly;
 
-						// CHECKME: Some SCI versions use chan.flags & 1 for this:
-						pSnd->_chan[chan.number]._dontMap = false;
+				// CHECKME: Some SCI versions use chan.flags & 1 for this:
+				pSnd->_chan[chan.number]._dontMap = false;
 
-						// FIXME: Most MIDI tracks use the first 10 bytes for
-						// fixed MIDI commands. SSCI skips those the first iteration,
-						// but _does_ update channel state (including volume) with
-						// them. Specifically, prio/voices, patch, volume, pan.
-						// This should probably be implemented in
-						// MidiParser_SCI::loadMusic.
-					}
-			
-					pSnd->pMidiParser->mainThreadBegin();
-					// loadMusic() below calls jumpToTick.
-					// Disable sound looping and hold before jumpToTick is called,
-					// otherwise the song may keep looping forever when it ends in
-					// jumpToTick (e.g. LSL3, when going left from room 210).
-					uint16 prevLoop = pSnd->loop;
-					int16 prevHold = pSnd->hold;
-					pSnd->loop = 0;
-					pSnd->hold = -1;
-					pSnd->playBed = false;
-					pSnd->overridePriority = false;
-
-					pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-					pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-					// Restore looping and hold
-					pSnd->loop = prevLoop;
-					pSnd->hold = prevHold;
-					pSnd->pMidiParser->mainThreadEnd();
-				}
+				// FIXME: Most MIDI tracks use the first 10 bytes for
+				// fixed MIDI commands. SSCI skips those the first iteration,
+				// but _does_ update channel state (including volume) with
+				// them. Specifically, prio/voices, patch, volume, pan.
+				// This should probably be implemented in
+				// MidiParser_SCI::loadMusic.
 			}
+
+			pSnd->pMidiParser->mainThreadBegin();
+			// loadMusic() below calls jumpToTick.
+			// Disable sound looping and hold before jumpToTick is called,
+			// otherwise the song may keep looping forever when it ends in
+			// jumpToTick (e.g. LSL3, when going left from room 210).
+			uint16 prevLoop = pSnd->loop;
+			int16 prevHold = pSnd->hold;
+			pSnd->loop = 0;
+			pSnd->hold = -1;
+			pSnd->playBed = false;
+			pSnd->overridePriority = false;
+
+			pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
+			pSnd->reverb = pSnd->pMidiParser->getSongReverb();
+
+			// Restore looping and hold
+			pSnd->loop = prevLoop;
+			pSnd->hold = prevHold;
+			pSnd->pMidiParser->mainThreadEnd();
+		}
 	}
 }
 

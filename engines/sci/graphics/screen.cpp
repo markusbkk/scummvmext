@@ -269,6 +269,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 		_backupScreen = 0;
 	} else {
 		ConfMan.setBool("rgb_rendering", true);
+		ConfMan.getBool("rgb_rendering");
 		// Initialize the actual screen
 		Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
 		const Graphics::PixelFormat *format = &format8;

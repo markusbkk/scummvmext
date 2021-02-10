@@ -94,7 +94,16 @@ private:
 	bool _addToFlag;
 	int16 _EGApaletteNo;
 	byte _priority;
-
+	Graphics::Surface *png;
+	Graphics::Surface *pngPal;
+	Graphics::Surface *pngPrio;
+	Graphics::Surface *pngOverlay;
+	Graphics::Surface *pngSurface;
+	const byte *enh;
+	const byte *enhPal;
+	const byte *enhPrio;
+	const byte *enhOverlay;
+	const byte *enhSurface;
 	// If true, we will show the whole EGA drawing process...
 	bool _EGAdrawingVisualize;
 };

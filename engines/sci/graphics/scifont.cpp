@@ -299,8 +299,6 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	byte b = 0, mask = 0xFF;
 	int16 greyedTop = top;
 
-	Graphics::Surface *png;
-	const byte *enh;
 	bool enhancedFont = false;
 	int pixelsLength = 0;
 
@@ -315,11 +313,11 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 				//debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 			} else {
 				//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-				png = loadFontPNG(file);
-				if (png) {
-					enh = (const byte *)png->getPixels();
-					if (enh) {
-						pixelsLength = png->w * png->h * 4;
+				pngfont = loadFontPNG(file);
+				if (pngfont) {
+					enhfont = (const byte *)pngfont->getPixels();
+					if (enhfont) {
+						pixelsLength = pngfont->w * pngfont->h * 4;
 						enhancedFont = true;
 					}
 				}
@@ -401,15 +399,15 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 				for (int x = 0; x < charWidth * g_sci->_enhancementMultiplier; x++) {
 				if (greyedOutput)
 				mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
-				b = enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3] & mask;
+				b = enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3] & mask;
 					if (b & 0x80) {
 						int screenX = (left) + x;
 						int screenY = (top) + y;
 						if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
 
-						_screen->putFontPixelR(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
-						_screen->putFontPixelG(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
-						_screen->putFontPixelB(screenX, screenY, 255, color, enh[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelR(screenX, screenY, 255, color, enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelG(screenX, screenY, 255, color, enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelB(screenX, screenY, 255, color, enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
 
 						} else {
 							warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);

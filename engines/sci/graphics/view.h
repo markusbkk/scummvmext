@@ -100,7 +100,8 @@ private:
 	Common::Array<LoopInfo> _loop;
 	bool _embeddedPal;
 	Palette _viewPalette;
-
+	Graphics::Surface *viewpng;
+	const byte *viewenh;
 	SciSpan<const byte> _EGAmapping;
 
 	// this is set for sci0early to adjust for the getCelRect() change
