@@ -234,7 +234,7 @@ void GfxAnimate::makeSortedList(List *list) {
 		foundInList = false;
 		if (_list.size() > 0) {
 			for (it = _list.begin(); it != _list.end(); ++it) {
-				if (it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && listEntry.processed == false) {
+				if (it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && listEntry.tweenNo == (it->tweenNo - 1) && listEntry.processed == false) {
 					listEntry.tweenNo = it->tweenNo;
 					listEntry.processed = true;
 					_newList.push_back(listEntry);

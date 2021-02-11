@@ -1142,7 +1142,8 @@ void GfxView::draw(const Common::Rect &rect, const Common::Rect &clipRect, const
 								}
 							} else {
 
-								if (offset256 + (x) < (viewpng->w * y) + viewpng->w) {
+								if (offset256 + (x) < (viewpng->w * viewpng->h))
+								{
 									if (viewenh[offset256 + (x)] != clearKey) {
 										if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 											_screen->putPixelPaletted((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset256 + (x)], priority, 0);
@@ -1428,7 +1429,8 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 										}
 									} else {
-										if (offset256 + (scalingX[(x + offsetX)]) < (viewpng->w * y) + viewpng->w) {
+									    if (offset256 + (scalingX[(x + offsetX)]) <= (viewpng->w * viewpng->h))
+										{
 											if (viewenh[offset256 + (scalingX[(x + offsetX)])] != clearKey) {
 												_screen->putPixelPaletted(x2, y2, drawMask, getMappedColor(viewenh[offset256 + (scalingX[(x + offsetX)])], scaleSignal, palette, x2, y2), priority, 0);
 												_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
@@ -1468,7 +1470,8 @@ void GfxView::drawScaled(const Common::Rect &rect, const Common::Rect &clipRect,
 											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 										}
 									} else {
-										if (offset256 + (scalingX[(x + offsetX)]) < (viewpng->w * y) + viewpng->w) {
+									    if (offset256 + (scalingX[(x + offsetX)]) <= (viewpng->w * viewpng->h))
+										{
 											if (viewenh[offset256 + (scalingX[(x + offsetX)])] != clearKey) {											
 												_screen->putPixelPaletted(x2, y2, drawMask, getMappedColor(viewenh[offset256 + (scalingX[(x + offsetX)])], scaleSignal, palette, x2, y2), priority, 0);
 												_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
