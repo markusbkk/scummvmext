@@ -304,7 +304,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 
 	Common::FSNode folder;
 	char charNoStr[5];
-	sprintf(charNoStr, "%d", chr);
+	sprintf(charNoStr, "%u", chr);
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + charNoStr + ".png").exists()) {
 			Common::String fileName = folder.getChild(_resource->name() + '.' + charNoStr + ".png").getName();

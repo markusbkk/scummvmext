@@ -1079,7 +1079,7 @@ reg_t kAddToPic(EngineState *s, int argc, reg_t *argv) {
 		topPos = argv[4].toSint16();
 		priority = argv[5].toSint16();
 		control = argv[6].toSint16();
-		g_sci->_gfxAnimate->kernelAddToPicView(viewId, loopNo, celNo, leftPos, topPos, priority, control);
+		g_sci->_gfxAnimate->kernelAddToPicView(viewId, viewId, loopNo, celNo, leftPos, topPos, priority, control);
 		break;
 	default:
 		error("kAddToPic with unsupported parameter count %d", argc);

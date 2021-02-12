@@ -128,6 +128,8 @@ public:
 	Audio::SoundHandle hCurrentAud;
 	bool isSample;
 
+
+
 public:
 	MusicEntry();
 	~MusicEntry() override;
@@ -245,6 +247,12 @@ public:
 	// include references to the mixer, otherwise there will probably be situations
 	// where a deadlock can occur
 	Common::Mutex _mutex;
+	Audio::SoundHandle _audioHandle;
+	Audio::Mixer *_mixer;
+
+	int wavID;
+	bool isPlayingWav;
+	bool muteMidi;
 
 protected:
 	void sortPlayList();
@@ -253,7 +261,7 @@ protected:
 
 	Audio::Mixer *_pMixer;
 	MidiPlayer *_pMidiDrv;
-
+	
 	uint32 _dwTempo;
 	// If true and a sound has a digital track, the sound from the AdLib track is played
 	bool _useDigitalSFX;
@@ -262,6 +270,7 @@ protected:
 	void remapChannels(bool mainThread = true);
 	ChannelRemapping *determineChannelMap();
 	void resetDeviceChannel(int devChannel, bool mainThread);
+	
 
 private:
 	MusicList _playList;
