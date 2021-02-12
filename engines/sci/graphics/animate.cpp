@@ -260,7 +260,7 @@ void GfxAnimate::makeSortedList(List *list) {
 		listEntry.processed = false;
 		listEntry.signal = readSelectorValue(_s->_segMan, curObject, SELECTOR(signal));
 		listEntry.pixelsLength = 0;
-		listEntry.tweenNo = 0;
+		
 		if (getSciVersion() >= SCI_VERSION_1_1) {
 			// Cel scaling
 			listEntry.scaleSignal = readSelectorValue(_s->_segMan, curObject, SELECTOR(scaleSignal));
@@ -283,6 +283,10 @@ void GfxAnimate::makeSortedList(List *list) {
 			for (it = _list.begin(); it != _list.end(); ++it) {
 				bool found = false;
 				if (found == false && it->viewId == listEntry.viewId && it->loopNo == listEntry.loopNo && it->celNo == listEntry.celNo && it->processed == false && listEntry.processed == false) {
+					it->tweenNo++;
+					if (it->tweenNo > 3) {
+						it->tweenNo = 3;
+					}
 					listEntry.tweenNo = it->tweenNo;
 					it->processed = true;
 					listEntry.processed = true;
@@ -441,7 +445,7 @@ void GfxAnimate::makeSortedList(List *list) {
 			}
 
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + ".png").exists()) {
-				if (!listEntry.viewEnhanced) {
+				{
 					Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
@@ -460,7 +464,7 @@ void GfxAnimate::makeSortedList(List *list) {
 					}
 				}
 			} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + "_256.png").exists()) {
-				if (!listEntry.viewEnhanced) {
+		 {
 					Common::String fileName = folder.getChild(fn + ".t." + twn + "_256.png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
@@ -480,7 +484,7 @@ void GfxAnimate::makeSortedList(List *list) {
 					}
 				}
 			} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + "_256RP.png").exists()) {
-				if (!listEntry.viewEnhanced) {
+		 {
 					Common::String fileName = folder.getChild(fn + ".t." + twn + "_256RP.png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
@@ -689,7 +693,6 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalAlwaysUpdate) {
 			// draw corresponding cel
-			it->tweenNo++;
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
@@ -722,7 +725,7 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
-			it->tweenNo++;
+			
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
@@ -747,7 +750,7 @@ void GfxAnimate::drawCels() {
 			bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
 			writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 			// draw corresponding cel
-			it->tweenNo++;
+			
 
 				Common::FSNode folder;
 			if (ConfMan.hasKey("extrapath")) {
@@ -993,7 +996,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 		AnimateArray::iterator end = _lastCastData.end();
 		for (it = _lastCastData.begin(); it != end; ++it) {
 			it->castHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
-			it->tweenNo++;
+			
 
 				Common::FSNode folder;
 			if (ConfMan.hasKey("extrapath")) {
