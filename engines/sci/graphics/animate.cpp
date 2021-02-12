@@ -439,62 +439,62 @@ void GfxAnimate::makeSortedList(List *list) {
 					}
 				}
 			}
-		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + ".png").exists()) {
-			if (!listEntry.viewEnhanced) {
-				Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
-				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-				} else {
-					debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-					listEntry.viewpng = loadCelPNG(file);
-					if (listEntry.viewpng) {
-						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
-						if (listEntry.viewenh) {
-							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-							listEntry.viewEnhanced = true;
-							listEntry.enhancedIs256 = false;
-						}
-					}
-				}
-			}
-		}
-		else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + "_256.png").exists()) {
-			if (!listEntry.viewEnhanced) {
-				Common::String fileName = folder.getChild(fn + ".t." + twn + "_256.png").getName();
-				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-				} else {
-					debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 
-					listEntry.viewpng = loadCelPNGCLUT(file);
-					if (listEntry.viewpng) {
-						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
-						if (listEntry.viewenh) {
-							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-							listEntry.viewEnhanced = true;
-							listEntry.enhancedIs256 = true;
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + ".png").exists()) {
+				if (!listEntry.viewEnhanced) {
+					Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
+					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+					} else {
+						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						listEntry.viewpng = loadCelPNG(file);
+						if (listEntry.viewpng) {
+							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+							if (listEntry.viewenh) {
+								listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+								listEntry.viewEnhanced = true;
+								listEntry.enhancedIs256 = false;
+							}
 						}
 					}
 				}
-			}
-		} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + "_256RP.png").exists()) {
-			if (!listEntry.viewEnhanced) {
-				Common::String fileName = folder.getChild(fn + ".t." + twn + "_256RP.png").getName();
-				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-				} else {
-					debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-					listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
-					if (listEntry.viewpng) {
-						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
-						if (listEntry.viewenh) {
-							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-							listEntry.viewEnhanced = true;
-							listEntry.enhancedIs256 = true;
+			} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + "_256.png").exists()) {
+				if (!listEntry.viewEnhanced) {
+					Common::String fileName = folder.getChild(fn + ".t." + twn + "_256.png").getName();
+					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+					} else {
+						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+
+						listEntry.viewpng = loadCelPNGCLUT(file);
+						if (listEntry.viewpng) {
+							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+							if (listEntry.viewenh) {
+								listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+								listEntry.viewEnhanced = true;
+								listEntry.enhancedIs256 = true;
+							}
+						}
+					}
+				}
+			} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + "_256RP.png").exists()) {
+				if (!listEntry.viewEnhanced) {
+					Common::String fileName = folder.getChild(fn + ".t." + twn + "_256RP.png").getName();
+					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+					} else {
+						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
+						if (listEntry.viewpng) {
+							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+							if (listEntry.viewenh) {
+								listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+								listEntry.viewEnhanced = true;
+								listEntry.enhancedIs256 = true;
+							}
 						}
 					}
 				}
