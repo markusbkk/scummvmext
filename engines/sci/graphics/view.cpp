@@ -441,7 +441,13 @@ void GfxView::getCelRect(int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, C
 	outRect.bottom = y + celInfo->displaceY - z + 1 + _adjustForSci0Early;
 	outRect.top = outRect.bottom - celInfo->height;
 }
-
+void GfxView::getCelRectEnhanced(Graphics::Surface *viewpng, bool viewEnhanced, int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, Common::Rect &outRect) const {
+	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
+	outRect.left = x + celInfo->displaceX - ((int16)(viewpng->w / g_sci->_enhancementMultiplier) >> 1);
+	outRect.right = outRect.left + (int16)(viewpng->w / g_sci->_enhancementMultiplier);
+	outRect.bottom = y + celInfo->displaceY - z + 1 + _adjustForSci0Early;
+	outRect.top = outRect.bottom - (int16)(viewpng->h / g_sci->_enhancementMultiplier);
+}
 void GfxView::getCelSpecialHoyle4Rect(int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, Common::Rect &outRect) const {
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
 	int16 adjustY = y + celInfo->displaceY - celInfo->height + 1;
@@ -467,7 +473,24 @@ void GfxView::getCelScaledRect(int16 loopNo, int16 celNo, int16 x, int16 y, int1
 	outRect.bottom = y + scaledDisplaceY - z + 1;
 	outRect.top = outRect.bottom - scaledHeight;
 }
+void GfxView::getCelScaledRectEnhanced(Graphics::Surface *viewpng, bool viewEnhanced, int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, int16 scaleX, int16 scaleY, Common::Rect &outRect) const {
+	int16 scaledDisplaceX, scaledDisplaceY;
+	int16 scaledWidth, scaledHeight;
+	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
 
+	// Scaling displaceX/Y, Width/Height
+	scaledDisplaceX = (celInfo->displaceX * scaleX) >> 7;
+	scaledDisplaceY = (celInfo->displaceY * scaleY) >> 7;
+	scaledWidth = ((int16)(viewpng->w / g_sci->_enhancementMultiplier) * scaleX) >> 7;
+	scaledHeight = ((int16)(viewpng->h / g_sci->_enhancementMultiplier) * scaleY) >> 7;
+	scaledWidth = CLIP<int16>(scaledWidth, 0, _screen->getWidth());
+	scaledHeight = CLIP<int16>(scaledHeight, 0, _screen->getHeight());
+
+	outRect.left = x + scaledDisplaceX - (scaledWidth >> 1);
+	outRect.right = outRect.left + scaledWidth;
+	outRect.bottom = y + scaledDisplaceY - z + 1;
+	outRect.top = outRect.bottom - scaledHeight;
+}
 void unpackCelData(const SciSpan<const byte> &inBuffer, SciSpan<byte> &celBitmap, byte clearColor, int rlePos, int literalPos, ViewType viewType, uint16 width, bool isMacSci11ViewData) {
 	const int pixelCount = celBitmap.size();
 	byte *outPtr = celBitmap.getUnsafeDataAt(0);
@@ -844,7 +867,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 		return;
 	}
 
-	const byte *bitmapData = bitmap.getUnsafeDataAt((clipRect.top - rect.top) * celWidth + (clipRect.left - rect.left), celWidth * (height - 1) + width);
+	
 
 	// Set up custom per-view palette mod
 	byte oldpalvalue = _screen->getCurPaletteMapValue();
@@ -858,6 +881,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 	char tweenNoStr[5];
 	sprintf(tweenNoStr, "%u", tn);
 	if (!viewEnhanced) {
+		const byte *bitmapData = bitmap.getUnsafeDataAt((clipRect.top - rect.top) * celWidth + (clipRect.left - rect.left), celWidth * (height - 1) + width);
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
 			for (int y = 0; y < height; y++, bitmapData += celWidth) {
@@ -899,12 +923,6 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 		Common::Rect celRect = rect;
 		Common::Rect newClipRect = clipRect;
 		Common::Rect newClipRectTranslated = clipRectTranslated;
-		
-
-			celRect.left -= (((int16)(viewpng->w / g_sci->_enhancementMultiplier) - (celWidth)));
-		celRect.top -= (((int16)(viewpng->h / g_sci->_enhancementMultiplier) - (celHeight)));
-		    celRect.right += (((int16)(viewpng->w / g_sci->_enhancementMultiplier) - (celWidth)));
-		celRect.bottom += (((int16)(viewpng->h / g_sci->_enhancementMultiplier) - (celHeight)));
 
 			newClipRect = celRect;
 			newClipRect.clip(_currentViewPort);
@@ -932,7 +950,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			debug("newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
 			debug("clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
 			debug("newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
-		
+		    /*
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
 			for (int y = 0; y < height; y++, bitmapData += celWidth) {
@@ -964,7 +982,8 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 					}
 				}
 			}
-		} else {
+		} else */
+			{
 			int offset = (((((((newClipRect.top - celRect.top) * g_sci->_enhancementMultiplier) * (viewpng->w))) + ((newClipRect.left - celRect.left) * g_sci->_enhancementMultiplier))) * 4);
 			int offset256 = (((((((newClipRect.top - celRect.top) * g_sci->_enhancementMultiplier) * (viewpng->w))) + ((newClipRect.left - celRect.left) * g_sci->_enhancementMultiplier))));
 			for (int y = 0; y < height * g_sci->_enhancementMultiplier; y++) {
@@ -975,7 +994,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 						if ((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x <= _screen->getDisplayWidth() && ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y) <= _screen->getDisplayHeight()) {
 
 							if (!enhancedIs256) {
-								if (viewenh[offset + (x * 4) + 3] == 255) {
+								if (offset + (x * 4) + 3 < (viewpng->w * g_sci->_enhancementMultiplier) * (viewpng->h * g_sci->_enhancementMultiplier) * 4 && viewenh[offset + (x * 4) + 3] == 255) {
 									if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 										_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4)], viewenh[offset + (x * 4) + 3], priority, 0);     //viewenh[offset + (x * 4)]
 										_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0); //viewenh[offset + (x * 4) + 1]
@@ -986,7 +1005,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 								}
 							} else {
 
-								if (offset256 + (x) < (viewpng->w * viewpng->h))
+								if (offset256 + (x * 4) + 3 < (viewpng->w * g_sci->_enhancementMultiplier) * (viewpng->h * g_sci->_enhancementMultiplier) && offset256 + (x) < (viewpng->w * viewpng->h))
 								{
 									if (viewenh[offset256 + (x)] != clearKey) {
 										if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
@@ -1102,11 +1121,6 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 		Common::Rect newClipRectTranslated = clipRectTranslated;
 		//if (viewpng->w != celWidth * g_sci->_enhancementMultiplier && viewpng->h != celHeight * g_sci->_enhancementMultiplier)
 		{
-
-			celRect.left -= (((viewpng->w / g_sci->_enhancementMultiplier) - (celWidth)));
-			celRect.top -= (((viewpng->h / g_sci->_enhancementMultiplier) - (celHeight)));
-			celRect.right += (((viewpng->w / g_sci->_enhancementMultiplier) - (celWidth)));
-			celRect.bottom += (((viewpng->h / g_sci->_enhancementMultiplier) - (celHeight)));
 
 			newClipRect = celRect;
 			newClipRect.clip(_currentViewPort);

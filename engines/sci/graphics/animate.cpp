@@ -628,7 +628,11 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 
 	// Create rect according to coordinates and given cel
 	if (it->scaleSignal & kScaleSignalDoScaling) {
-		view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+		if (!it->viewEnhanced) {
+			view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+		} else {
+			view->getCelScaledRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+		}
 		// when being scaled, only set nsRect, if object will get drawn
 		if ((it->signal & kSignalHidden) && !(it->signal & kSignalAlwaysUpdate))
 			shouldSetNsRect = false;
@@ -640,7 +644,11 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 			view->getCelSpecialHoyle4Rect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
 			shouldSetNsRect = false;
 		} else {
-			view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+			if (!it->viewEnhanced) {
+				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+			} else {
+				view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+			}
 		}
 	}
 
@@ -1187,10 +1195,18 @@ void GfxAnimate::addToPicDrawCels() {
 			if (it->scaleSignal & kScaleSignalGlobalScaling) {
 				applyGlobalScaling(it, view);
 			}
-			view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+			if (!it->viewEnhanced) {
+				view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+			} else {
+				view->getCelScaledRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+			}
 			g_sci->_gfxCompare->setNSRect(curObject, it->celRect);
 		} else {
-			view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+			if (!it->viewEnhanced) {
+				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+			} else {
+				view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+			}
 		}
 
 		// draw corresponding cel
@@ -1209,8 +1225,6 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 	if (priority == -1)
 		priority = _ports->kernelCoordinateToPriority(y);
 
-	// Create rect according to coordinates and given cel
-	view->getCelRect(loopNo, celNo, x, y, 0, celRect);
 	AnimateEntry listEntry;
 
 		Common::FSNode folder;
@@ -1358,7 +1372,8 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 				}
 			}
 		}
-	
+	    // Create rect according to coordinates and given cel
+	    view->getCelRectEnhanced(listEntry.viewpng, listEntry.viewEnhanced,loopNo, celNo, x, y, 0, celRect);
 	_paint16->drawCel(listEntry.viewpng, listEntry.viewenh, listEntry.pixelsLength, listEntry.viewEnhanced, listEntry.enhancedIs256, view, loopNo, celNo, 0, celRect, priority, 0);
 
 	if (control != -1) {
