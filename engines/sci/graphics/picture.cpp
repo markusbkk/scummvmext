@@ -193,6 +193,7 @@ Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen 
 }
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	g_sci->_gfxPalette16->overridePalette = false;
+	
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
 	const SciSpan<const byte> rlePtr = inbuffer.subspan(rlePos);
 	// displaceX, displaceY fields are ignored, and may contain garbage

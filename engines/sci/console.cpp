@@ -2021,17 +2021,50 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 		AnimateEntry listEntry;
 		Common::FSNode folder;
 		if (ConfMan.hasKey("extrapath")) {
+			Common::String fn = "view.";
+			bool stop = false;
 			char viewNoStr[5];
-			sprintf(viewNoStr, "%d", resourceId);
+			sprintf(viewNoStr, "%u", resourceId);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+				if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+					fn += viewNoStr[n];
+				} else {
+					stop = true;
+				}
+			}
+			stop = false;
+			fn += ".";
 			char loopNoStr[5];
-			sprintf(loopNoStr, "%d", loopNo);
+			sprintf(loopNoStr, "%u", loopNo);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+				if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+					fn += loopNoStr[n];
+				} else {
+					stop = true;
+				}
+			}
+			stop = false;
+			fn += ".";
 			char celNoStr[5];
-			sprintf(celNoStr, "%d", celNo);
+			sprintf(celNoStr, "%u", celNo);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+				if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+					fn += celNoStr[n];
+				} else {
+					stop = true;
+				}
+			}
 			char tweenNoStr[5];
-			sprintf(tweenNoStr, "%d", 0);
-			Common::String fn = viewNoStr;
-			fn += '.' + loopNoStr;
-			fn += '.' + celNoStr;
+			Common::String twn = "";
+			sprintf(tweenNoStr, "%u", 0);
+			for (int n = 0; n < 5; n++) {
+				if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+					twn += tweenNoStr[n];
+				}
+			}
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
 				Common::String fileName = folder.getChild(fn + ".png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);

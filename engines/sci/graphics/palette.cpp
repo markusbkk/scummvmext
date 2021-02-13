@@ -536,7 +536,7 @@ void GfxPalette::copySysPaletteToScreen(bool update) {
 bool GfxPalette::kernelSetFromResource(GuiResourceId resourceId, bool force) {
 	Resource *palResource = _resMan->findResource(ResourceId(kResourceTypePalette, resourceId), false);
 	Palette palette;
-
+	debug("Palette Resource : %u", resourceId);
 	if (palResource) {
 		createFromData(*palResource, &palette);
 		set(&palette, force);

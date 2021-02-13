@@ -872,14 +872,54 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 	// Set up custom per-view palette mod
 	byte oldpalvalue = _screen->getCurPaletteMapValue();
 	doCustomViewPalette(_screen, _resourceId, loopNo, celNo);
+	Common::String fn = "view.";
+	bool stop = false;
 	char viewNoStr[5];
 	sprintf(viewNoStr, "%u", _resourceId);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+				fn += viewNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
+	stop = false;
+	fn += ".";
 	char loopNoStr[5];
 	sprintf(loopNoStr, "%u", loopNo);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+				fn += loopNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
+	stop = false;
+	fn += ".";
 	char celNoStr[5];
 	sprintf(celNoStr, "%u", celNo);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+				fn += celNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
+	stop = false;
 	char tweenNoStr[5];
-	sprintf(tweenNoStr, "%u", tn);
+	Common::String twn = "";
+	sprintf(tweenNoStr, "%u", tweenNo);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+				twn += tweenNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
 	if (!viewEnhanced) {
 		const byte *bitmapData = bitmap.getUnsafeDataAt((clipRect.top - rect.top) * celWidth + (clipRect.left - rect.left), celWidth * (height - 1) + width);
 		if (_EGAmapping) {
@@ -1051,8 +1091,8 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 	debug(dbg.c_str());
 	// Reset custom per-view palette mod
 	_screen->setCurPaletteMapValue(oldpalvalue);
-	Common::String fn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
-	g_sci->_audio->PlayEnhancedViewCelAudio(fn, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
+	Common::String sfn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
+	g_sci->_audio->PlayEnhancedViewCelAudio(sfn, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }
 
 void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
