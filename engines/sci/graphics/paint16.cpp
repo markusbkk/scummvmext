@@ -142,52 +142,36 @@ void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo,
 		Common::FSNode folder;
 		if (ConfMan.hasKey("extrapath")) {
 			Common::String fn = "view.";
-			bool stop = false;
 			char viewNoStr[5];
 			sprintf(viewNoStr, "%u", viewId);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-						fn += viewNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+					fn += viewNoStr[n];
+				}
 			}
-			stop = false;
 			fn += ".";
 			char loopNoStr[5];
 			sprintf(loopNoStr, "%u", loopNo);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-						fn += loopNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+					fn += loopNoStr[n];
+				}
 			}
-			stop = false;
 			fn += ".";
 			char celNoStr[5];
 			sprintf(celNoStr, "%u", celNo);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-						fn += celNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+					fn += celNoStr[n];
+				}
 			}
-			stop = false;
 			char tweenNoStr[5];
 			Common::String twn = "";
 			sprintf(tweenNoStr, "%u", tweenNo);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-						twn += tweenNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+					twn += tweenNoStr[n];
+				}
 			}
 			debug(fn.c_str());
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
@@ -385,52 +369,36 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 		Common::FSNode folder;
 		if (ConfMan.hasKey("extrapath")) {
 			Common::String fn = "view.";
-			bool stop = false;
 			char viewNoStr[5];
 			sprintf(viewNoStr, "%u", viewId);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-						fn += viewNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+					fn += viewNoStr[n];
+				}
 			}
-			stop = false;
 			fn += ".";
 			char loopNoStr[5];
 			sprintf(loopNoStr, "%u", loopNo);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-						fn += loopNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+					fn += loopNoStr[n];
+				}
 			}
-			stop = false;
 			fn += ".";
 			char celNoStr[5];
 			sprintf(celNoStr, "%u", celNo);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-						fn += celNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+					fn += celNoStr[n];
+				}
 			}
-			stop = false;
 			char tweenNoStr[5];
 			Common::String twn = "";
 			sprintf(tweenNoStr, "%u", tweenNo);
 			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-						twn += tweenNoStr[n];
-					} else {
-						stop = true;
-					}
+				if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+					twn += tweenNoStr[n];
+				}
 			}
 			debug(fn.c_str());
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
@@ -665,6 +633,10 @@ void GfxPaint16::frameRect(const Common::Rect &rect) {
 
 void GfxPaint16::bitsShow(const Common::Rect &rect) {
 	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
+	workerRect.left -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.top -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.right += (1 * g_sci->_enhancementMultiplier);
+	workerRect.bottom += (1 * g_sci->_enhancementMultiplier);
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to show
 		return;
@@ -688,6 +660,10 @@ reg_t GfxPaint16::bitsSave(const Common::Rect &rect, byte screenMask) {
 	int size;
 
 	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
+	workerRect.left -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.top -= (1 * g_sci->_enhancementMultiplier);
+	workerRect.right += (1 * g_sci->_enhancementMultiplier);
+	workerRect.bottom += (1 * g_sci->_enhancementMultiplier);
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to save
 		return NULL_REG;

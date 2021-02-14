@@ -209,9 +209,7 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	int _enhancementMultiplier;
-	int16 currentPicture;
-	int16 picAnimFrame = 0;
-	int16 lastPlayedAnimFrame = -1;
+	
 	bool enhanced;
 	bool enhancedPrio;
 

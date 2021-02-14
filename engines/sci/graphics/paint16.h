@@ -84,14 +84,14 @@ public:
 	void kernelPortraitShow(const Common::String &resourceName, Common::Point position, uint16 resourceNum, uint16 noun, uint16 verb, uint16 cond, uint16 seq);
 	void kernelPortraitUnload(uint16 portraitId);
 	GfxPorts *_ports;
-	
 
 private:
 	ResourceManager *_resMan;
 	SegManager *_segMan;
 	AudioPlayer *_audio;
 	GfxAnimate *_animate;
-	GfxCache *_cache;	
+	GfxCache *_cache;
+
 	GfxCoordAdjuster16 *_coordAdjuster;
 	GfxScreen *_screen;
 	GfxPalette *_palette;
