@@ -54,6 +54,8 @@ class ResourceManager;
 class SegManager;
 
 class AudioPlayer {
+	static Audio::SoundHandle _audioHandleStatic;
+
 public:
 	AudioPlayer(ResourceManager *resMan);
 	~AudioPlayer();
@@ -63,6 +65,8 @@ public:
 	Audio::RewindableAudioStream *getAudioStream(uint32 number, uint32 volume, int *sampleLen);
 	int getAudioPosition();
 	int startAudio(uint16 module, uint32 tuple);
+	void PlayEnhancedTextAudio(char *fileName, Common::String text);
+	void PlayEnhancedViewCelAudio(Common::String fileName, int surfaceNumber, unsigned long hashId);
 	int wPlayAudio(uint16 module, uint32 tuple);
 	void stopAudio();
 	void pauseAudio();
@@ -76,6 +80,9 @@ public:
 	int audioCdPosition();
 
 	void stopAllAudio();
+	unsigned long lastPlayedCustomSound;
+	
+	
 
 private:
 	ResourceManager *_resMan;

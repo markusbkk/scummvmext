@@ -86,6 +86,9 @@ private:
 	uint8 _fontHeight;
 	uint16 _numChars;
 	Charinfo *_chars;
+
+	Graphics::Surface *pngfont;
+	const byte *enhfont;
 };
 
 } // End of namespace Sci

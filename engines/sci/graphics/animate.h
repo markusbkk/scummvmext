@@ -59,6 +59,8 @@ struct AnimateEntry {
 	GuiResourceId viewId;
 	int16 loopNo;
 	int16 celNo;
+	int16 tweenNo;
+	bool processed;
 	int16 paletteNo;
 	int16 x, y, z;
 	int16 priority;
@@ -69,6 +71,11 @@ struct AnimateEntry {
 	Common::Rect celRect;
 	bool showBitsFlag;
 	reg_t castHandle;
+	Graphics::Surface *viewpng;
+	int pixelsLength;
+	const byte *viewenh;
+	bool viewEnhanced = false;
+	bool enhancedIs256 = false;
 };
 typedef Common::List<AnimateEntry> AnimateList;
 typedef Common::Array<AnimateEntry> AnimateArray;
@@ -105,12 +112,14 @@ public:
 	void restoreAndDelete(int argc, reg_t *argv);
 	void reAnimate(Common::Rect rect);
 	void addToPicDrawCels();
-	void addToPicDrawView(GuiResourceId viewId, int16 loopNo, int16 celNo, int16 leftPos, int16 topPos, int16 priority, int16 control);
+	void addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loopNo, int16 celNo, int16 leftPos, int16 topPos, int16 priority, int16 control);
 	void printAnimateList(Console *con);
 
 	virtual void kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t *argv);
 	virtual void kernelAddToPicList(reg_t listReference, int argc, reg_t *argv);
-	virtual void kernelAddToPicView(GuiResourceId viewId, int16 loopNo, int16 celNo, int16 leftPos, int16 topPos, int16 priority, int16 control);
+	virtual void kernelAddToPicView(GuiResourceId viewId, int16 viewNo, int16 loopNo, int16 celNo, int16 leftPos, int16 topPos, int16 priority, int16 control);
+	
+		GfxScreen *_screen;
 
 private:
 	void init();
@@ -128,14 +137,16 @@ private:
 	GfxCache *_cache;
 	GfxPorts *_ports;
 	GfxPaint16 *_paint16;
-	GfxScreen *_screen;
 	GfxPalette *_palette;
+
 	GfxCursor *_cursor;
 	GfxTransitions *_transitions;
-
+	AnimateList _newList;
 	AnimateList _list;
 	AnimateArray _lastCastData;
-
+	AnimateList::iterator it;
+	AnimateList::iterator itb;
+	bool foundInList = false;
 	bool _fastCastEnabled;
 };
 

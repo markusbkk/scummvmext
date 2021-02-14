@@ -113,6 +113,7 @@ public:
 	Port *_curPort;
 
 	void saveLoadWithSerializer(Common::Serializer &ser) override;
+	Common::Rect _currentViewPort;
 
 private:
 	/** The list of open 'windows' (and ports), in visual order. */

@@ -47,7 +47,7 @@
 #include "sci/graphics/palette.h"
 #include "sci/graphics/ports.h"
 #include "sci/graphics/view.h"
-
+#include "sci/graphics/screen.h"
 #include "sci/parser/vocabulary.h"
 
 #include "video/avi_decoder.h"
@@ -65,6 +65,8 @@
 #include "common/savefile.h"
 
 #include "engines/util.h"
+#include <common/config-manager.h>
+#include <image/png.h>
 
 namespace Sci {
 
@@ -1959,7 +1961,47 @@ bool Console::cmdDrawPic(int argc, const char **argv) {
 
 	return true;
 }
+Graphics::Surface *loadCelPNGConsole(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
 
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+	return srf;
+}
+Graphics::Surface *loadCelPNGCLUTConsole(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	return srf;
+}
+
+Graphics::Surface *loadCelPNGCLUTOverrideConsole(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), d.getPalette());
+
+	for (int16 i = 0; i < 256; i++) {
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].r = d.getPalette()[i * 3];
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].g = d.getPalette()[(i * 3) + 1];
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].b = d.getPalette()[(i * 3) + 2];
+	}
+	g_sci->_gfxPalette16->_sysPalette = g_sci->_gfxPalette16->_paletteOverride;
+	//memcpy((void *)g_sci->_gfxPalette16->_paletteOverride, d.getPalette(), sizeof(d.getPalette()));
+	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
+	return srf;
+}
 bool Console::cmdDrawCel(int argc, const char **argv) {
 	if (argc < 4) {
 		debugPrintf("Draws a cel from a view resource\n");
@@ -1967,17 +2009,174 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 		debugPrintf("where <resourceId> is the number of the view resource to draw\n");
 		return true;
 	}
-
 	uint16 resourceId = atoi(argv[1]);
 	uint16 loopNo = atoi(argv[2]);
 	uint16 celNo = atoi(argv[3]);
 
 	if (_engine->_gfxPaint16) {
-		_engine->_gfxPaint16->kernelDrawCel(resourceId, loopNo, celNo, 50, 50, 0, 0, 128, 128, false, NULL_REG);
+		_engine->_gfxPaint16->kernelDrawCel(resourceId, loopNo, celNo, 0, 50, 50, 0, 0, 128, 128, false, NULL_REG);
 	} else {
 		GfxView *view = _engine->_gfxCache->getView(resourceId);
 		Common::Rect celRect(50, 50, 50 + view->getWidth(loopNo, celNo), 50 + view->getHeight(loopNo, celNo));
-		view->draw(celRect, celRect, celRect, loopNo, celNo, 255, 0, false);
+		AnimateEntry listEntry;
+		Common::FSNode folder;
+		if (ConfMan.hasKey("extrapath")) {
+			Common::String fn = "view.";
+			bool stop = false;
+			char viewNoStr[5];
+			sprintf(viewNoStr, "%u", resourceId);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+				if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+					fn += viewNoStr[n];
+				} else {
+					stop = true;
+				}
+			}
+			stop = false;
+			fn += ".";
+			char loopNoStr[5];
+			sprintf(loopNoStr, "%u", loopNo);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+				if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+					fn += loopNoStr[n];
+				} else {
+					stop = true;
+				}
+			}
+			stop = false;
+			fn += ".";
+			char celNoStr[5];
+			sprintf(celNoStr, "%u", celNo);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+				if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+					fn += celNoStr[n];
+				} else {
+					stop = true;
+				}
+			}
+			char tweenNoStr[5];
+			Common::String twn = "";
+			sprintf(tweenNoStr, "%u", 0);
+			for (int n = 0; n < 5; n++) {
+				if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+					twn += tweenNoStr[n];
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+				Common::String fileName = folder.getChild(fn + ".png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					listEntry.viewpng = loadCelPNGConsole(file);
+					if (listEntry.viewpng) {
+						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+						if (listEntry.viewenh) {
+							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+							listEntry.viewEnhanced = true;
+							listEntry.enhancedIs256 = false;
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+				Common::String fileName = folder.getChild(fn + "_256.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					listEntry.viewpng = loadCelPNGCLUTConsole(file);
+					if (listEntry.viewpng) {
+						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+						if (listEntry.viewenh) {
+							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+							listEntry.viewEnhanced = true;
+							listEntry.enhancedIs256 = true;
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+				Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					
+					listEntry.viewpng = loadCelPNGCLUTOverrideConsole(file);
+					if (listEntry.viewpng) {
+						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+						if (listEntry.viewenh) {
+							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+							listEntry.viewEnhanced = true;
+							listEntry.enhancedIs256 = true;
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + ".png").exists()) {
+				Common::String fileName = folder.getChild(fn + ".t." + tweenNoStr + ".png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					listEntry.viewpng = loadCelPNGConsole(file);
+					if (listEntry.viewpng) {
+						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+						if (listEntry.viewenh) {
+							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+							listEntry.viewEnhanced = true;
+							listEntry.enhancedIs256 = false;
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + "_256.png").exists()) {
+				Common::String fileName = folder.getChild(fn + ".t." + tweenNoStr + "_256.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+
+					listEntry.viewpng = loadCelPNGCLUTConsole(file);
+					if (listEntry.viewpng) {
+						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+						if (listEntry.viewenh) {
+							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+							listEntry.viewEnhanced = true;
+							listEntry.enhancedIs256 = true;
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + "_256RP.png").exists()) {
+				Common::String fileName = folder.getChild(fn + ".t." + tweenNoStr + "_256RP.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					listEntry.viewpng = loadCelPNGCLUTOverrideConsole(file);
+					if (listEntry.viewpng) {
+						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+						if (listEntry.viewenh) {
+							listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+							listEntry.viewEnhanced = true;
+							listEntry.enhancedIs256 = true;
+						}
+					}
+				}
+			}
+		}
+		view->draw(listEntry.viewpng, listEntry.viewenh, listEntry.pixelsLength, listEntry.viewEnhanced, listEntry.enhancedIs256, celRect, celRect, celRect, loopNo, celNo, 0, 255, 0, false);
 		_engine->_gfxScreen->copyRectToScreen(celRect);
 	}
 	return true;

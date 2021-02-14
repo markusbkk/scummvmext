@@ -30,9 +30,11 @@
 #include "sci/graphics/cache.h"
 #include "sci/graphics/maciconbar.h"
 #include "sci/graphics/palette.h"
+#include "sci/graphics/paint16.h"
 #include "sci/graphics/remap.h"
 #include "sci/graphics/screen.h"
 #include "sci/graphics/view.h"
+#include "sci/graphics/ports.h"
 
 namespace Sci {
 
@@ -103,6 +105,8 @@ GfxPalette::GfxPalette(ResourceManager *resMan, GfxScreen *screen)
 		error("GfxPalette: Unknown view type");
 	}
 }
+
+
 
 GfxPalette::~GfxPalette() {
 	if (_palVaryResourceId != -1)
@@ -501,6 +505,7 @@ static byte convertMacGammaToSCIGamma(int comp) {
 
 void GfxPalette::copySysPaletteToScreen(bool update) {
 	// just copy palette to system
+	
 	byte bpal[3 * 256];
 
 	// Get current palette, update it and put back
@@ -514,9 +519,15 @@ void GfxPalette::copySysPaletteToScreen(bool update) {
 			bpal[i * 3 + 2] = convertMacGammaToSCIGamma(_macClut[i * 3 + 2]);
 		} else if (_sysPalette.colors[i].used != 0) {
 			// Otherwise, copy to the screen
-			bpal[i * 3    ] = CLIP(_sysPalette.colors[i].r * _sysPalette.intensity[i] / 100, 0, 255);
-			bpal[i * 3 + 1] = CLIP(_sysPalette.colors[i].g * _sysPalette.intensity[i] / 100, 0, 255);
-			bpal[i * 3 + 2] = CLIP(_sysPalette.colors[i].b * _sysPalette.intensity[i] / 100, 0, 255);
+			if (!overridePalette) {
+				bpal[i * 3] = CLIP(_sysPalette.colors[i].r * _sysPalette.intensity[i] / 100, 0, 255);
+				bpal[i * 3 + 1] = CLIP(_sysPalette.colors[i].g * _sysPalette.intensity[i] / 100, 0, 255);
+				bpal[i * 3 + 2] = CLIP(_sysPalette.colors[i].b * _sysPalette.intensity[i] / 100, 0, 255);
+			} else {
+				bpal[i * 3] = CLIP(_paletteOverride.colors[i].r * _sysPalette.intensity[i] / 100, 0, 255);
+				bpal[i * 3 + 1] = CLIP(_paletteOverride.colors[i].g * _sysPalette.intensity[i] / 100, 0, 255);
+				bpal[i * 3 + 2] = CLIP(_paletteOverride.colors[i].b * _sysPalette.intensity[i] / 100, 0, 255);
+			}
 		}
 	}
 
@@ -524,15 +535,37 @@ void GfxPalette::copySysPaletteToScreen(bool update) {
 		g_sci->_gfxRemap16->updateRemapping();
 
 	_screen->setPalette(bpal, 0, 256, update);
+	
 }
 
 bool GfxPalette::kernelSetFromResource(GuiResourceId resourceId, bool force) {
 	Resource *palResource = _resMan->findResource(ResourceId(kResourceTypePalette, resourceId), false);
 	Palette palette;
-
+	
 	if (palResource) {
+		
+		g_sci->palResourceCURRENT = "pal.";
+		bool stop = false;
+		char palNoStr[5];
+		sprintf(palNoStr, "%u", resourceId);
+		for (int n = 0; n < 5; n++) {
+			if (stop == false)
+				if (palNoStr[n] >= '0' && palNoStr[n] <= '9') {
+					g_sci->palResourceCURRENT += palNoStr[n];
+				} else {
+					stop = true;
+				}
+		}
 		createFromData(*palResource, &palette);
 		set(&palette, force);
+
+			debug(("SWITCHING PALETTE TO # " + g_sci->palResourceCURRENT).c_str());
+			debug("------------- PREFER 256 == TRUE -------------");
+			g_sci->prefer256 = true;
+			g_sci->_gfxPaint16->kernelDrawPicture(g_sci->PICpictureId, g_sci->PICanimationNr, g_sci->PICanimationBlackoutFlag, g_sci->PICmirroredFlag, g_sci->PICaddToFlag, g_sci->PICEGApaletteNo);
+		    g_sci->_gfxScreen->copyToScreen();
+		    g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);
+
 		return true;
 	}
 
@@ -572,6 +605,7 @@ int16 GfxPalette::kernelFindColor(uint16 r, uint16 g, uint16 b) {
 // Returns true, if palette got changed
 bool GfxPalette::kernelAnimate(byte fromColor, byte toColor, int speed) {
 	Color col;
+	Color colOver;
 	//byte colorNr;
 	int16 colorCount;
 	uint32 now = g_sci->getTickCount();
@@ -601,23 +635,37 @@ bool GfxPalette::kernelAnimate(byte fromColor, byte toColor, int speed) {
 				if (speed > 0) {
 					// TODO: Not really sure about this, sierra sci seems to do exactly this here
 					col = _sysPalette.colors[fromColor];
+					colOver = _paletteOverride.colors[fromColor];
 					if (fromColor < toColor) {
 						colorCount = toColor - fromColor - 1;
 						memmove(&_sysPalette.colors[fromColor], &_sysPalette.colors[fromColor + 1], colorCount * sizeof(Color));
+						memmove(&_paletteOverride.colors[fromColor], &_paletteOverride.colors[fromColor + 1], colorCount * sizeof(Color));
 					}
 					_sysPalette.colors[toColor - 1] = col;
+					_paletteOverride.colors[toColor - 1] = colOver;
 				} else {
 					col = _sysPalette.colors[toColor - 1];
+					colOver = _paletteOverride.colors[toColor - 1];
 					if (fromColor < toColor) {
 						colorCount = toColor - fromColor - 1;
 						memmove(&_sysPalette.colors[fromColor + 1], &_sysPalette.colors[fromColor], colorCount * sizeof(Color));
+						memmove(&_paletteOverride.colors[fromColor + 1], &_paletteOverride.colors[fromColor], colorCount * sizeof(Color));
 					}
 					_sysPalette.colors[fromColor] = col;
+					_paletteOverride.colors[fromColor] = colOver;
 				}
 				// removing schedule
 				_schedules[scheduleNr].schedule = now + ABS(speed);
 				// TODO: Not sure when sierra actually removes a schedule
 				//_schedules.remove_at(scheduleNr);
+
+				if (!g_sci->prefer256) {
+					debug("------------- PREFER 256 == TRUE -------------");
+					g_sci->prefer256 = true;
+					g_sci->_gfxPaint16->kernelDrawPicture(g_sci->PICpictureId, g_sci->PICanimationNr, g_sci->PICanimationBlackoutFlag, g_sci->PICmirroredFlag, g_sci->PICaddToFlag, g_sci->PICEGApaletteNo);
+					g_sci->_gfxScreen->copyToScreen();
+					g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);
+				}
 				return true;
 			}
 			return false;
@@ -673,6 +721,19 @@ void GfxPalette::kernelAssertPalette(GuiResourceId resourceId) {
 	Palette *viewPalette = view->getPalette();
 	if (viewPalette) {
 		// merge/insert this palette
+		g_sci->palResourceCURRENT = "pal.";
+		bool stop = false;
+		char palNoStr[5];
+		sprintf(palNoStr, "%u", resourceId);
+		for (int n = 0; n < 5; n++) {
+			if (stop == false)
+				if (palNoStr[n] >= '0' && palNoStr[n] <= '9') {
+					g_sci->palResourceCURRENT += palNoStr[n];
+				} else {
+					stop = true;
+				}
+		}
+		debug(("ASSERTING PALETTE # " + g_sci->palResourceCURRENT).c_str());
 		set(viewPalette, true);
 	}
 }
@@ -761,7 +822,24 @@ bool GfxPalette::kernelPalVaryInit(GuiResourceId resourceId, uint16 ticks, uint1
 	if (palVaryLoadTargetPalette(resourceId)) {
 		// Save current palette
 		memcpy(&_palVaryOriginPalette, &_sysPalette, sizeof(Palette));
-
+		g_sci->palResourceCURRENT = "pal.";
+		bool stop = false;
+		char palNoStr[5];
+		sprintf(palNoStr, "%u", resourceId);
+		for (int n = 0; n < 5; n++) {
+			if (stop == false)
+				if (palNoStr[n] >= '0' && palNoStr[n] <= '9') {
+					g_sci->palResourceCURRENT += palNoStr[n];
+				} else {
+					stop = true;
+				}
+		}
+		debug(("palVaryLoadTargetPalette # " + g_sci->palResourceCURRENT).c_str());
+		debug("------------- PREFER 256 == TRUE -------------");
+		g_sci->prefer256 = true;
+		g_sci->_gfxPaint16->kernelDrawPicture(g_sci->PICpictureId, g_sci->PICanimationNr, g_sci->PICanimationBlackoutFlag, g_sci->PICmirroredFlag, g_sci->PICaddToFlag, g_sci->PICEGApaletteNo);
+		g_sci->_gfxScreen->copyToScreen();
+		g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);
 		_palVarySignal = 0;
 		_palVaryTicks = ticks;
 		_palVaryStep = 1;
@@ -814,6 +892,19 @@ int16 GfxPalette::kernelPalVaryChangeTarget(GuiResourceId resourceId) {
 			createFromData(*palResource, &insertPalette);
 			// insert new palette into target
 			insert(&insertPalette, &_palVaryTargetPalette);
+			g_sci->palResourceCURRENT = "pal.";
+			bool stop = false;
+			char palNoStr[5];
+			sprintf(palNoStr, "%u", resourceId);
+			for (int n = 0; n < 5; n++) {
+				if (stop == false)
+					if (palNoStr[n] >= '0' && palNoStr[n] <= '9') {
+						g_sci->palResourceCURRENT += palNoStr[n];
+					} else {
+						stop = true;
+					}
+			}
+			debug(("INSERTING PALETTE # " + g_sci->palResourceCURRENT).c_str());
 			// update palette and set on screen
 			palVaryProcess(0, true);
 		}
@@ -944,6 +1035,16 @@ void GfxPalette::palVaryProcess(int signal, bool setPalette) {
 	if ((_sysPaletteChanged) && (setPalette) && (_screen->_picNotValid == 0)) {
 		setOnScreen();
 		_sysPaletteChanged = false;
+	}
+	if (_palVaryStep == _palVaryStepStop) {
+		if (!g_sci->prefer256) {
+			debug("------------- PREFER 256 == TRUE -------------");
+			debug("------ _palVaryStep == _palVaryStepStop! -------");
+			g_sci->prefer256 = true;
+			g_sci->_gfxPaint16->kernelDrawPicture(g_sci->PICpictureId, g_sci->PICanimationNr, g_sci->PICanimationBlackoutFlag, g_sci->PICmirroredFlag, g_sci->PICaddToFlag, g_sci->PICEGApaletteNo);
+			g_sci->_gfxScreen->copyToScreen();
+			g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);
+		}
 	}
 }
 

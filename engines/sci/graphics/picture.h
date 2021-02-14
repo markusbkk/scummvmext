@@ -81,16 +81,29 @@ private:
 	GfxPorts *_ports;
 	GfxScreen *_screen;
 	GfxPalette *_palette;
-
+	
 	int16 _resourceId;
 	Resource *_resource;
 	int _resourceType;
-
+	bool enhanced;
+	bool overlay;
+	bool paletted;
+	bool surface;
+	bool enhancedPrio;
 	bool _mirroredFlag;
 	bool _addToFlag;
 	int16 _EGApaletteNo;
 	byte _priority;
-
+	Graphics::Surface *png;
+	Graphics::Surface *pngPal;
+	Graphics::Surface *pngPrio;
+	Graphics::Surface *pngOverlay;
+	Graphics::Surface *pngSurface;
+	const byte *enh;
+	const byte *enhPal;
+	const byte *enhPrio;
+	const byte *enhOverlay;
+	const byte *enhSurface;
 	// If true, we will show the whole EGA drawing process...
 	bool _EGAdrawingVisualize;
 };

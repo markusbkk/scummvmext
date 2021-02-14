@@ -108,10 +108,22 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	_eventMan = 0;
 	_console = 0;
 	_opcode_formats = 0;
-
+	g_sci->palResourceCURRENT = "pal.";
+	bool stop = false;
+	char palNoStr[5];
+	sprintf(palNoStr, "%u", 999);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (palNoStr[n] >= '0' && palNoStr[n] <= '9') {
+				g_sci->palResourceCURRENT += palNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
 	_forceHiresGraphics = false;
 	_enhancementMultiplier = 4;
-
+	enhanced = false;
+	enhancedPrio = false;
 	// Set up the engine specific debug levels
 	DebugMan.addDebugChannel(kDebugLevelError, "Error", "Script error debugging");
 	DebugMan.addDebugChannel(kDebugLevelNodes, "Lists", "Lists and nodes debugging");
@@ -324,6 +336,7 @@ Common::Error SciEngine::run() {
 	} else
 #endif
 		_audio = new AudioPlayer(_resMan);
+		_audio->lastPlayedCustomSound = 0;
 #ifdef ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
 		_video32 = new Video32(segMan, _eventMan);
