@@ -250,9 +250,21 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
 	}
+	Common::String animFramePrevious = "";
+	char animFramePreviousStr[5];
+	bool stop = false;
+	sprintf(animFramePreviousStr, "%u", (int)(g_sci->lastPlayedAnimFrame));
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (animFramePreviousStr[n] >= '0' && animFramePreviousStr[n] <= '9') {
+				animFramePrevious += animFramePreviousStr[n];
+			} else {
+				stop = true;
+			}
+	}
 	Common::String animFrame = "";
 	char animFrameStr[5];
-	bool stop = false;
+	stop = false;
 	sprintf(animFrameStr, "%u", (int)(g_sci->picAnimFrame++/2));
 	for (int n = 0; n < 5; n++) {
 		if (stop == false)
@@ -262,9 +274,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				stop = true;
 			}
 	}
-	if (g_sci->picAnimFrame >= 120) {
-		g_sci->picAnimFrame = 0;
-	}
+	if (g_sci->picAnimFrame % 2 == 0) {
+	debug("-= RUN SCUMMVMX ON SOLID STATE / SSD HARD DRIVES ONLY! =-");
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
@@ -401,6 +412,141 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					}
 				}
 			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFramePrevious + ".png").exists()) {
+				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFramePrevious + ".png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(_resource->name() + ".png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					} else {
+						//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						png = loadPNG(file);
+						if (png) {
+							enh = (const byte *)png->getPixels();
+							if (enh) {
+								pixelCountX = png->w * png->h * 4;
+								enhanced = true;
+							}
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFramePrevious + "_256.png").exists()) {
+				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFramePrevious + "_256.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(_resource->name() + "_256.png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					} else {
+						//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						pngPal = loadPNGCLUT(file, _screen);
+						if (pngPal) {
+							enhPal = (const byte *)pngPal->getPixels();
+							if (enhPal) {
+								pixelCountX = pngPal->w * pngPal->h * 4;
+								paletted = true;
+								g_sci->_gfxPalette16->overridePalette = false;
+							}
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFramePrevious + "_256RP.png").exists()) {
+				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFramePrevious + "_256RP.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					} else {
+						//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						pngPal = loadPNGCLUTOverride(file, _screen);
+						if (pngPal) {
+							enhPal = (const byte *)pngPal->getPixels();
+							if (enhPal) {
+								pixelCountX = pngPal->w * pngPal->h * 4;
+								paletted = true;
+								g_sci->_gfxPalette16->overridePalette = true;
+							}
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFramePrevious + "_o.png").exists()) {
+
+				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFramePrevious + "_o.png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(_resource->name() + "_o.png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					} else {
+						//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						pngOverlay = loadPNG(file);
+						if (pngOverlay) {
+							enhOverlay = (const byte *)pngOverlay->getPixels();
+							if (enhOverlay) {
+								pixelCountX = pngOverlay->w * pngOverlay->h * 4;
+								overlay = true;
+							}
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFramePrevious + "_p.png").exists()) {
+				Common::String fileNamePrio = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFramePrevious + "_p.png").getName();
+				Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
+
+				if (!filePrio) {
+					fileNamePrio = folder.getChild(_resource->name() + "_p.png").getName();
+					filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
+					if (!filePrio) {
+						//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					} else {
+						//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+						pngPrio = loadPNG(filePrio);
+						if (pngPrio) {
+							enhPrio = (const byte *)pngPrio->getPixels();
+							if (enhPrio) {
+								pixelCountX = pngPrio->w * pngPrio->h * 4;
+								enhancedPrio = true;
+							}
+						}
+					}
+				}
+			}
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFramePrevious + "_s.png").exists()) {
+				Common::String fileNameSurf = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFramePrevious + "_s.png").getName();
+				Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
+
+				if (!fileSurf) {
+					fileNameSurf = folder.getChild(_resource->name() + "_s.png").getName();
+					fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
+					if (!fileSurf) {
+						//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					} else {
+						//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+						pngSurface = loadPNG(fileSurf);
+						if (pngSurface) {
+							enhSurface = (const byte *)pngSurface->getPixels();
+							if (enhSurface) {
+								pixelCountX = pngSurface->w * pngSurface->h * 4;
+								surface = true;
+							}
+						}
+					}
+				}
+			}
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + animFrame + ".png").exists()) {
 				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + animFrame + ".png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -418,6 +564,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (enh) {
 								pixelCountX = png->w * png->h * 4;
 								enhanced = true;
+								g_sci->lastPlayedAnimFrame = g_sci->picAnimFrame;
 							}
 						}
 					}
@@ -441,6 +588,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								pixelCountX = pngPal->w * pngPal->h * 4;
 								paletted = true;
 								g_sci->_gfxPalette16->overridePalette = false;
+								g_sci->lastPlayedAnimFrame = g_sci->picAnimFrame;
 							}
 						}
 					}
@@ -464,6 +612,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								pixelCountX = pngPal->w * pngPal->h * 4;
 								paletted = true;
 								g_sci->_gfxPalette16->overridePalette = true;
+								g_sci->lastPlayedAnimFrame = g_sci->picAnimFrame;
 							}
 						}
 					}
@@ -487,6 +636,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (enhOverlay) {
 								pixelCountX = pngOverlay->w * pngOverlay->h * 4;
 								overlay = true;
+								g_sci->lastPlayedAnimFrame = g_sci->picAnimFrame;
 							}
 						}
 					}
@@ -509,6 +659,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (enhPrio) {
 								pixelCountX = pngPrio->w * pngPrio->h * 4;
 								enhancedPrio = true;
+								g_sci->lastPlayedAnimFrame = g_sci->picAnimFrame;
 							}
 						}
 					}
@@ -531,12 +682,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (enhSurface) {
 								pixelCountX = pngSurface->w * pngSurface->h * 4;
 								surface = true;
+								g_sci->lastPlayedAnimFrame = g_sci->picAnimFrame;
 							}
 						}
 					}
 				}
 			}
 		}
+	}
+		if (g_sci->picAnimFrame >= g_sci->lastPlayedAnimFrame + 3) {
+			g_sci->picAnimFrame = 0;
+		}
+	
 	}
 
 	Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
