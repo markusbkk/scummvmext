@@ -54,10 +54,6 @@
 #ifdef ENABLE_SCI32
 #include "sci/graphics/text32.h"
 #endif
-#include <common/config-manager.h>
-#include <audio/audiostream.h>
-#include <sci/sound/audio.h>
-#include <sci/sound/music.h>
 
 namespace Sci {
 
@@ -334,23 +330,9 @@ reg_t kGraphSaveUpscaledHiresBox(EngineState *s, int argc, reg_t *argv) {
 	return g_sci->_gfxPaint16->kernelGraphSaveUpscaledHiresBox(rect);
 }
 
-unsigned long
-hash(const char *str) {
-	unsigned long hash = 5381;
-	int c;
-
-	while (c = *str++)
-		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-	return hash;
-}
-
 reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 	int16 textWidth, textHeight;
 	Common::String text = s->_segMan->getString(argv[1]);
-	char trimmedTextStr[250] = {'\0'};
-	sprintf(trimmedTextStr, "%d", hash(text.c_str()));
-	g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
 	reg_t *dest = s->_segMan->derefRegPtr(argv[0], 4);
 	int maxwidth = (argc > 3) ? argv[3].toUint16() : 0;
 	int font_nr = argv[2].toUint16();
@@ -1079,7 +1061,7 @@ reg_t kAddToPic(EngineState *s, int argc, reg_t *argv) {
 		topPos = argv[4].toSint16();
 		priority = argv[5].toSint16();
 		control = argv[6].toSint16();
-		g_sci->_gfxAnimate->kernelAddToPicView(viewId, viewId, loopNo, celNo, leftPos, topPos, priority, control);
+		g_sci->_gfxAnimate->kernelAddToPicView(viewId, loopNo, celNo, leftPos, topPos, priority, control);
 		break;
 	default:
 		error("kAddToPic with unsupported parameter count %d", argc);
@@ -1150,7 +1132,7 @@ reg_t kDrawCel(EngineState *s, int argc, reg_t *argv) {
 		}
 	}
 
-	g_sci->_gfxPaint16->kernelDrawCel(viewId, loopNo, celNo, 0, x, y, priority, paletteNo, scaleX, scaleY, hiresMode, upscaledHiresHandle);
+	g_sci->_gfxPaint16->kernelDrawCel(viewId, loopNo, celNo, x, y, priority, paletteNo, scaleX, scaleY, hiresMode, upscaledHiresHandle);
 
 	return s->r_acc;
 }

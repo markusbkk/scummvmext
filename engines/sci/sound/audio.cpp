@@ -48,7 +48,6 @@ AudioPlayer::AudioPlayer(ResourceManager *resMan) : _resMan(resMan), _audioRate(
 
 	_mixer = g_system->getMixer();
 	_wPlayFlag = false;
-
 }
 
 AudioPlayer::~AudioPlayer() {
@@ -189,227 +188,11 @@ void AudioPlayer::handleFanmadeSciAudio(reg_t sciAudioObject, SegManager *segMan
 		}
 	}
 }
-void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
-	Common::FSNode folder;
-	bool foundAudio = false;
-	Common::String fnStr = "text.";
-	fnStr += fileName;
-	if (ConfMan.hasKey("extrapath")) {
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
-			if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
-			Common::File *sciAudioFile = new Common::File();
-			// Replace backwards slashes
 
-			Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
-			for (uint i = 0; i < fileName.size(); i++) {
-				if (fileName[i] == '\\')
-					fileName.setChar('/', i);
-			}
-			sciAudioFile->open(fileName);
-
-			Audio::RewindableAudioStream *audioStream = nullptr;
-			audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
-
-			if (audioStream) {
-				foundAudio = true;
-				debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
-				Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
-				// We only support one audio handle
-				if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-					
-						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-						g_system->getMixer()->stopID(2147483646 - 1983);
-					
-					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
-				}
-			}
-			} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
-				Common::File *sciAudioFile = new Common::File();
-				// Replace backwards slashes
-
-				Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
-				for (uint i = 0; i < fileName.size(); i++) {
-					if (fileName[i] == '\\')
-						fileName.setChar('/', i);
-				}
-				sciAudioFile->open(fileName);
-
-				Audio::RewindableAudioStream *audioStream = nullptr;
-				audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
-
-				if (audioStream) {
-					foundAudio = true;
-					debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
-					Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
-					// We only support one audio handle
-					if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-
-						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-							g_system->getMixer()->stopID(2147483646 - 1983);
-
-						g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
-					}
-				}
-			}
-		}
-	}
-	if (foundAudio == false) {
-		debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
-	}
-}
-
-void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceNumber, unsigned long hashId) {
-	if (!g_system->getMixer()->isSoundIDActive(hashId) && g_sci->_audio->lastPlayedCustomSound != (hashId) || g_sci->_audio->lastPlayedCustomSound == 0) {
-		bool hasSurface = false;
-		Common::FSNode folder;
-		bool foundAudio = false;
-		Common::String fnStr = fileName.c_str();
-		if (ConfMan.hasKey("extrapath")) {
-			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
-				Common::String fnStrSurf = fileName.c_str();
-				char surfNoStr[5];
-				sprintf(surfNoStr, "%d", surfaceNumber);
-				fnStrSurf += ".s.";
-				fnStrSurf += surfNoStr;
-				debug(("view + surface : " + fnStrSurf).c_str());
-				if (folder.getChild((fnStrSurf + ".mp3").c_str()).exists()) {
-					hasSurface = true;
-					Common::File *sciAudioFile = new Common::File();
-					// Replace backwards slashes
-
-					Common::String fileName = folder.getChild((fnStrSurf + ".mp3").c_str()).getName();
-					for (uint i = 0; i < fileName.size(); i++) {
-						if (fileName[i] == '\\')
-							fileName.setChar('/', i);
-					}
-					sciAudioFile->open(fileName);
-
-					Audio::RewindableAudioStream *audioStream = nullptr;
-					audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
-
-					if (audioStream) {
-						foundAudio = true;
-						debug(("Found : " + fnStrSurf + ".mp3").c_str());
-						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
-						// We only support one audio handle
-						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-
-							if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-								g_system->getMixer()->stopID(hashId);
-
-							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
-
-							if (g_system->getMixer()->isSoundIDActive(hashId))
-								g_sci->_audio->lastPlayedCustomSound = hashId;
-						}
-					}
-				} else if (folder.getChild((fnStrSurf + ".wav").c_str()).exists()) {
-					hasSurface = true;
-					Common::File *sciAudioFile = new Common::File();
-					// Replace backwards slashes
-
-					Common::String fileName = folder.getChild((fnStrSurf + ".wav").c_str()).getName();
-					for (uint i = 0; i < fileName.size(); i++) {
-						if (fileName[i] == '\\')
-							fileName.setChar('/', i);
-					}
-					sciAudioFile->open(fileName);
-
-					Audio::RewindableAudioStream *audioStream = nullptr;
-					audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
-
-					if (audioStream) {
-						foundAudio = true;
-						debug(("Found : " + fnStrSurf + ".wav").c_str());
-						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
-						// We only support one audio handle
-						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-
-							if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-								g_system->getMixer()->stopID(hashId);
-
-							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
-
-							if (g_system->getMixer()->isSoundIDActive(hashId))
-								g_sci->_audio->lastPlayedCustomSound = hashId;
-						}
-					}
-				}
-			}
-			if (!hasSurface) {
-			
-			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
-					if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
-						Common::File *sciAudioFile = new Common::File();
-						// Replace backwards slashes
-
-						Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
-						for (uint i = 0; i < fileName.size(); i++) {
-							if (fileName[i] == '\\')
-								fileName.setChar('/', i);
-						}
-						sciAudioFile->open(fileName);
-
-						Audio::RewindableAudioStream *audioStream = nullptr;
-						audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
-
-						if (audioStream) {
-							foundAudio = true;
-							debug(("Found : " + fnStr + ".mp3").c_str());
-							Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
-							// We only support one audio handle
-							if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-
-								if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-									g_system->getMixer()->stopID(hashId);
-
-								g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
-								if (g_system->getMixer()->isSoundIDActive(hashId))
-									g_sci->_audio->lastPlayedCustomSound = hashId;
-							}
-						}
-					} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
-						Common::File *sciAudioFile = new Common::File();
-						// Replace backwards slashes
-
-						Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
-						for (uint i = 0; i < fileName.size(); i++) {
-							if (fileName[i] == '\\')
-								fileName.setChar('/', i);
-						}
-						sciAudioFile->open(fileName);
-
-						Audio::RewindableAudioStream *audioStream = nullptr;
-						audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
-
-						if (audioStream) {
-							foundAudio = true;
-							debug(("Found : " + fnStr + ".wav").c_str());
-							Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
-							// We only support one audio handle
-							if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-
-								if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-									g_system->getMixer()->stopID(hashId);
-
-								g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, hashId, 127, 0, DisposeAfterUse::YES);
-								if (g_system->getMixer()->isSoundIDActive(hashId))
-									g_sci->_audio->lastPlayedCustomSound = hashId;
-							}
-						}
-					}
-				}
-				
-			}
-		}
-		debug(("view : " + fnStr).c_str());
-	}
-}
-
-	int AudioPlayer::startAudio(uint16 module, uint32 number) {
+int AudioPlayer::startAudio(uint16 module, uint32 number) {
 	int sampleLen;
 	Audio::AudioStream *audioStream = getAudioStream(number, module, &sampleLen);
-	
+
 	if (audioStream) {
 		_wPlayFlag = false;
 		Audio::Mixer::SoundType soundType = (module == 65535) ? Audio::Mixer::kSFXSoundType : Audio::Mixer::kSpeechSoundType;
@@ -604,7 +387,7 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 			return NULL;
 		}
 	}
-	
+
 	byte audioFlags;
 	uint32 audioCompressionType = audioRes->getAudioCompressionType();
 

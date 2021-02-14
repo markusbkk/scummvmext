@@ -209,9 +209,6 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	int _enhancementMultiplier;
-	
-	bool enhanced;
-	bool enhancedPrio;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

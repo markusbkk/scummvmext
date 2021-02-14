@@ -111,8 +111,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 
 	_forceHiresGraphics = false;
 	_enhancementMultiplier = 4;
-	enhanced = false;
-	enhancedPrio = false;
+
 	// Set up the engine specific debug levels
 	DebugMan.addDebugChannel(kDebugLevelError, "Error", "Script error debugging");
 	DebugMan.addDebugChannel(kDebugLevelNodes, "Lists", "Lists and nodes debugging");
@@ -325,7 +324,6 @@ Common::Error SciEngine::run() {
 	} else
 #endif
 		_audio = new AudioPlayer(_resMan);
-		_audio->lastPlayedCustomSound = 0;
 #ifdef ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
 		_video32 = new Video32(segMan, _eventMan);

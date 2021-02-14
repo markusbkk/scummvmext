@@ -95,7 +95,6 @@ private:
 
 	Common::Rect _codeRefTempRect;
 	CodeRefRectArray _codeRefRects;
-
 };
 
 } // End of namespace Sci

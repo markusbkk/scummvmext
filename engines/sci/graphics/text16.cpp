@@ -676,7 +676,6 @@ void GfxText16::DrawStatus(const Common::String &strOrig) {
 		str = Common::convertBiDiString(strOrig, g_sci->getLanguage());
 
 	const byte *text = (const byte *)str.c_str();
-	
 	uint16 textLen = str.size();
 	Common::Rect rect;
 

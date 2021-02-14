@@ -35,7 +35,6 @@
 #include "sci/graphics/view.h"
 #include "sci/graphics/palette.h"
 #include "sci/graphics/scifx.h"
-#include "sci/graphics/picture.h"
 
 namespace Sci {
 
@@ -46,6 +45,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	if (_resMan->getViewType() != kViewEga) {
 		_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_VGA;
 	}
+	ConfMan.setBool("rgb_rendering", true);
 	// we default to scripts running at 320x200
 	_scriptWidth = 320;
 	_scriptHeight = 200;
@@ -53,6 +53,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	_height = 0;
 	_displayWidth = 0;
 	_displayHeight = 0;
+
 	_curPaletteMapValue = 0;
 	_paletteModsEnabled = false;
 
@@ -173,21 +174,25 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
 	// Allocate visual, priority, control and display screen
 	_visualScreen = (byte *)calloc(_pixels, 1);
+	_priorityScreen = (byte *)calloc(_pixels, 1);
+	_controlScreen = (byte *)calloc(_pixels, 1);
 
 	_visualScreenR = (byte *)calloc(_pixels, 1);
-	_visualScreenG = (byte *)calloc(_pixels, 1);
-	_visualScreenB = (byte *)calloc(_pixels, 1);
+	_priorityScreenR = (byte *)calloc(_pixels, 1);
+	_controlScreenR = (byte *)calloc(_pixels, 1);
 
-	_controlScreen = (byte *)calloc(_pixels, 1);
+	_visualScreenG = (byte *)calloc(_pixels, 1);
+	_priorityScreenG = (byte *)calloc(_pixels, 1);
+	_controlScreenG = (byte *)calloc(_pixels, 1);
+
+	_visualScreenB = (byte *)calloc(_pixels, 1);
+	_priorityScreenB = (byte *)calloc(_pixels, 1);
+	_controlScreenB = (byte *)calloc(_pixels, 1);
 
 	_displayScreen = (byte *)calloc(_displayPixels, 1);
 	_displayScreenR = (byte *)calloc(_displayPixels, 1);
 	_displayScreenG = (byte *)calloc(_displayPixels, 1);
 	_displayScreenB = (byte *)calloc(_displayPixels, 1);
-	_displayScreenA = (byte *)calloc(_displayPixels, 1);
-	_enhancedMatte = (byte *)calloc(_displayPixels, 1);
-	_priorityScreenX = (byte *)calloc(_displayPixels, 1);
-	_surfaceScreen = (byte *)calloc(_displayPixels, 1);
 
 	memset(&_ditheredPicColors, 0, sizeof(_ditheredPicColors));
 
@@ -221,117 +226,71 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 		setupCustomPaletteMods(this);
 		ConfMan.setBool("rgb_rendering", true);
 	}
-	ConfMan.setBool("rgb_rendering", true);
-	if (ConfMan.getBool("rgb_rendering")) {
-		// Initialize the actual screen
-		Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
-		const Graphics::PixelFormat *format = &format8;
+
+	// Initialize the actual screen
+	Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
+	const Graphics::PixelFormat *format = &format8;
+	if (ConfMan.getBool("rgb_rendering"))
 		format = 0; // Backend's preferred mode; RGB if available
 
-		if (g_sci->hasMacIconBar()) {
-			// For SCI1.1 Mac games with the custom icon bar, we need to expand the screen
-			// to accommodate for the icon bar. Of course, both KQ6 and QFG1 VGA differ in size.
-			// We add 2 to the height of the icon bar to add a buffer between the screen and the
-			// icon bar (as did the original interpreter).
-			if (g_sci->getGameId() == GID_KQ6)
-				initGraphics(_displayWidth, _displayHeight + 26 + 2, format);
-			else if (g_sci->getGameId() == GID_FREDDYPHARKAS)
-				initGraphics(_displayWidth, _displayHeight + 28 + 2, format);
-			else
-				error("Unknown SCI1.1 Mac game");
-		} else
-			initGraphics(_displayWidth, _displayHeight, format);
+	if (g_sci->hasMacIconBar()) {
+		// For SCI1.1 Mac games with the custom icon bar, we need to expand the screen
+		// to accommodate for the icon bar. Of course, both KQ6 and QFG1 VGA differ in size.
+		// We add 2 to the height of the icon bar to add a buffer between the screen and the
+		// icon bar (as did the original interpreter).
+		if (g_sci->getGameId() == GID_KQ6)
+			initGraphics(_displayWidth, _displayHeight + 26 + 2, format);
+		else if (g_sci->getGameId() == GID_FREDDYPHARKAS)
+			initGraphics(_displayWidth, _displayHeight + 28 + 2, format);
+		else
+			error("Unknown SCI1.1 Mac game");
+	} else
+		initGraphics(_displayWidth, _displayHeight, format);
 
-		_format = g_system->getScreenFormat();
-
-		// If necessary, allocate buffers for RGB mode
-		if (_format.bytesPerPixel != 1) {
-			_displayedScreen = (byte *)calloc(_displayPixels, 1);
-			_displayedScreenR = (byte *)calloc(_displayPixels, 1);
-			_displayedScreenG = (byte *)calloc(_displayPixels, 1);
-			_displayedScreenB = (byte *)calloc(_displayPixels, 1);
-			_rgbScreen = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
-			_palette = new byte[3 * 256];
-
-			if (_paletteModsEnabled)
-				_paletteMapScreen = (byte *)calloc(_displayPixels, 1);
-			else
-				_paletteMapScreen = 0;
-		} else {
-			_displayedScreen = 0;
-			_displayedScreenR = 0;
-			_displayedScreenG = 0;
-			_displayedScreenB = 0;
-			_palette = 0;
-			_rgbScreen = 0;
-			_paletteMapScreen = 0;
-		}
-		_backupScreen = 0;
-	} else {
-		ConfMan.setBool("rgb_rendering", true);
-		ConfMan.getBool("rgb_rendering");
-		// Initialize the actual screen
-		Graphics::PixelFormat format8 = Graphics::PixelFormat::createFormatCLUT8();
-		const Graphics::PixelFormat *format = &format8;
-		format = 0; // Backend's preferred mode; RGB if available
-
-		if (g_sci->hasMacIconBar()) {
-			// For SCI1.1 Mac games with the custom icon bar, we need to expand the screen
-			// to accommodate for the icon bar. Of course, both KQ6 and QFG1 VGA differ in size.
-			// We add 2 to the height of the icon bar to add a buffer between the screen and the
-			// icon bar (as did the original interpreter).
-			if (g_sci->getGameId() == GID_KQ6)
-				initGraphics(_displayWidth, _displayHeight + 26 + 2, format);
-			else if (g_sci->getGameId() == GID_FREDDYPHARKAS)
-				initGraphics(_displayWidth, _displayHeight + 28 + 2, format);
-			else
-				error("Unknown SCI1.1 Mac game");
-		} else
-			initGraphics(_displayWidth, _displayHeight, format);
-
-		_format = g_system->getScreenFormat();
-
-		// If necessary, allocate buffers for RGB mode
-		if (_format.bytesPerPixel != 1) {
-			_displayedScreen = (byte *)calloc(_displayPixels, 1);
-			_displayedScreenR = (byte *)calloc(_displayPixels, 1);
-			_displayedScreenG = (byte *)calloc(_displayPixels, 1);
-			_displayedScreenB = (byte *)calloc(_displayPixels, 1);
-			_rgbScreen = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
-			_palette = new byte[3 * 256];
-
-			if (_paletteModsEnabled)
-				_paletteMapScreen = (byte *)calloc(_displayPixels, 1);
-			else
-				_paletteMapScreen = 0;
-		} else {
-			_displayedScreen = 0;
-			_displayedScreenR = 0;
-			_displayedScreenG = 0;
-			_displayedScreenB = 0;
-			_palette = 0;
-			_rgbScreen = 0;
-			_paletteMapScreen = 0;
-		}
-		_backupScreen = 0;
-	}
+	_format = g_system->getScreenFormat();
 	
+	// If necessary, allocate buffers for RGB mode
+	if (_format.bytesPerPixel != 1) {
+		_displayedScreen = (byte *)calloc(_displayPixels, 1);
+		_displayedScreenR = (byte *)calloc(_displayPixels, 1);
+		_displayedScreenG = (byte *)calloc(_displayPixels, 1);
+		_displayedScreenB = (byte *)calloc(_displayPixels, 1);
+		_rgbScreen = (byte *)calloc(_format.bytesPerPixel*_displayPixels, 1);
+		_palette = new byte[3*256];
+
+		if (_paletteModsEnabled)
+			_paletteMapScreen = (byte *)calloc(_displayPixels, 1);
+		else
+			_paletteMapScreen = 0;
+	} else {
+		_displayedScreen = 0;
+		_displayedScreenR = 0;
+		_displayedScreenG = 0;
+		_displayedScreenB = 0;
+		_palette = 0;
+		_rgbScreen = 0;
+		_paletteMapScreen = 0;
+	}
+	_backupScreen = 0;
 }
 
 GfxScreen::~GfxScreen() {
 	free(_visualScreen);
+	free(_priorityScreen);
 	free(_controlScreen);
 	free(_visualScreenR);
+	free(_priorityScreenR);
+	free(_controlScreenR);
 	free(_visualScreenG);
+	free(_priorityScreenG);
+	free(_controlScreenG);
 	free(_visualScreenB);
-	free(_priorityScreenX);
-	free(_enhancedMatte);
-	free(_surfaceScreen);
+	free(_priorityScreenB);
+	free(_controlScreenB);
 	free(_displayScreen);
 	free(_displayScreenR);
 	free(_displayScreenG);
 	free(_displayScreenB);
-	free(_displayScreenA);
 	free(_paletteMapScreen);
 	free(_displayedScreen);
 	free(_displayedScreenR);
@@ -346,12 +305,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 	assert(_format.bytesPerPixel != 1);
 
 	for (int y = rect.top; y < rect.bottom; ++y) {
-		const byte *inE = _enhancedMatte + y * _displayWidth + rect.left;
-		const byte *inP = _displayScreen + y * _displayWidth + rect.left;
+
 		const byte *inR = _displayedScreenR + y * _displayWidth + rect.left;
 		const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
 		const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
-		const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
 		byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 
 		// TODO: Reduce code duplication here
@@ -363,12 +320,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					byte r = *inR;
 					byte g = *inG;
 					byte b = *inB;
-					byte i = *inP;
-						
-					r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-					g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-					b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-					
+
 					if (*mod) {
 						r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
 						g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
@@ -377,12 +329,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 
 					uint16 c = (uint16)_format.RGBToColor(r, g, b);
 					WRITE_UINT16(out, c);
-					inE += 1;
-					inP += 1;
+
 					inR += 1;
 					inG += 1;
 					inB += 1;
-					inA += 1;
 					out += 2;
 				}
 			} else {
@@ -390,21 +340,13 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					byte r = *inR;
 					byte g = *inG;
 					byte b = *inB;
-					//if (*inE == 0)
-					{
-						byte i = *inP;
-						r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-					}
+
 					uint16 c = (uint16)_format.RGBToColor(r, g, b);
 					WRITE_UINT16(out, c);
-					inE += 1;
-					inP += 1;
+
 					inR += 1;
 					inG += 1;
 					inB += 1;
-					inA += 1;
 					out += 2;
 				}
 			}
@@ -418,13 +360,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					byte r = *inR;
 					byte g = *inG;
 					byte b = *inB;
-					//if (*inE == 0)
-					{
-						byte i = *inP;
-						r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-					}
+
 					if (*mod) {
 						r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
 						g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
@@ -433,12 +369,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 
 					uint32 c = _format.RGBToColor(r, g, b);
 					WRITE_UINT32(out, c);
-					inE += 1;
-					inP += 1;
+
 					inR += 1;
 					inG += 1;
 					inB += 1;
-					inA += 1;
 					out += 4;
 				}
 			} else {
@@ -446,21 +380,12 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					byte r = *inR;
 					byte g = *inG;
 					byte b = *inB;
-					//if (*inE == 0)
-					{
-						byte i = *inP;
-						r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-					}
+
 					uint32 c = _format.RGBToColor(r, g, b);
 					WRITE_UINT32(out, c);
-					inE += 1;
-					inP += 1;
 					inR += 1;
 					inG += 1;
 					inB += 1;
-					inA += 1;
 					out += 4;
 				}
 			}
@@ -511,18 +436,21 @@ void GfxScreen::displayRect(const Common::Rect &rect, int x, int y) {
 void GfxScreen::clearForRestoreGame() {
 	// reset all screen data
 	memset(_visualScreen, 0, _pixels);
+	memset(_priorityScreen, 0, _pixels);
 	memset(_controlScreen, 0, _pixels);
 	memset(_visualScreenR, 0, _pixels);
+	memset(_priorityScreenR, 0, _pixels);
+	memset(_controlScreenR, 0, _pixels);
 	memset(_visualScreenG, 0, _pixels);
+	memset(_priorityScreenG, 0, _pixels);
+	memset(_controlScreenG, 0, _pixels);
 	memset(_visualScreenB, 0, _pixels);
-	memset(_enhancedMatte, 0, _displayPixels);
-	memset(_surfaceScreen, 0, _displayPixels);
+	memset(_priorityScreenB, 0, _pixels);
+	memset(_controlScreenB, 0, _pixels);
 	memset(_displayScreen, 0, _displayPixels);
 	memset(_displayScreenR, 0, _displayPixels);
 	memset(_displayScreenG, 0, _displayPixels);
 	memset(_displayScreenB, 0, _displayPixels);
-	memset(_displayScreenA, 0, _displayPixels);
-	memset(_priorityScreenX, 0, _displayPixels);
 	if (_displayedScreen) {
 		memset(_displayedScreen, 0, _displayPixels);
 		memset(_displayedScreenR, 0, _displayPixels);
@@ -560,13 +488,10 @@ void GfxScreen::kernelSyncWithFramebuffer() {
 	if (_format.bytesPerPixel == 1) {
 		Graphics::Surface *screen = g_system->lockScreen();
 		const byte *pix = (const byte *)screen->getPixels();
-		for (int y = 0; y < _displayHeight; ++y) {
+		for (int y = 0; y < _displayHeight; ++y)
 			memcpy(_displayScreen + y * _displayWidth, pix + y * screen->pitch, _displayWidth);
-			memcpy(_enhancedMatte + y * _displayWidth, pix + y * screen->pitch, _displayWidth);
-		}
 		g_system->unlockScreen();
 	} else {
-		memcpy(_enhancedMatte, _displayedScreen, _displayPixels);
 		memcpy(_displayScreen, _displayedScreen, _displayPixels);
 		memcpy(_displayScreenR, _displayedScreenR, _displayPixels);
 		memcpy(_displayScreenG, _displayedScreenG, _displayPixels);
@@ -671,19 +596,17 @@ void GfxScreen::vectorPutLinePixel(int16 x, int16 y, byte drawMask, byte color, 
 // Special 480x300 Mac putPixel for vector line drawing, also draws an additional pixel below the actual one
 void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
 	int offset = y * _width + x;
-	int offsetPrio = ((y * g_sci->_enhancementMultiplier) * _displayWidth) + (x * g_sci->_enhancementMultiplier);
+
 	if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 		// also set pixel below actual pixel
 		_visualScreen[offset] = color;
 		_visualScreen[offset + _width] = color;
 		_displayScreen[offset] = color;
 		_displayScreen[offset + _displayWidth] = color;
-		_enhancedMatte[offset] = 0;
-		_enhancedMatte[offset + _displayWidth] = 0;
 	}
 	if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-		_priorityScreenX[offsetPrio] = priority;
-		_priorityScreenX[offsetPrio + _displayWidth] = priority;
+		_priorityScreen[offset] = priority;
+		_priorityScreen[offset + _width] = priority;
 	}
 	if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 		_controlScreen[offset] = control;
@@ -693,7 +616,6 @@ void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte 
 
 byte GfxScreen::vectorIsFillMatch(int16 x, int16 y, byte screenMask, byte checkForColor, byte checkForPriority, byte checkForControl, bool isEGA) {
 	int offset = y * _width + x;
-	int offsetPrio = ((y * g_sci->_enhancementMultiplier) * _displayWidth) + (x * g_sci->_enhancementMultiplier);
 	byte match = 0;
 
 	if (screenMask & GFX_SCREEN_MASK_VISUAL) {
@@ -715,7 +637,7 @@ byte GfxScreen::vectorIsFillMatch(int16 x, int16 y, byte screenMask, byte checkF
 				match |= GFX_SCREEN_MASK_VISUAL;
 		}
 	}
-	if ((screenMask & GFX_SCREEN_MASK_PRIORITY) && *(_priorityScreenX + offsetPrio) == checkForPriority)
+	if ((screenMask & GFX_SCREEN_MASK_PRIORITY) && *(_priorityScreen + offset) == checkForPriority)
 		match |= GFX_SCREEN_MASK_PRIORITY;
 	if ((screenMask & GFX_SCREEN_MASK_CONTROL) && *(_controlScreen + offset) == checkForControl)
 		match |= GFX_SCREEN_MASK_CONTROL;
@@ -820,40 +742,34 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 		byteCount += pixels; // _visualScreenG
 		byteCount += pixels; // _visualScreenB
 		if (!_upscaledHires) {
-			byteCount += pixels; // _enhancedMatte
-			byteCount += pixels; // _surfaceScreen
 			byteCount += pixels; // _displayScreen
 			byteCount += pixels; // _displayScreenR
 			byteCount += pixels; // _displayScreenG
 			byteCount += pixels; // _displayScreenB
-			byteCount += pixels; // _displayScreenA
 			if (_paletteMapScreen)
 				byteCount += pixels; // _paletteMapScreen
 		} else {
 			int rectHeight = _upscaledHeightMapping[rect.bottom] - _upscaledHeightMapping[rect.top];
 			int rectWidth = _upscaledWidthMapping[rect.right] - _upscaledWidthMapping[rect.left];
-			byteCount += rectHeight * rectWidth; // _enhancedMatte (upscaled hires)
-			byteCount += rectHeight * rectWidth; // _surfaceScreen (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreen (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenR (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenG (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenB (upscaled hires)
-			byteCount += rectHeight * rectWidth; // _displayScreenA (upscaled hires)
 			if (_paletteMapScreen)
 				byteCount += rectHeight * rectWidth; // _paletteMapScreen (upscaled hires)
 		}
 	}
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
-		if (!_upscaledHires) {
-			byteCount += pixels; // _priorityScreenX
-		} else {
-			int rectHeight = _upscaledHeightMapping[rect.bottom] - _upscaledHeightMapping[rect.top];
-			int rectWidth = _upscaledWidthMapping[rect.right] - _upscaledWidthMapping[rect.left];
-			byteCount += rectHeight * rectWidth; // _priorityScreenX (upscaled hires)
-		}
+		byteCount += pixels; // _priorityScreen
+		byteCount += pixels; // _priorityScreenR
+		byteCount += pixels; // _priorityScreenG
+		byteCount += pixels; // _priorityScreenB
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		byteCount += pixels; // _controlScreen
+		byteCount += pixels; // _controlScreenR
+		byteCount += pixels; // _controlScreenG
+		byteCount += pixels; // _controlScreenB
 	}
 	if (mask & GFX_SCREEN_MASK_DISPLAY) {
 		if (!_upscaledHires)
@@ -877,32 +793,32 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		bitsSaveScreen(rect, _visualScreenR, _width, memoryPtr);
 		bitsSaveScreen(rect, _visualScreenG, _width, memoryPtr);
 		bitsSaveScreen(rect, _visualScreenB, _width, memoryPtr);
-		bitsSaveDisplayScreen(rect, _enhancedMatte, memoryPtr);
-		bitsSaveDisplayScreen(rect, _surfaceScreen, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreen, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenR, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenG, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenB, memoryPtr);
-		bitsSaveDisplayScreen(rect, _displayScreenA, memoryPtr);
 		if (_paletteMapScreen)
 			bitsSaveDisplayScreen(rect, _paletteMapScreen, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
-		bitsSaveDisplayScreen(rect, _priorityScreenX, memoryPtr);
+		bitsSaveScreen(rect, _priorityScreen, _width, memoryPtr);
+		bitsSaveScreen(rect, _priorityScreenR, _width, memoryPtr);
+		bitsSaveScreen(rect, _priorityScreenG, _width, memoryPtr);
+		bitsSaveScreen(rect, _priorityScreenB, _width, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		bitsSaveScreen(rect, _controlScreen, _width, memoryPtr);
+		bitsSaveScreen(rect, _controlScreenR, _width, memoryPtr);
+		bitsSaveScreen(rect, _controlScreenG, _width, memoryPtr);
+		bitsSaveScreen(rect, _controlScreenB, _width, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_DISPLAY) {
 		if (!_upscaledHires)
 			error("bitsSave() called w/o being in upscaled hires mode");
-		bitsSaveScreen(rect, _enhancedMatte, _displayWidth, memoryPtr);
-		bitsSaveScreen(rect, _surfaceScreen, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreen, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenR, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenG, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenB, _displayWidth, memoryPtr);
-		bitsSaveScreen(rect, _displayScreenA, _displayWidth, memoryPtr);
 		if (_paletteMapScreen)
 			bitsSaveScreen(rect, _paletteMapScreen, _displayWidth, memoryPtr);
 	}
@@ -956,32 +872,32 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		bitsRestoreScreen(rect, memoryPtr, _visualScreenR, _width);
 		bitsRestoreScreen(rect, memoryPtr, _visualScreenG, _width);
 		bitsRestoreScreen(rect, memoryPtr, _visualScreenB, _width);
-		bitsRestoreDisplayScreen(rect, memoryPtr, _enhancedMatte);
-		bitsRestoreDisplayScreen(rect, memoryPtr, _surfaceScreen);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreen);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB);
-		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenA);
 		if (_paletteMapScreen)
 			bitsRestoreDisplayScreen(rect, memoryPtr, _paletteMapScreen);
 	}
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
-		bitsRestoreDisplayScreen(rect, memoryPtr, _priorityScreenX);
+		bitsRestoreScreen(rect, memoryPtr, _priorityScreen, _width);
+		bitsRestoreScreen(rect, memoryPtr, _priorityScreenR, _width);
+		bitsRestoreScreen(rect, memoryPtr, _priorityScreenG, _width);
+		bitsRestoreScreen(rect, memoryPtr, _priorityScreenB, _width);
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		bitsRestoreScreen(rect, memoryPtr, _controlScreen, _width);
+		bitsRestoreScreen(rect, memoryPtr, _controlScreenR, _width);
+		bitsRestoreScreen(rect, memoryPtr, _controlScreenG, _width);
+		bitsRestoreScreen(rect, memoryPtr, _controlScreenB, _width);
 	}
 	if (mask & GFX_SCREEN_MASK_DISPLAY) {
 		if (!_upscaledHires)
 			error("bitsRestore() called w/o being in upscaled hires mode");
-		bitsRestoreScreen(rect, memoryPtr, _enhancedMatte, _displayWidth);
-		bitsRestoreScreen(rect, memoryPtr, _surfaceScreen, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreen, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenR, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenG, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenB, _displayWidth);
-		bitsRestoreScreen(rect, memoryPtr, _displayScreenA, _displayWidth);
 		if (_paletteMapScreen)
 			bitsRestoreScreen(rect, memoryPtr, _paletteMapScreen, _displayWidth);
 
@@ -1156,10 +1072,16 @@ void GfxScreen::debugShowMap(int mapNo) {
 		_activeScreenB = _visualScreenB;
 		break;
 	case 1:
-		_activeScreen = _priorityScreenX;
+		_activeScreen = _priorityScreen;
+		_activeScreenR = _priorityScreenR;
+		_activeScreenG = _priorityScreenG;
+		_activeScreenB = _priorityScreenB;
 		break;
 	case 2:
 		_activeScreen = _controlScreen;
+		_activeScreenR = _controlScreenR;
+		_activeScreenG = _controlScreenG;
+		_activeScreenB = _controlScreenB;
 		break;
 	case 3:
 		_activeScreen = _displayScreen;
