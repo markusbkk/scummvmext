@@ -99,11 +99,21 @@ private:
 	Graphics::Surface *pngPrio;
 	Graphics::Surface *pngOverlay;
 	Graphics::Surface *pngSurface;
+	byte clearColor;
 	const byte *enh;
 	const byte *enhPal;
 	const byte *enhPrio;
 	const byte *enhOverlay;
 	const byte *enhSurface;
+	uint16 width, height;
+	int headerPosPrevious;
+	int rlePosPrevious;
+	int literalPosPrevious;
+	int16 drawXPrevious;
+	int16 drawYPrevious;
+	int16 pictureXPrevious;
+	int16 pictureYPrevious;
+	bool isEGAPrevious;
 	// If true, we will show the whole EGA drawing process...
 	bool _EGAdrawingVisualize;
 };

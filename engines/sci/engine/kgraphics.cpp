@@ -1189,7 +1189,7 @@ reg_t kNewWindow(EngineState *s, int argc, reg_t *argv) {
 reg_t kAnimate(EngineState *s, int argc, reg_t *argv) {
 	reg_t castListReference = (argc > 0) ? argv[0] : NULL_REG;
 	bool cycle = (argc > 1) ? ((argv[1].toUint16()) ? true : false) : false;
-
+	
 	g_sci->_gfxAnimate->kernelAnimate(castListReference, cycle, argc, argv);
 
 	// WORKAROUND: At the end of Ecoquest 1, during the credits, the game

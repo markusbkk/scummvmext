@@ -95,6 +95,7 @@ public:
 	Palette _sysPalette;
 	Palette _paletteOverride;
 	bool overridePalette;
+
 	void saveLoadWithSerializer(Common::Serializer &s) override;
 	void palVarySaveLoadPalette(Common::Serializer &s, Palette *palette);
 

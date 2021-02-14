@@ -45,6 +45,7 @@
 #include <common/config-manager.h>
 #include <image/png.h>
 #include <cctype>
+#include <engines/sci/graphics/picture.cpp>
 
 namespace Sci {
 
@@ -683,7 +684,8 @@ void GfxAnimate::update() {
 	Common::Rect rect;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
-
+	g_sci->_gfxPaint16->kernelDrawPicture(g_sci->currentPicture, 100, false, false, false, 0);
+	g_sci->_gfxScreen->copyToScreen();
 	// Remove all no-update cels, if requested
 	for (it = _list.reverse_begin(); it != end; --it) {
 		if (it->signal & kSignalNoUpdate) {
@@ -1024,6 +1026,7 @@ void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
 }
 
 void GfxAnimate::reAnimate(Common::Rect rect) {
+
 	if (!_lastCastData.empty()) {
 		AnimateArray::iterator it;
 		AnimateArray::iterator end = _lastCastData.end();
