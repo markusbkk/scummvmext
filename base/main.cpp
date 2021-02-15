@@ -417,7 +417,7 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 	} else {
 		ConfMan.loadDefaultConfigFile();
 	}
-
+	ConfMan.setBool("rgb_rendering", true);
 	// Update the config file
 	ConfMan.set("versioninfo", gScummVMVersion, Common::ConfigManager::kApplicationDomain);
 

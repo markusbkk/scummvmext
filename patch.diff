@@ -1,0 +1,14 @@
+diff --git a/configure b/configure
+index 838c759b75..04cfd361dd 100755
+--- a/configure
++++ b/configure
+@@ -6070,6 +6070,9 @@ case $_host_os in
+ 		append_var CXXFLAGS "-fdata-sections"
+ 		append_var LDFLAGS "-Wl,--gc-sections"
+ 		;;
++	mingw*)
++		LIBS=`echo $LIBS | sed -e 's/-mconsole//g' -e 's/-mwindows//g'`
++		;;
+ 	n64)
+ 		# Move some libs down here, otherwise some symbols requires by libvorbis aren't found
+ 		# during linking stage
