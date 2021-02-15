@@ -208,18 +208,10 @@ public:
 	bool checkSelectorBreakpoint(BreakpointType breakpointType, reg_t send_obj, int selector);
 	bool checkAddressBreakpoint(const reg_t &address);
 
-	int _enhancementMultiplier; // Should keep going, and going... (32?)
+	int _enhancementMultiplier;
 	
-	bool enhanced = false;
-	bool enhancedPrio = false;
-	bool prefer256 = false;
-	int16 PICpictureId = -1;
-	int16 PICanimationNr;
-	bool PICanimationBlackoutFlag;
-	bool PICmirroredFlag;
-	bool PICaddToFlag;
-	int16 PICEGApaletteNo;
-	Common::String palResourceCURRENT = "";
+	bool enhanced;
+	bool enhancedPrio;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

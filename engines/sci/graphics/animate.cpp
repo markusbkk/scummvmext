@@ -252,6 +252,7 @@ void GfxAnimate::makeSortedList(List *list) {
 		listEntry.viewId = readSelectorValue(_s->_segMan, curObject, SELECTOR(view));
 		listEntry.loopNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(loop));
 		listEntry.celNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(cel));
+		listEntry.tweenNo = 0;
 		listEntry.paletteNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(palette));
 		listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
 		listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
@@ -352,36 +353,52 @@ void GfxAnimate::makeSortedList(List *list) {
 		// listEntry.celRect is filled in AnimateFill()
 		listEntry.showBitsFlag = false;
 		Common::String fn = "view.";
+		bool stop = false;
 		char viewNoStr[5];
 		sprintf(viewNoStr, "%u", listEntry.viewId);
 		for (int n = 0; n < 5; n++) {
-			if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-				fn += viewNoStr[n];
-			}
+			if (stop == false)
+				if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+					fn += viewNoStr[n];
+				} else {
+					stop = true;
+				}
 		}
+		stop = false;
 		fn += ".";
 		char loopNoStr[5];
 		sprintf(loopNoStr, "%u", listEntry.loopNo);
 		for (int n = 0; n < 5; n++) {
-			if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-				fn += loopNoStr[n];
-			}
+			if (stop == false)
+				if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+					fn += loopNoStr[n];
+				} else {
+					stop = true;
+				}
 		}
+		stop = false;
 		fn += ".";
 		char celNoStr[5];
 		sprintf(celNoStr, "%u", listEntry.celNo);
 		for (int n = 0; n < 5; n++) {
-			if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-				fn += celNoStr[n];
-			}
+			if (stop == false)
+				if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+					fn += celNoStr[n];
+				} else {
+					stop = true;
+				}
 		}
+		stop = false;
 		char tweenNoStr[5];
 		Common::String twn = "";
 		sprintf(tweenNoStr, "%u", listEntry.tweenNo);
 		for (int n = 0; n < 5; n++) {
-			if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-				twn += tweenNoStr[n];
-			}
+			if (stop == false)
+				if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+					twn += tweenNoStr[n];
+				} else {
+					stop = true;
+				}
 		}
 		debug(fn.c_str());
 		Common::FSNode folder;
@@ -754,38 +771,54 @@ void GfxAnimate::drawCels() {
 
 				Common::FSNode folder;
 			if (ConfMan.hasKey("extrapath")) {
-				Common::String fn = "view.";
-				char viewNoStr[5];
-				sprintf(viewNoStr, "%u", it->viewId);
-				for (int n = 0; n < 5; n++) {
-					if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-						fn += viewNoStr[n];
-					}
-				}
-				fn += ".";
-				char loopNoStr[5];
-				sprintf(loopNoStr, "%u", it->loopNo);
-				for (int n = 0; n < 5; n++) {
-					if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-						fn += loopNoStr[n];
-					}
-				}
-				fn += ".";
-				char celNoStr[5];
-				sprintf(celNoStr, "%u", it->celNo);
-				for (int n = 0; n < 5; n++) {
-					if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-						fn += celNoStr[n];
-					}
-				}
-				char tweenNoStr[5];
-				Common::String twn = "";
-				sprintf(tweenNoStr, "%u", it->tweenNo);
-				for (int n = 0; n < 5; n++) {
-					if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-						twn += tweenNoStr[n];
-					}
-				}
+				    Common::String fn = "view.";
+				    bool stop = false;
+				    char viewNoStr[5];
+				    sprintf(viewNoStr, "%u", it->viewId);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+							    fn += viewNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
+				    stop = false;
+				    fn += ".";
+				    char loopNoStr[5];
+				    sprintf(loopNoStr, "%u", it->loopNo);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+							    fn += loopNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
+				    stop = false;
+				    fn += ".";
+				    char celNoStr[5];
+				    sprintf(celNoStr, "%u", it->celNo);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+							    fn += celNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
+				    stop = false;
+				    char tweenNoStr[5];
+				    Common::String twn = "";
+				    sprintf(tweenNoStr, "%u", it->tweenNo);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+							    twn += tweenNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
 				debug(fn.c_str());
 				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
 					if (!it->viewEnhanced) {
@@ -1000,38 +1033,54 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 
 				Common::FSNode folder;
 			if (ConfMan.hasKey("extrapath")) {
-				Common::String fn = "view.";
-				char viewNoStr[5];
-				sprintf(viewNoStr, "%u", it->viewId);
-				for (int n = 0; n < 5; n++) {
-					if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-						fn += viewNoStr[n];
-					}
-				}
-				fn += ".";
-				char loopNoStr[5];
-				sprintf(loopNoStr, "%u", it->loopNo);
-				for (int n = 0; n < 5; n++) {
-					if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-						fn += loopNoStr[n];
-					}
-				}
-				fn += ".";
-				char celNoStr[5];
-				sprintf(celNoStr, "%u", it->celNo);
-				for (int n = 0; n < 5; n++) {
-					if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-						fn += celNoStr[n];
-					}
-				}
-				char tweenNoStr[5];
-				Common::String twn = "";
-				sprintf(tweenNoStr, "%u", it->tweenNo);
-				for (int n = 0; n < 5; n++) {
-					if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-						twn += tweenNoStr[n];
-					}
-				}
+				    Common::String fn = "view.";
+				    bool stop = false;
+				    char viewNoStr[5];
+				    sprintf(viewNoStr, "%u", it->viewId);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+							    fn += viewNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
+				    stop = false;
+				    fn += ".";
+				    char loopNoStr[5];
+				    sprintf(loopNoStr, "%u", it->loopNo);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+							    fn += loopNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
+				    stop = false;
+				    fn += ".";
+				    char celNoStr[5];
+				    sprintf(celNoStr, "%u", it->celNo);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+						    if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+							    fn += celNoStr[n];
+						    } else {
+							    stop = true;
+						    }
+				    }
+				    stop = false;
+				    char tweenNoStr[5];
+				    Common::String twn = "";
+				    sprintf(tweenNoStr, "%u", it->tweenNo);
+				    for (int n = 0; n < 5; n++) {
+					    if (stop == false)
+					    if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+						    twn += tweenNoStr[n];
+						} else {
+							stop = true;
+						}
+				    }
 				debug(fn.c_str());
 
 				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
@@ -1232,38 +1281,54 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 
 		Common::FSNode folder;
 		if (ConfMan.hasKey("extrapath")) {
-			Common::String fn = "view.";
-			char viewNoStr[5];
-			sprintf(viewNoStr, "%u", viewId);
-			for (int n = 0; n < 5; n++) {
-				if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-					fn += viewNoStr[n];
-				}
-			}
-			fn += ".";
-			char loopNoStr[5];
-			sprintf(loopNoStr, "%u", loopNo);
-			for (int n = 0; n < 5; n++) {
-				if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-					fn += loopNoStr[n];
-				}
-			}
-			fn += ".";
-			char celNoStr[5];
-			sprintf(celNoStr, "%u", celNo);
-			for (int n = 0; n < 5; n++) {
-				if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-					fn += celNoStr[n];
-				}
-			}
-			char tweenNoStr[5];
-			Common::String twn = "";
-			sprintf(tweenNoStr, "%u", 0);
-			for (int n = 0; n < 5; n++) {
-				if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-					twn += tweenNoStr[n];
-				}
-			}
+		    Common::String fn = "view.";
+		    bool stop = false;
+		    char viewNoStr[5];
+		    sprintf(viewNoStr, "%u", viewId);
+		    for (int n = 0; n < 5; n++) {
+			    if (stop == false)
+				    if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+					    fn += viewNoStr[n];
+				    } else {
+					    stop = true;
+				    }
+		    }
+		    stop = false;
+		    fn += ".";
+		    char loopNoStr[5];
+		    sprintf(loopNoStr, "%u", loopNo);
+		    for (int n = 0; n < 5; n++) {
+			    if (stop == false)
+				    if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+					    fn += loopNoStr[n];
+				    } else {
+					    stop = true;
+				    }
+		    }
+		    stop = false;
+		    fn += ".";
+		    char celNoStr[5];
+		    sprintf(celNoStr, "%u", celNo);
+		    for (int n = 0; n < 5; n++) {
+			    if (stop == false)
+				    if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+					    fn += celNoStr[n];
+				    } else {
+					    stop = true;
+				    }
+		    }
+		    stop = false;
+		    char tweenNoStr[5];
+		    Common::String twn = "";
+		    sprintf(tweenNoStr, "%u", 0);
+		    for (int n = 0; n < 5; n++) {
+			    if (stop == false)
+				    if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+					    twn += tweenNoStr[n];
+				    } else {
+					    stop = true;
+				    }
+		    }
 			debug(fn.c_str());
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
 				Common::String fileName = folder.getChild(fn + ".png").getName();

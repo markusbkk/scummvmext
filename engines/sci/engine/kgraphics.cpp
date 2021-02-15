@@ -598,14 +598,7 @@ reg_t kDrawPic(EngineState *s, int argc, reg_t *argv) {
 	}
 	if (argc >= 4)
 		EGApaletteNo = argv[3].toUint16();
-	debug("------------- PREFER 256 == FALSE -------------");
-	g_sci->prefer256 = false;
-	g_sci->PICpictureId = pictureId;
-	g_sci->PICanimationNr = animationNr;
-	g_sci->PICanimationBlackoutFlag = animationBlackoutFlag;
-	g_sci->PICmirroredFlag = mirroredFlag;
-	g_sci->PICaddToFlag = addToFlag;
-	g_sci->PICEGApaletteNo = EGApaletteNo;
+
 	g_sci->_gfxPaint16->kernelDrawPicture(pictureId, animationNr, animationBlackoutFlag, mirroredFlag, addToFlag, EGApaletteNo);
 
 	return s->r_acc;

@@ -100,7 +100,7 @@ public:
 
 	byte findMacIconBarColor(byte r, byte g, byte b);
 	bool colorIsFromMacClut(byte index);
-	
+	int16 _palVaryStep;
 
 protected:
 	void palVaryInit();
@@ -122,7 +122,6 @@ protected:
 	GuiResourceId _palVaryResourceId;
 	Palette _palVaryOriginPalette;
 	Palette _palVaryTargetPalette;
-	int16 _palVaryStep;
 	int16 _palVaryStepStop;
 	int16 _palVaryDirection;
 	uint16 _palVaryTicks;

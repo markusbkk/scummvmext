@@ -82,7 +82,6 @@ public:
 
 	void adjustToUpscaledCoordinates(int16 &y, int16 &x);
 	void adjustBackUpscaledCoordinates(int16 &y, int16 &x);
-	GfxPorts *_ports;
 
 private:
 	void initData(GuiResourceId resourceId);

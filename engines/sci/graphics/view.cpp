@@ -50,7 +50,7 @@ GfxView::~GfxView() {
 	_resMan->unlockResource(_resource);
 }
 
-
+GfxPorts *_ports;
 extern Common::Rect _currentViewPort;
 
 static const byte EGAmappingStraight[SCI_VIEW_EGAMAPPING_SIZE] = {
@@ -845,8 +845,8 @@ hashit(const char *str) {
 void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
 			int16 loopNo, int16 celNo, int16 tweenNo, byte priority, uint16 EGAmappingNr, bool upscaledHires, uint16 scaleSignal) {
 	int16 tn = tweenNo;
-	if (tn > 4) {
-		tn = 4;
+	if (tn > 3) {
+		tn = 3;
 	}
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
@@ -1098,8 +1098,8 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, const Common::Rect &rect, const Common::Rect &clipRect, const Common::Rect &clipRectTranslated,
                          int16 loopNo, int16 celNo, int16 tweenNo, byte priority, int16 scaleX, int16 scaleY, uint16 scaleSignal) {
 	int16 tn = tweenNo;
-	if (tn > 4) {
-		tn = 4;
+	if (tn > 3) {
+		tn = 3;
 	}
 	const Palette *palette = _embeddedPal ? &_viewPalette : &_palette->_sysPalette;
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
@@ -1114,12 +1114,54 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 		_palette->set(&_viewPalette, false);
 
 	int surfaceNumber = 0;
+	Common::String fn = "view.";
+	bool stop = false;
+	char viewNoStr[5];
+	sprintf(viewNoStr, "%u", _resourceId);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
+				fn += viewNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
+	stop = false;
+	fn += ".";
 	char loopNoStr[5];
 	sprintf(loopNoStr, "%u", loopNo);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
+				fn += loopNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
+	stop = false;
+	fn += ".";
 	char celNoStr[5];
 	sprintf(celNoStr, "%u", celNo);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
+				fn += celNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
+	stop = false;
 	char tweenNoStr[5];
+	Common::String twn = "";
 	sprintf(tweenNoStr, "%u", tn);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
+				twn += tweenNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
 	
 	if (!viewEnhanced) {
 
