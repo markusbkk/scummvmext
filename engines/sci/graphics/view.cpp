@@ -1342,8 +1342,8 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 	}
 	Common::String dbg = _resource->name() + '.' + loopNoStr + '.' + celNoStr + " /  TWEEN NO = " + tweenNoStr;
 	debug(dbg.c_str());
-	Common::String fn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
-	g_sci->_audio->PlayEnhancedViewCelAudio(fn, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
+	Common::String fn2 = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
+	g_sci->_audio->PlayEnhancedViewCelAudio(fn2, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }
 
 void GfxView::createScalingTable(Common::Array<uint16> &table, int16 celSize, uint16 maxSize, int16 scale) {
