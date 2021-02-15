@@ -41,6 +41,7 @@ namespace Sci {
 GfxPicture::GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuster, GfxPorts *ports, GfxScreen *screen, GfxPalette *palette, GuiResourceId resourceId, bool EGAdrawingVisualize)
 	: _resMan(resMan), _coordAdjuster(coordAdjuster), _ports(ports), _screen(screen), _palette(palette), _resourceId(resourceId), _EGAdrawingVisualize(EGAdrawingVisualize) {
 	assert(resourceId != -1);
+	
 	enhanced = true;
 	overlay = true;
 	paletted = true;
@@ -362,7 +363,30 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		
+		if (!g_sci->prefer256 || paletted == false) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "." + g_sci->palResourceCURRENT + ".png").exists()) {
+				Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "." + g_sci->palResourceCURRENT + ".png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(_resource->name() + "." + g_sci->palResourceCURRENT + ".png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						debug("Enhanced Picture Bitmap %s error", fileName.c_str());
+					} else {
+						debug("Enhanced Picture Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						png = loadPNG(file);
+						if (png) {
+							enh = (const byte *)png->getPixels();
+							if (enh) {
+								pixelCountX = png->w * png->h * 4;
+								enhanced = true;
+							}
+						}
+					}
+				}
+			}
+		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
 
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_o.png").getName();

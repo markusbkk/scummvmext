@@ -713,7 +713,7 @@ void GfxPaint16::bitsFree(reg_t memoryHandle) {
 
 void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, bool animationBlackoutFlag, bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 	Port *oldPort = _ports->setPort((Port *)_ports->_picWind);
-
+	g_sci->PICpictureId = pictureId;
 	if (_ports->isFrontWindow(_ports->_picWind)) {
 		_screen->_picNotValid = 1;
 		drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);

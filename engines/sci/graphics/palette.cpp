@@ -558,14 +558,14 @@ bool GfxPalette::kernelSetFromResource(GuiResourceId resourceId, bool force) {
 		}
 		createFromData(*palResource, &palette);
 		set(&palette, force);
-
+		if (g_sci->PICpictureId != -1) {
 			debug(("SWITCHING PALETTE TO # " + g_sci->palResourceCURRENT).c_str());
 			debug("------------- PREFER 256 == TRUE -------------");
 			g_sci->prefer256 = true;
 			g_sci->_gfxPaint16->kernelDrawPicture(g_sci->PICpictureId, g_sci->PICanimationNr, g_sci->PICanimationBlackoutFlag, g_sci->PICmirroredFlag, g_sci->PICaddToFlag, g_sci->PICEGApaletteNo);
-		    g_sci->_gfxScreen->copyToScreen();
-		    g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);
-
+			g_sci->_gfxScreen->copyToScreen();
+			g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);
+		}
 		return true;
 	}
 
@@ -628,10 +628,10 @@ bool GfxPalette::kernelAnimate(byte fromColor, byte toColor, int speed) {
 	}
 
 	g_sci->getEngineState()->_throttleTrigger = true;
-
+	
 	for (scheduleNr = 0; scheduleNr < scheduleCount; scheduleNr++) {
 		if (_schedules[scheduleNr].from == fromColor) {
-			if (_schedules[scheduleNr].schedule <= now) {
+			if (_schedules[scheduleNr].schedule < now) {
 				if (speed > 0) {
 					// TODO: Not really sure about this, sierra sci seems to do exactly this here
 					col = _sysPalette.colors[fromColor];
@@ -671,6 +671,7 @@ bool GfxPalette::kernelAnimate(byte fromColor, byte toColor, int speed) {
 			return false;
 		}
 	}
+	
 	return false;
 }
 
@@ -812,6 +813,7 @@ void GfxPalette::palVaryInstallTimer() {
 }
 
 void GfxPalette::palVaryRemoveTimer() {
+	
 	g_sci->getTimerManager()->removeTimerProc(&palVaryCallback);
 }
 
@@ -1037,10 +1039,10 @@ void GfxPalette::palVaryProcess(int signal, bool setPalette) {
 		_sysPaletteChanged = false;
 	}
 	if (_palVaryStep == _palVaryStepStop) {
-		if (!g_sci->prefer256) {
-			debug("------------- PREFER 256 == TRUE -------------");
+		if (g_sci->prefer256) {
+			debug("------------- PREFER 256 == FALSE -------------");
 			debug("------ _palVaryStep == _palVaryStepStop! -------");
-			g_sci->prefer256 = true;
+			g_sci->prefer256 = false;
 			g_sci->_gfxPaint16->kernelDrawPicture(g_sci->PICpictureId, g_sci->PICanimationNr, g_sci->PICanimationBlackoutFlag, g_sci->PICmirroredFlag, g_sci->PICaddToFlag, g_sci->PICEGApaletteNo);
 			g_sci->_gfxScreen->copyToScreen();
 			g_sci->_gfxPaint16->kernelGraphRedrawBox(g_sci->_gfxPorts->_curPort->rect);

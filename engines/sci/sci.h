@@ -213,7 +213,7 @@ public:
 	bool enhanced = false;
 	bool enhancedPrio = false;
 	bool prefer256 = false;
-	int16 PICpictureId = 0;
+	int16 PICpictureId = -1;
 	int16 PICanimationNr;
 	bool PICanimationBlackoutFlag;
 	bool PICmirroredFlag;
