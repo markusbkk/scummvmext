@@ -23,7 +23,7 @@
 #include "common/span.h"
 #include "common/stack.h"
 #include "common/system.h"
-
+#include "common/config-manager.h"
 #include "sci/sci.h"
 #include "sci/engine/state.h"
 #include "sci/graphics/screen.h"
@@ -31,7 +31,7 @@
 #include "sci/graphics/coordadjuster.h"
 #include "sci/graphics/ports.h"
 #include "sci/graphics/picture.h"
-#include <common/config-manager.h>
+#include "video/theora_decoder.h"
 #include <image/png.h>
 
 namespace Sci {
@@ -245,10 +245,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
-#ifdef USE_MPEG2
-
-
-#endif
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);

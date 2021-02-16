@@ -44,6 +44,10 @@ class GfxCoordAdjuster16;
 class ResourceManager;
 class Resource;
 
+/**
+ * Picture class, handles loading and displaying of picture resources
+ *  every picture resource has its own instance of this class
+ */
 class GfxPicture {
 public:
 	GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuster, GfxPorts *ports, GfxScreen *screen, GfxPalette *palette, GuiResourceId resourceId, bool EGAdrawingVisualize = false);

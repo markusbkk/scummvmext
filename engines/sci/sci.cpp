@@ -78,6 +78,7 @@
 #include "sci/graphics/video32.h"
 #include "sci/sound/audio32.h"
 #endif
+#include <common/events.h>
 
 namespace Sci {
 
@@ -442,15 +443,90 @@ Common::Error SciEngine::run() {
 	if (getGameId() == GID_GK2 && ConfMan.getBool("subtitles") && !_resMan->testResource(ResourceId(kResourceTypeSync, 10))) {
 		suggestDownloadGK2SubTitlesPatch();
 	}
-
+	
+	runTheoraIntro();
 	runGame();
-
+	runTheoraOutro();
 	ConfMan.flushToDisk();
 
 	return Common::kNoError;
 }
 
-bool SciEngine::gameHasFanMadePatch() {
+void SciEngine::runTheoraIntro() {
+	
+	if (ConfMan.hasKey("extrapath")) {
+		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		if (folder.exists() && folder.getChild("intro.ogg").exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild("intro.ogg").getName()).c_str();
+			debug((fileName).c_str());
+			_theoraDecoder = new Video::TheoraDecoder();
+			_theoraDecoder->loadFile("intro.ogg");
+			_theoraDecoder->start();
+			int16 frameTime = _theoraDecoder->getTimeToNextFrame();
+			while (!_theoraDecoder->isPlaying()) {
+				debug(("WAITING TO PLAY : " + fileName).c_str());
+				g_system->delayMillis(20);
+			}
+			
+			while (_theoraDecoder->isPlaying() && !_theoraDecoder->endOfVideo()) {
+
+				g_system->copyRectToScreen(_theoraDecoder->decodeNextFrame()->getPixels(), _theoraDecoder->getWidth() * 4, 0, 0, _theoraDecoder->getWidth(), _theoraDecoder->getHeight());
+				g_system->updateScreen();
+				Common::Event event;
+				while (g_system->getEventManager()->pollEvent(event)) {
+
+					// Ignore everything but ESC when movies are playing
+					Common::EventType type = event.type;
+					if (type == Common::EVENT_KEYDOWN && event.kbd.keycode == Common::KEYCODE_ESCAPE) {
+						_theoraDecoder->stop();
+						break;
+					}
+				}
+				
+			}
+			
+		} else {
+			debug("NO 'intro.ogg'");
+		}
+	}
+}
+void SciEngine::runTheoraOutro() {
+
+	if (ConfMan.hasKey("extrapath")) {
+		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		if (folder.exists() && folder.getChild("outro.ogg").exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild("outro.ogg").getName()).c_str();
+			debug((fileName).c_str());
+			_theoraDecoder = new Video::TheoraDecoder();
+			_theoraDecoder->loadFile("outro.ogg");
+			_theoraDecoder->start();
+			int16 frameTime = _theoraDecoder->getTimeToNextFrame();
+			while (!_theoraDecoder->isPlaying()) {
+				debug(("WAITING TO PLAY : " + fileName).c_str());
+				g_system->delayMillis(20);
+			}
+			while (_theoraDecoder->isPlaying() && !_theoraDecoder->endOfVideo()) {
+
+				g_system->copyRectToScreen(_theoraDecoder->decodeNextFrame()->getPixels(), _theoraDecoder->getWidth() * 4, 0, 0, _theoraDecoder->getWidth(), _theoraDecoder->getHeight());
+				g_system->updateScreen();
+				Common::Event event;
+				while (g_system->getEventManager()->pollEvent(event)) {
+
+					// Ignore everything but ESC when movies are playing
+					Common::EventType type = event.type;
+					if (type == Common::EVENT_KEYDOWN && event.kbd.keycode == Common::KEYCODE_ESCAPE) {
+						_theoraDecoder->stop();
+						break;
+					}
+				}
+			}
+
+		} else {
+			debug("NO 'outro.ogg'");
+		}
+	}
+}
+	bool SciEngine::gameHasFanMadePatch() {
 	struct FanMadePatchInfo {
 		SciGameId gameID;
 		uint16 targetScript;

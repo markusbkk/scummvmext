@@ -30,6 +30,7 @@
 #include "sci/engine/vm_types.h"	// for Selector
 #include "sci/debug.h"	// for DebugState
 #include "sci/detection.h" // Shared code between detection and engine
+#include "video/theora_decoder.h"
 
 struct ADGameDescription;
 
@@ -138,6 +139,8 @@ public:
 	SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId);
 	~SciEngine() override;
 
+	void runTheoraIntro();
+	void runTheoraOutro();
 	// Engine APIs
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
@@ -152,7 +155,7 @@ public:
 	void updateSoundMixerVolumes();
 	uint32 getTickCount();
 	void setTickCount(const uint32 ticks);
-
+	
 	const SciGameId &getGameId() const { return _gameId; }
 	const char *getGameIdStr() const;
 	Common::Language getLanguage() const;
@@ -209,7 +212,7 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	int _enhancementMultiplier;
-	
+	Graphics::Surface *_theoraSurface;
 	bool enhanced;
 	bool enhancedPrio;
 
@@ -266,6 +269,7 @@ public:
 	GfxText32 *_gfxText32;
 	GfxTransitions *_gfxTransitions; // transitions between screens for 16-bit gfx
 	GfxMacIconBar *_gfxMacIconBar; // Mac Icon Bar manager
+	Video::TheoraDecoder *_theoraDecoder;
 
 #ifdef ENABLE_SCI32
 	Audio32 *_audio32;
