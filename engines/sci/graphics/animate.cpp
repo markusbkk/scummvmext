@@ -992,10 +992,9 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		}
 	}
 	// use this for debug purposes
-	if (g_sci->backgroundIsVideo) {
-		
+	if (g_sci->backgroundIsVideo) {	
 		reAnimate(_ports->_curPort->rect);
-		_screen->convertToRGB(_ports->_curPort->rect);
+		//_screen->convertToRGB(_ports->_curPort->rect);
 	}
 	 
 }
