@@ -671,7 +671,7 @@ void run_vm(EngineState *s) {
 			vmHooks.advance(offset);
 		}
 		const byte opcode = extOpcode >> 1;
-		//debug("%s: %d, %d, %d, %d, acc = %04x:%04x, script %d, local script %d", opcodeNames[opcode], opparams[0], opparams[1], opparams[2], opparams[3], PRINT_REG(s->r_acc), scr->getScriptNumber(), local_script->getScriptNumber());
+		//debug(10, "%s: %d, %d, %d, %d, acc = %04x:%04x, script %d, local script %d", opcodeNames[opcode], opparams[0], opparams[1], opparams[2], opparams[3], PRINT_REG(s->r_acc), scr->getScriptNumber(), local_script->getScriptNumber());
 
 #ifdef ABORT_ON_INFINITE_LOOP
 		if (prevOpcode != 0xFF) {
@@ -1295,7 +1295,7 @@ void run_vm(EngineState *s) {
 
 		case op_line: // 0x3f (63)
 			// Debug opcode (line number)
-			//debug("Script %d, line %d", scr->getScriptNumber(), opparams[0]);
+			//debug(10, "Script %d, line %d", scr->getScriptNumber(), opparams[0]);
 			break;
 
 		case op_lag: // 0x40 (64)

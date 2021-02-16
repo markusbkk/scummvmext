@@ -1125,7 +1125,7 @@ void ResourceManager::addToLRU(Resource *res) {
 	_LRU.push_front(res);
 	_memoryLRU += res->size();
 #if SCI_VERBOSE_RESMAN
-	debug("Adding %s (%d bytes) to lru control: %d bytes total",
+	debug(10, "Adding %s (%d bytes) to lru control: %d bytes total",
 	      res->_id.toString().c_str(), res->size,
 	      _memoryLRU);
 #endif
@@ -1140,13 +1140,13 @@ void ResourceManager::printLRU() {
 
 	while (it != _LRU.end()) {
 		res = *it;
-		debug("\t%s: %u bytes", res->_id.toString().c_str(), res->size());
+		debug(10, "\t%s: %u bytes", res->_id.toString().c_str(), res->size());
 		mem += res->size();
 		++entries;
 		++it;
 	}
 
-	debug("Total: %d entries, %d bytes (mgr says %d)", entries, mem, _memoryLRU);
+	debug(10, "Total: %d entries, %d bytes (mgr says %d)", entries, mem, _memoryLRU);
 }
 
 void ResourceManager::freeOldResources() {
@@ -1156,7 +1156,7 @@ void ResourceManager::freeOldResources() {
 		removeFromLRU(goner);
 		goner->unalloc();
 #ifdef SCI_VERBOSE_RESMAN
-		debug("resMan-debug: LRU: Freeing %s (%d bytes)", goner->_id.toString().c_str(), goner->size);
+		debug(10, "resMan-debug: LRU: Freeing %s (%d bytes)", goner->_id.toString().c_str(), goner->size);
 #endif
 	}
 }
@@ -1566,7 +1566,7 @@ void ResourceManager::processPatch(ResourceSource *source, ResourceType resource
 	ResourceType checkForType = resourceType;
 
 	if (isBlacklistedPatch(resId)) {
-		debug("Skipping blacklisted patch file %s", source->getLocationName().c_str());
+		debug(10, "Skipping blacklisted patch file %s", source->getLocationName().c_str());
 		delete source;
 		return;
 	}
@@ -1592,7 +1592,7 @@ void ResourceManager::processPatch(ResourceSource *source, ResourceType resource
 
 	int fsize = fileStream->size();
 	if (fsize < 3) {
-		debug("Patching %s failed - file too small", source->getLocationName().c_str());
+		debug(10, "Patching %s failed - file too small", source->getLocationName().c_str());
 		delete source;
 		delete fileStream;
 		return;
@@ -1656,13 +1656,13 @@ void ResourceManager::processPatch(ResourceSource *source, ResourceType resource
 	delete fileStream;
 
 	if (patchType != checkForType) {
-		debug("Patching %s failed - resource type mismatch", source->getLocationName().c_str());
+		debug(10, "Patching %s failed - resource type mismatch", source->getLocationName().c_str());
 		delete source;
 		return;
 	}
 
 	if (patchDataOffset >= fsize) {
-		debug("Patching %s failed - patch starting at offset %d can't be in file of size %d",
+		debug(10, "Patching %s failed - patch starting at offset %d can't be in file of size %d",
 		      source->getLocationName().c_str(), patchDataOffset, fsize);
 		delete source;
 		return;
@@ -1738,9 +1738,9 @@ void ResourceManager::readResourcePatchesBase36() {
 
 			/*
 			if (i == kResourceTypeAudio36)
-				debug("audio36 patch: %s => %s. tuple:%d, %s\n", name.c_str(), inputName.c_str(), resource36.tuple, resource36.toString().c_str());
+				debug(10, "audio36 patch: %s => %s. tuple:%d, %s\n", name.c_str(), inputName.c_str(), resource36.tuple, resource36.toString().c_str());
 			else
-				debug("sync36 patch: %s => %s. tuple:%d, %s\n", name.c_str(), inputName.c_str(), resource36.tuple, resource36.toString().c_str());
+				debug(10, "sync36 patch: %s => %s. tuple:%d, %s\n", name.c_str(), inputName.c_str(), resource36.tuple, resource36.toString().c_str());
 			*/
 
 			// Make sure that the audio patch is a valid resource

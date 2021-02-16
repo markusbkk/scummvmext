@@ -149,11 +149,11 @@ Common::String getCardDescription(int16 card, int16 suit) {
 }
 
 void debugInputData(SciArray* data) {
-	debug("Player %d's turn", data->getAsInt16(kCurrentPlayer));
+	debug(10, "Player %d's turn", data->getAsInt16(kCurrentPlayer));
 
-	debug("Pot: %d, bet: %d", data->getAsInt16(kCurrentPot), data->getAsInt16(kCurrentBet));
+	debug(10, "Pot: %d, bet: %d", data->getAsInt16(kCurrentPot), data->getAsInt16(kCurrentBet));
 
-	debug("Chips: %d %d %d %d - %d in total",
+	debug(10, "Chips: %d %d %d %d - %d in total",
 		data->getAsInt16(kTotalChipsPlayer1),
 		data->getAsInt16(kTotalChipsPlayer2),
 		data->getAsInt16(kTotalChipsPlayer3),
@@ -161,7 +161,7 @@ void debugInputData(SciArray* data) {
 		data->getAsInt16(kTotalChips)
 	);
 
-	debug("Player status: %d %d %d %d",
+	debug(10, "Player status: %d %d %d %d",
 		data->getAsInt16(kStatusPlayer1),
 		data->getAsInt16(kStatusPlayer2),
 		data->getAsInt16(kStatusPlayer3),
@@ -169,10 +169,10 @@ void debugInputData(SciArray* data) {
 	);
 
 	for (int player = 0; player < 4; player++) {
-		debug("Player %d cards:", player);
+		debug(10, "Player %d cards:", player);
 		for (int i = 19 + player * 10; i < 29 + player * 10; i += 2) {
 			if (data->getAsInt16(i) > 0)
-				debug("- %s", getCardDescription(data->getAsInt16(i), data->getAsInt16(i + 1)).c_str());
+				debug(10, "- %s", getCardDescription(data->getAsInt16(i), data->getAsInt16(i + 1)).c_str());
 		}
 	}
 
@@ -185,7 +185,7 @@ void debugInputData(SciArray* data) {
 			continue;
 
 		if (data->getAsInt16(i) != 0)
-			debug("%d: %d", i, data->getAsInt16(i));
+			debug(10, "%d: %d", i, data->getAsInt16(i));
 	}
 }
 

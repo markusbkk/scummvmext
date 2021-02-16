@@ -486,7 +486,7 @@ void SciEngine::runTheoraIntro() {
 			}
 			
 		} else {
-			debug("NO 'intro.ogg'");
+			debug(10, "NO 'intro.ogg'");
 		}
 	}
 }
@@ -522,7 +522,7 @@ void SciEngine::runTheoraOutro() {
 			}
 
 		} else {
-			debug("NO 'outro.ogg'");
+			debug(10, "NO 'outro.ogg'");
 		}
 	}
 }

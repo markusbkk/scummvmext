@@ -1217,7 +1217,7 @@ void MidiPart_PC9801::addChannels(int num, int resetMissingChannels, int channel
 		_chan[i]->_assign = _id;
 
 #ifdef DEBUG_REMAP
-		debug("===== MidiDriver_PC9801: hardware channel %d is assigned to device channel %d =====", i, _id);
+		debug(10, "===== MidiDriver_PC9801: hardware channel %d is assigned to device channel %d =====", i, _id);
 #endif
 		if (_chan[i]->_note != 0xff)
 			_chan[i]->noteOff();
@@ -1246,7 +1246,7 @@ void MidiPart_PC9801::dropChannels(int num) {
 		_chan[i]->_assign = 0xff;
 
 #ifdef DEBUG_REMAP
-		debug("===== MidiDriver_PC9801: hardware channel %d is dropped from device channel %d =====", i, _id);
+		debug(10, "===== MidiDriver_PC9801: hardware channel %d is dropped from device channel %d =====", i, _id);
 #endif
 
 		if (!--num)

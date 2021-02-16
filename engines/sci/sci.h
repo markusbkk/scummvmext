@@ -212,9 +212,10 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	int _enhancementMultiplier;
-	Graphics::Surface *_theoraSurface;
+	const Graphics::Surface *_theoraSurface;
 	bool enhanced;
 	bool enhancedPrio;
+	bool backgroundIsVideo = false;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

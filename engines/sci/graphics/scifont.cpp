@@ -310,9 +310,9 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			Common::String fileName = folder.getChild(_resource->name() + '.' + charNoStr + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (!file) {
-				//debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 			} else {
-				//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 				pngfont = loadFontPNG(file);
 				if (pngfont) {
 					enhfont = (const byte *)pngfont->getPixels();
@@ -326,7 +326,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	}
 	/*
 	if (greyedOutput)
-	debug("%d", (color));
+	debug(10, "%d", (color));
 	
 	bool invert = false;
 	SciSpan<const byte> charData = getCharData(chr);
@@ -347,7 +347,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			
 			
 			if (b & 0x80) { // if MSB is set - paint it
-				debug("%d", (x));
+				debug(10, "%d", (x));
 				int screenX = left + x;
 				int screenY = top + y;
 				if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {

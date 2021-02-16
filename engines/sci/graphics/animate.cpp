@@ -408,9 +408,9 @@ void GfxAnimate::makeSortedList(List *list) {
 				Common::String fileName = folder.getChild(fn + ".png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 				} else {
-					debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 					listEntry.viewpng = loadCelPNG(file);
 					if (listEntry.viewpng) {
 						listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
@@ -426,9 +426,9 @@ void GfxAnimate::makeSortedList(List *list) {
 					Common::String fileName = folder.getChild(fn + "_256.png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
-						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 					} else {
-						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 						listEntry.viewpng = loadCelPNGCLUT(file);
 						if (listEntry.viewpng) {
 							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
@@ -445,9 +445,9 @@ void GfxAnimate::makeSortedList(List *list) {
 					Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
-						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 					} else {
-						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 						listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
 						if (listEntry.viewpng) {
 							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
@@ -466,9 +466,9 @@ void GfxAnimate::makeSortedList(List *list) {
 					Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
-						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 					} else {
-						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 						listEntry.viewpng = loadCelPNG(file);
 						if (listEntry.viewpng) {
 							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
@@ -485,9 +485,9 @@ void GfxAnimate::makeSortedList(List *list) {
 					Common::String fileName = folder.getChild(fn + ".t." + twn + "_256.png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
-						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 					} else {
-						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 
 						listEntry.viewpng = loadCelPNGCLUT(file);
 						if (listEntry.viewpng) {
@@ -505,9 +505,9 @@ void GfxAnimate::makeSortedList(List *list) {
 					Common::String fileName = folder.getChild(fn + ".t." + twn + "_256RP.png").getName();
 					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
-						debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 					} else {
-						debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+						debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 						listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
 						if (listEntry.viewpng) {
 							listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
@@ -753,6 +753,7 @@ void GfxAnimate::update() {
 			}
 		}
 	}
+	
 }
 
 void GfxAnimate::drawCels() {
@@ -825,9 +826,9 @@ void GfxAnimate::drawCels() {
 						Common::String fileName = folder.getChild(fn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNG(file);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -845,9 +846,9 @@ void GfxAnimate::drawCels() {
 						Common::String fileName = folder.getChild(fn + "_256.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNGCLUT(file);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -865,9 +866,9 @@ void GfxAnimate::drawCels() {
 						Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNGCLUTOverride(file, _screen);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -885,9 +886,9 @@ void GfxAnimate::drawCels() {
 						Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNG(file);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -905,9 +906,9 @@ void GfxAnimate::drawCels() {
 						Common::String fileName = folder.getChild(fn + ".t." + twn + "_256.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 
 							it->viewpng = loadCelPNGCLUT(file);
 							if (it->viewpng) {
@@ -926,9 +927,9 @@ void GfxAnimate::drawCels() {
 						Common::String fileName = folder.getChild(fn + ".t." + twn + "_256RP.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNGCLUTOverride(file, _screen);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -991,7 +992,10 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		}
 	}
 	// use this for debug purposes
-	// _screen->copyToScreen();
+	if (g_sci->backgroundIsVideo) {
+		_screen->copyToScreen();
+	}
+	 
 }
 
 void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
@@ -1088,9 +1092,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 						Common::String fileName = folder.getChild(fn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNG(file);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -1108,9 +1112,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 						Common::String fileName = folder.getChild(fn + "_256.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNGCLUT(file);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -1128,9 +1132,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 						Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNGCLUTOverride(file, _screen);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -1148,9 +1152,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 						Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNG(file);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();
@@ -1168,9 +1172,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 						Common::String fileName = folder.getChild(fn + ".t." + twn + "_256.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 
 							it->viewpng = loadCelPNGCLUT(file);
 							if (it->viewpng) {
@@ -1189,9 +1193,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 						Common::String fileName = folder.getChild(fn + ".t." + twn + "_256RP.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
-							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 						} else {
-							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 							it->viewpng = loadCelPNGCLUTOverride(file, _screen);
 							if (it->viewpng) {
 								it->viewenh = (const byte *)it->viewpng->getPixels();

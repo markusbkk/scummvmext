@@ -158,7 +158,7 @@ public:
 	void setCurPaletteMapValue(byte val) { _curPaletteMapValue = val; }
 	void setPaletteMods(const PaletteMod *mods, unsigned int count);
 	bool paletteModsEnabled() const { return _paletteModsEnabled; }
-	
+	void convertToRGB(const Common::Rect &rect);
 
 private:
 	uint16 _width;
@@ -229,7 +229,7 @@ private:
 
 	byte *_backupScreen; // for bak* functions
 
-	void convertToRGB(const Common::Rect &rect);
+	
 	void displayRectRGB(const Common::Rect &rect, int x, int y);
 	void displayRect(const Common::Rect &rect, int x, int y);
 	byte *_palette;
@@ -266,7 +266,7 @@ private:
 
 	// pixel related code, in header so that it can be inlined for performance
 public:
-	void putPixel(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
+	void putPixel(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control, bool bg) {
 		if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 			putPixel480x300(x, y, drawMask, color, priority, control);
 			return;
@@ -283,7 +283,14 @@ public:
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:
 				_displayScreen[offset] = color;
-				_enhancedMatte[offset] = 0;
+				
+				if (g_sci->backgroundIsVideo == false) {
+					_enhancedMatte[offset] = 0;
+				} else {
+					_enhancedMatte[offset] = 128;
+				}
+				if (!bg)
+					_enhancedMatte[offset] = 0;
 				break;
 
 			case GFX_SCREEN_UPSCALED_640x400:
@@ -291,7 +298,7 @@ public:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
-				putScaledPixelOnDisplay(x, y, color);
+				putScaledPixelOnDisplay(x, y, color, bg);
 				break;
 			default:
 				break;
@@ -317,7 +324,7 @@ public:
 			_controlScreen[offset] = control;
 		}
 	}
-	void putPixelPaletted(int16 x, int16 y, byte drawMask, byte c, byte priority, byte control) {
+	void putPixelPaletted(int16 x, int16 y, byte drawMask, byte c, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
@@ -331,12 +338,24 @@ public:
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreen[displayOffset] = c;
-					_enhancedMatte[displayOffset] = 0;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 0;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 0;
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 
 					_displayScreen[displayOffset] = c;
-					_enhancedMatte[displayOffset] = 0;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 0;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 0;
 				}
 				break;
 			}
@@ -345,7 +364,7 @@ public:
 			}
 		}
 	}
-	void putPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control) {
+	void putPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
@@ -360,13 +379,25 @@ public:
 			
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 					        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
-					        _enhancedMatte[displayOffset] = 255;
+					        if (g_sci->backgroundIsVideo == false) {
+						        _enhancedMatte[displayOffset] = 255;
+					        } else {
+						        _enhancedMatte[displayOffset] = 128;
+					        }
+					        if (!bg)
+						        _enhancedMatte[displayOffset] = 255;
 						} else {
 							//assert(_format.bytesPerPixel == 4);
 
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 					        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
-					        _enhancedMatte[displayOffset] = 255;
+					        if (g_sci->backgroundIsVideo == false) {
+						        _enhancedMatte[displayOffset] = 255;
+					        } else {
+						        _enhancedMatte[displayOffset] = 128;
+					        }
+					        if (!bg)
+						        _enhancedMatte[displayOffset] = 255;
 						}
 				break;
 			}
@@ -448,7 +479,11 @@ public:
 					byte ir = _palette[3 * i + 0];
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
 					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
-					_enhancedMatte[displayOffset] = 255;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 					byte i = r;
@@ -456,7 +491,11 @@ public:
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
 					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
-					_enhancedMatte[displayOffset] = 255;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
 				}
 
 				break;
@@ -610,7 +649,7 @@ public:
 		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			// For regular upscaled modes forward to the regular putPixel
-			putPixel(x, y, drawMask, color, priority, control);
+			putPixel(x, y, drawMask, color, priority, control, true);
 			return;
 			break;
 
@@ -642,10 +681,16 @@ public:
 	 * only used on upscaled-Hires games where hires content needs to get drawn ONTO
 	 * the upscaled display screen (like japanese fonts, hires portraits, etc.).
 	 */
-	void putPixelOnDisplay(int16 x, int16 y, byte color) {
+	void putPixelOnDisplay(int16 x, int16 y, byte color, bool bg) {
 		int offset = y * _displayWidth + x;
 		_displayScreen[offset] = color;
-		_enhancedMatte[offset] = 0;
+		if (g_sci->backgroundIsVideo == false) {
+			_enhancedMatte[offset] = 0;
+		} else {
+			_enhancedMatte[offset] = 128;
+		}
+		if (!bg)
+			_enhancedMatte[offset] = 0;
 		int displayOffset = 0;
 
 		switch (_upscaledHires) {
@@ -665,7 +710,13 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;
-						_enhancedMatte[displayOffset] = 0;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
 					} else {
 						assert(_format.bytesPerPixel == 4);
 
@@ -677,7 +728,13 @@ public:
 						_displayScreenG[displayOffset] = g;
 						_displayScreenB[displayOffset] = b;
 						_displayScreen[displayOffset] = color;
-						_enhancedMatte[displayOffset] = 0;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
 					}
 				}
 			}
@@ -689,7 +746,7 @@ public:
 	}
 	
 	// Upscales a pixel and puts it on display screen only
-	void putScaledPixelOnDisplay(int16 x, int16 y, byte color) {
+	void putScaledPixelOnDisplay(int16 x, int16 y, byte color, bool bg) {
 		int displayOffset = 0;
 
 		switch (_upscaledHires) {
@@ -753,7 +810,13 @@ public:
 						_displayScreenB[displayOffset] = b;
 						_displayScreenA[displayOffset] = 0;
 						_displayScreen[displayOffset] = color;
-						_enhancedMatte[displayOffset] = 0;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
 
 					} else if (_format.bytesPerPixel == 4) {
 
@@ -766,7 +829,13 @@ public:
 						_displayScreenB[displayOffset] = b;
 						_displayScreenA[displayOffset] = 0;
 						_displayScreen[displayOffset] = color;	
-						_enhancedMatte[displayOffset] = 0;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
 					} else {
 
 						byte r;
@@ -778,7 +847,13 @@ public:
 						_displayScreenB[displayOffset] = b;
 						_displayScreenA[displayOffset] = 0;
 						_displayScreen[displayOffset] = color;
-						_enhancedMatte[displayOffset] = 0;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
 					}
 				}
 			}
@@ -853,7 +928,7 @@ public:
 		int16 actualY = startingY + y;
 		if (_fontIsUpscaled) {
 			// Do not scale ourselves, but put it on the display directly
-			putPixelOnDisplay(x, actualY, color);
+			putPixelOnDisplay(x, actualY, color, false);
 		} else {
 			if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 				putPixel480x300(x, actualY, GFX_SCREEN_MASK_VISUAL, color, 0, 0);
@@ -883,7 +958,7 @@ public:
 			}
 
 			default:
-				putScaledPixelOnDisplay(x, actualY, color);
+				putScaledPixelOnDisplay(x, actualY, color, false);
 				break;
 			}
 		}
@@ -893,7 +968,7 @@ public:
 
 		if (_fontIsUpscaled) {
 			// Do not scale ourselves, but put it on the display directly
-			putPixelOnDisplay(x, actualY, color);
+			putPixelOnDisplay(x, actualY, color, false);
 		} else {
 			if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 				putPixel480x300(x, actualY, GFX_SCREEN_MASK_VISUAL, color, 0, 0);

@@ -226,7 +226,7 @@ reg_t kSetDebug(EngineState *s, int argc, reg_t *argv) {
 	// Therefore, don't break into the debugger in GK1, but do so elsewhere.
 
 	if (g_sci->getGameId() != GID_GK1) {
-		debug("Debug mode activated");
+		debug(10, "Debug mode activated");
 
 		g_sci->getDebugger()->attach();
 	}
@@ -919,7 +919,7 @@ reg_t kKawaHacks(EngineState *s, int argc, reg_t *argv) {
 }
 reg_t kKawaDbugStr(EngineState *s, int argc, reg_t *argv)
 {
-	debug("%s", Common::String::format(s->_segMan->getString(argv[0]).c_str(), argc - 1, argv + 1).c_str());
+	debug(10, "%s", Common::String::format(s->_segMan->getString(argv[0]).c_str(), argc - 1, argv + 1).c_str());
 	return NULL_REG;
 }
 

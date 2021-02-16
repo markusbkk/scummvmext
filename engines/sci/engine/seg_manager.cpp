@@ -329,9 +329,9 @@ reg_t SegManager::findObjectByName(const Common::String &name, int index) {
 		return NULL_REG;
 
 	if (result.size() > 1 && index < 0) {
-		debug("findObjectByName(%s): multiple matches:", name.c_str());
+		debug(10, "findObjectByName(%s): multiple matches:", name.c_str());
 		for (uint i = 0; i < result.size(); i++)
-			debug("  %3x: [%04x:%04x]", i, PRINT_REG(result[i]));
+			debug(10, "  %3x: [%04x:%04x]", i, PRINT_REG(result[i]));
 		return NULL_REG; // Ambiguous
 	}
 

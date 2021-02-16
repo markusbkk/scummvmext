@@ -193,7 +193,7 @@ Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen 
 }
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	g_sci->_gfxPalette16->overridePalette = false;
-	
+	g_sci->backgroundIsVideo = false;
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
 	const SciSpan<const byte> rlePtr = inbuffer.subspan(rlePos);
 	// displaceX, displaceY fields are ignored, and may contain garbage
@@ -253,9 +253,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileName = folder.getChild(_resource->name() + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					png = loadPNG(file);
 					if (png) {
 						enh = (const byte *)png->getPixels();
@@ -267,6 +267,26 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
+		
+			Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		if (folder.exists() && folder.getChild(_resource->name() + ".ogg").exists()) {
+			    Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+				debug((fileName).c_str());
+				g_sci->_theoraDecoder = new Video::TheoraDecoder();
+			    g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+			    g_sci->_theoraDecoder->start();
+			    int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
+			    while (!g_sci->_theoraDecoder->isPlaying()) {
+					debug(("WAITING TO PLAY : " + fileName).c_str());
+					g_system->delayMillis(20);
+				}
+			    debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
+			    g_sci->backgroundIsVideo = true;
+			    enhanced = false; // fix later
+			} else {
+				debug(10, "NO 'intro.ogg'");
+			}
+		
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -275,9 +295,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileName = folder.getChild(_resource->name() + "_256.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngPal = loadPNGCLUT(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
@@ -298,9 +318,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngPal = loadPNGCLUTOverride(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
@@ -322,9 +342,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileName = folder.getChild(_resource->name() + "_o.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Overlay %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngOverlay = loadPNG(file);
 					if (pngOverlay) {
 						enhOverlay = (const byte *)pngOverlay->getPixels();
@@ -344,9 +364,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileNamePrio = folder.getChild(_resource->name() + "_p.png").getName();
 				filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 				if (!filePrio) {
-					//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
 				} else {
-					//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+					debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
 					pngPrio = loadPNG(filePrio);
 					if (pngPrio) {
 						enhPrio = (const byte *)pngPrio->getPixels();
@@ -366,9 +386,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				fileNameSurf = folder.getChild(_resource->name() + "_s.png").getName();
 				fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 				if (!fileSurf) {
-					//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
 				} else {
-					//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+					debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
 					pngSurface = loadPNG(fileSurf);
 					if (pngSurface) {
 						enhSurface = (const byte *)pngSurface->getPixels();
@@ -445,7 +465,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						curByte = *ptr++;
 						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
 							
-								_screen->putPixel(x, y, drawMask, curByte, priority, 0);
+								_screen->putPixel(x, y, drawMask, curByte, priority, 0, true);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						x++;
 
@@ -462,7 +482,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						curByte = *ptr++;
 						if ((curByte != clearColor) && (priority >= _screen->getPriority(x, y)))
 							
-								_screen->putPixel(x, y, drawMask, curByte, priority, 0);
+								_screen->putPixel(x, y, drawMask, curByte, priority, 0, true);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						if (x == leftX) {
 							ptr += sourcePixelSkipPerRow;
@@ -484,7 +504,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						curByte = *ptr++;
 						if (curByte != clearColor)
 							
-								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0, true);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						x++;
 
@@ -501,7 +521,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						curByte = *ptr++;
 						if (curByte != clearColor)
 							
-								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0);
+								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curByte, 0, 0, true);
 						//_screen->putPixelEtc(x, y, drawMask, priority, 0);
 						if (x == leftX) {
 							ptr += sourcePixelSkipPerRow;
@@ -566,18 +586,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (priority >= _screen->getPriorityX(x, y))
 							{
 								if (paletted) {
-									_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+									_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 								}
 								if (enhanced) {
 									if (enh[offset + 3] != 0) {
-										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 									}
 								}
 								if (overlay) {
 									
-										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
 										_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 									
@@ -680,18 +700,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (priority >= _screen->getPriorityX(x, y))
 							{
 								if (paletted) {
-									_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+									_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 								}
 								if (enhanced) {
 									if (enh[offset + 3] != 0) {
-										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+										_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 										_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 									}
 								}
 								if (overlay) {
 									
-										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+										_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
 										_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 										_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 									
@@ -795,18 +815,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						if (offset + 3 < pixelCountX - 1) {
 							if (paletted) {
-								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 							}
 							if (enhanced) {
 								if (enh[offset + 3] != 0) {
-									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 								}
 							}
 							if (overlay) {
 								
-									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
 									_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 								
@@ -901,18 +921,18 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					while (y < lastY) {
 						if (offset + 3 < pixelCountX - 1) {
 							if (paletted) {
-								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 							}
 							if (enhanced) {
 								if (enh[offset + 3] != 0) {
-									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+									_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 									_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 								}
 							}
 							if (overlay) {
 								
-									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+									_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
 									_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 									_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 								
@@ -1032,9 +1052,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				fileName = folder.getChild(_resource->name() + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					png = loadPNG(file);
 					if (png) {
 						enh = (const byte *)png->getPixels();
@@ -1054,9 +1074,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				fileName = folder.getChild(_resource->name() + "_256.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngPal = loadPNGCLUT(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
@@ -1077,9 +1097,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngPal = loadPNGCLUTOverride(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
@@ -1101,9 +1121,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				fileName = folder.getChild(_resource->name() + "_o.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
-					//debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
-					//debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
 					pngOverlay = loadPNG(file);
 					if (pngOverlay) {
 						enhOverlay = (const byte *)pngOverlay->getPixels();
@@ -1123,9 +1143,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				fileNamePrio = folder.getChild(_resource->name() + "_p.png").getName();
 				filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 				if (!filePrio) {
-					//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
 				} else {
-					//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+					debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
 					pngPrio = loadPNG(filePrio);
 					if (pngPrio) {
 						enhPrio = (const byte *)pngPrio->getPixels();
@@ -1145,9 +1165,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				fileNameSurf = folder.getChild(_resource->name() + "_s.png").getName();
 				fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 				if (!fileSurf) {
-					//debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
 				} else {
-					//debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+					debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
 					pngSurface = loadPNG(fileSurf);
 					if (pngSurface) {
 						enhSurface = (const byte *)pngSurface->getPixels();
@@ -1170,7 +1190,6 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 
 		// Vertical clipping
 		uint16 skipCelBitmapLines = 0;
-		int16 displayHeight = height;
 		
 			y = (displayArea.top) * g_sci->_enhancementMultiplier;
 			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
@@ -1204,18 +1223,18 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				//if (curByte != clearColor)
 				if (offset + 3 < pixelCountX - 1) {
 					if (paletted) {
-						_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+						_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 					}
 					if (enhanced) {
 						if (enh[offset + 3] != 0) {
-							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 						}
 					}
 					if (overlay) {
 						if (enhOverlay[offset + 3] == 255) {
-							_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+							_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 						}
@@ -1309,18 +1328,18 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			while (y < lastY) {
 				if (offset + 3 < pixelCountX - 1) {
 					if (paletted) {
-						_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0);
+						_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 					}
 					if (enhanced) {
 						if (enh[offset + 3] != 0) {
-							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0);
+							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
 						}
 					}
 					if (overlay) {
 						if (enhOverlay[offset + 3] == 255) {
-							_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0);
+							_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 						}
@@ -1560,7 +1579,7 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 	// Drawing
 	while (curPos < data.size()) {
 #ifdef DEBUG_PICTURE_DRAW
-		debug("Picture op: %X (%s) at %d", data[curPos], picOpcodeNames[data[curPos] - 0xF0], curPos);
+		debug(10, "Picture op: %X (%s) at %d", data[curPos], picOpcodeNames[data[curPos] - 0xF0], curPos);
 		_screen->copyToScreen();
 		g_system->updateScreen();
 		g_system->delayMillis(400);
@@ -1707,7 +1726,7 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 		case PIC_OP_OPX: // Extended functions
 			if (isEGA) {
 #ifdef DEBUG_PICTURE_DRAW
-				debug("* Picture ex op: %X (%s) at %d", data[curPos], picExOpcodeNamesEGA[data[curPos]], curPos);
+				debug(10, "* Picture ex op: %X (%s) at %d", data[curPos], picExOpcodeNamesEGA[data[curPos]], curPos);
 #endif
 				switch (pic_op = data[curPos++]) {
 				case PIC_OPX_EGA_SET_PALETTE_ENTRIES:
@@ -1762,7 +1781,7 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 				}
 			} else {
 #ifdef DEBUG_PICTURE_DRAW
-				debug("* Picture ex op: %X (%s) at %d", data[curPos], picExOpcodeNamesVGA[data[curPos]], curPos);
+				debug(10, "* Picture ex op: %X (%s) at %d", data[curPos], picExOpcodeNamesVGA[data[curPos]], curPos);
 #endif
 				switch (pic_op = data[curPos++]) {
 				case PIC_OPX_VGA_SET_PALETTE_ENTRIES:

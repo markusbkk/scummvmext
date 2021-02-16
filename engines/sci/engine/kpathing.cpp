@@ -474,16 +474,16 @@ static void print_polygon(SegManager *segMan, reg_t polygon) {
 	}
 
 	point = readPoint(pointList, 0);
-	debug(" (%i, %i);", point.x, point.y);
+	debug(10, " (%i, %i);", point.x, point.y);
 }
 
 static void print_input(EngineState *s, reg_t poly_list, Common::Point start, Common::Point end, int opt) {
 	List *list;
 	Node *node;
 
-	debug("Start point: (%i, %i)", start.x, start.y);
-	debug("End point: (%i, %i)", end.x, end.y);
-	debug("Optimization level: %i", opt);
+	debug(10, "Start point: (%i, %i)", start.x, start.y);
+	debug(10, "End point: (%i, %i)", end.x, end.y);
+	debug(10, "Optimization level: %i", opt);
 
 	if (!poly_list.getSegment())
 		return;
@@ -495,7 +495,7 @@ static void print_input(EngineState *s, reg_t poly_list, Common::Point start, Co
 		return;
 	}
 
-	debug("Polygons:");
+	debug(10, "Polygons:");
 	node = s->_segMan->lookupNode(list->first);
 
 	while (node) {
@@ -1190,7 +1190,7 @@ static Polygon *convert_polygon(EngineState *s, reg_t polygon) {
 	if ((size == 19) && g_sci->getGameId() == GID_LSL1) {
 		if ((s->currentRoomNumber() == 350)
 		&& (readPoint(pointList, 18) == Common::Point(108, 137))) {
-			debug(1, "Applying fix for broken polygon in lsl1sci, room 350");
+			debug(10, "Applying fix for broken polygon in lsl1sci, room 350");
 			size = 17;
 		}
 	}
@@ -1316,7 +1316,7 @@ static PathfindingState *convert_polygon_set(EngineState *s, reg_t poly_list, Co
 		// WORKAROUND LSL5 room 660. Priority glitch due to us choosing a different path
 		// than SSCI. Happens when Patti walks to the control room.
 		if (g_sci->getGameId() == GID_LSL5 && (s->currentRoomNumber() == 660) && (Common::Point(67, 131) == *new_start) && (Common::Point(229, 101) == *new_end)) {
-			debug(1, "[avoidpath] Applying fix for priority problem in LSL5, room 660");
+			debug(10, "[avoidpath] Applying fix for priority problem in LSL5, room 660");
 			pf_s->_prependPoint = new_start;
 			new_start = new Common::Point(77, 107);
 		}
@@ -1524,7 +1524,7 @@ static reg_t output_path(PathfindingState *p, EngineState *s) {
 	writePoint(arrayRef, offset, Common::Point(POLY_LAST_POINT, POLY_LAST_POINT));
 
 	if (DebugMan.isDebugChannelEnabled(kDebugLevelAvoidPath)) {
-		debug("\nReturning path:");
+		debug(10, "\nReturning path:");
 
 		SegmentRef outputList = s->_segMan->dereference(output);
 		if (!outputList.isValid() || outputList.skipByte) {
@@ -1536,7 +1536,7 @@ static reg_t output_path(PathfindingState *p, EngineState *s) {
 			Common::Point pt = readPoint(outputList, i);
 			debugN(-1, " (%i, %i)", pt.x, pt.y);
 		}
-		debug(";\n");
+		debug(10, ";\n");
 	}
 
 	return output;
@@ -1587,7 +1587,7 @@ reg_t kAvoidPath(EngineState *s, int argc, reg_t *argv) {
 		}
 
 		if (DebugMan.isDebugChannelEnabled(kDebugLevelAvoidPath)) {
-			debug("[avoidpath] Pathfinding input:");
+			debug(10, "[avoidpath] Pathfinding input:");
 			draw_point(s, start, 1, width, height);
 			draw_point(s, end, 0, width, height);
 
@@ -1840,7 +1840,7 @@ reg_t kIntersections(EngineState *s, int argc, reg_t *argv) {
 		if (curIndex == doneIndex) {
 			// End of polyline/polygon reached
 			if (DebugMan.isDebugChannelEnabled(kDebugLevelAvoidPath)) {
-				debug(";");
+				debug(10, ";");
 				debugN(-1, "Found %i intersections", outCount);
 
 				if (outCount) {
@@ -1852,7 +1852,7 @@ reg_t kIntersections(EngineState *s, int argc, reg_t *argv) {
 					}
 				}
 
-				debug(";");
+				debug(10, ";");
 
 				g_sci->_gfxScreen->copyToScreen();
 				g_system->updateScreen();
@@ -2178,14 +2178,14 @@ bool mergeSinglePolygon(Polygon &work, const Polygon &polygon) {
 				continue;
 
 #ifdef DEBUG_MERGEPOLY
-			debug("mergePoly: intersection at work %d, poly %d", wi, pi);
+			debug(10, "mergePoly: intersection at work %d, poly %d", wi, pi);
 #endif
 
 			if (intersectDir(workv, polyv) >= 0)
 				continue;
 
 #ifdef DEBUG_MERGEPOLY
-			debug("mergePoly: intersection in right direction");
+			debug(10, "mergePoly: intersection in right direction");
 #endif
 
 			int angle = 0;
@@ -2222,12 +2222,12 @@ bool mergeSinglePolygon(Polygon &work, const Polygon &polygon) {
 					if (!intersects)
 						continue;
 #ifdef DEBUG_MERGEPOLY
-					debug("mergePoly: re-entry intersection at work %d, poly %d", (wi + wi2) % workSize, (pi + 1 + pi2) % polygonSize);
+					debug(10, "mergePoly: re-entry intersection at work %d, poly %d", (wi + wi2) % workSize, (pi + 1 + pi2) % polygonSize);
 #endif
 
 					if (intersectDir(workv2, polyv2) > 0) {
 #ifdef DEBUG_MERGEPOLY
-						debug("mergePoly: re-entry intersection in right direction, angle = %d", angle);
+						debug(10, "mergePoly: re-entry intersection in right direction, angle = %d", angle);
 #endif
 						break; // found re-entry point
 					}
@@ -2265,7 +2265,7 @@ bool mergeSinglePolygon(Polygon &work, const Polygon &polygon) {
 			newPatch.disabled = false;
 
 #ifdef DEBUG_MERGEPOLY
-			debug("mergePoly: adding patch at work %d, poly %d", wi, pi);
+			debug(10, "mergePoly: adding patch at work %d, poly %d", wi, pi);
 #endif
 
 			if (patchCount == 0) {
@@ -2489,7 +2489,7 @@ reg_t kMergePoly(EngineState *s, int argc, reg_t *argv) {
 	if (!g_sci->_gfxPaint16)
 		g_system->delayMillis(1000);
 
-	debug("kMergePoly done");
+	debug(10, "kMergePoly done");
 #endif
 
 	return output;

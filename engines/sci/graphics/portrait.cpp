@@ -216,9 +216,9 @@ void Portrait::doit(Common::Point position, uint16 resourceId, uint16 noun, uint
 	if (raveResource->size < 4000) {
 		memcpy(debugPrint, raveResource->data, raveResource->size);
 		debugPrint[raveResource->size] = 0; // set terminating NUL
-		debug("kPortrait: using actor %s", _resourceName.c_str());
-		debug("kPortrait (noun %d, verb %d, cond %d, seq %d)", noun, verb, cond, seq);
-		debug("kPortrait: rave data is '%s'", debugPrint);
+		debug(10, "kPortrait: using actor %s", _resourceName.c_str());
+		debug(10, "kPortrait (noun %d, verb %d, cond %d, seq %d)", noun, verb, cond, seq);
+		debug(10, "kPortrait: rave data is '%s'", debugPrint);
 	}
 #endif
 
@@ -290,9 +290,9 @@ void Portrait::doit(Common::Point position, uint16 resourceId, uint16 noun, uint
 
 #ifdef DEBUG_PORTRAIT
 		if (raveID & 0x0ff) {
-			debug("kPortrait: rave '%c%c' after %d ticks", raveID >> 8, raveID & 0x0ff, raveTicks);
+			debug(10, "kPortrait: rave '%c%c' after %d ticks", raveID >> 8, raveID & 0x0ff, raveTicks);
 		} else if (raveID) {
-			debug("kPortrait: rave '%c' after %d ticks", raveID >> 8, raveTicks);
+			debug(10, "kPortrait: rave '%c' after %d ticks", raveID >> 8, raveTicks);
 		}
 #endif
 
@@ -336,9 +336,9 @@ void Portrait::doit(Common::Point position, uint16 resourceId, uint16 noun, uint
 				raveLipSyncBitmapNr = *raveLipSyncData++;
 #ifdef DEBUG_PORTRAIT
 				if (!raveLipSyncTicks) {
-					debug("kPortrait: showing frame %d", raveLipSyncBitmapNr);
+					debug(10, "kPortrait: showing frame %d", raveLipSyncBitmapNr);
 				} else {
-					debug("kPortrait: showing frame %d after %d ticks", raveLipSyncBitmapNr, raveLipSyncTicks);
+					debug(10, "kPortrait: showing frame %d after %d ticks", raveLipSyncBitmapNr, raveLipSyncTicks);
 				}
 #endif
 
@@ -501,7 +501,7 @@ void Portrait::drawBitmap(uint16 bitmapNr) {
 	const byte *data = _bitmaps[bitmapNr].rawBitmap.getUnsafeDataAt(0, bitmapWidth * bitmapHeight);
 	for (int y = 0; y < bitmapHeight; y++) {
 		for (int x = 0; x < bitmapWidth; x++) {
-			_screen->putPixelOnDisplay(bitmapPosition.x + x, bitmapPosition.y + y, _portraitPalette.mapping[*data++]);
+			_screen->putPixelOnDisplay(bitmapPosition.x + x, bitmapPosition.y + y, _portraitPalette.mapping[*data++], false);
 		}
 		data += _bitmaps[bitmapNr].extraBytesPerLine;
 	}

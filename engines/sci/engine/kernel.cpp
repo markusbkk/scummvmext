@@ -152,7 +152,7 @@ void Kernel::loadSelectorNames() {
 
 		Common::String tmp = r->getStringAt(offset + 2, len);
 		_selectorNames.push_back(tmp);
-		//debug("%s", tmp.c_str());
+		//debug(10, "%s", tmp.c_str());
 
 		// Early SCI versions used the LSB in the selector ID as a read/write
 		// toggle. To compensate for that, we add every selector name twice.

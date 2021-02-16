@@ -311,7 +311,7 @@ void GfxMenu::kernelSetAttribute(uint16 menuId, uint16 itemId, uint16 attributeI
 		itemEntry->keyPress = tolower(value.getOffset());
 		itemEntry->keyModifier = 0;
 		// TODO: Find out how modifier is handled
-		debug("setAttr keypress %X %X", value.getSegment(), value.getOffset());
+		debug(10, "setAttr keypress %X %X", value.getSegment(), value.getOffset());
 		break;
 	case SCI_MENU_ATTRIBUTE_TAG:
 		itemEntry->tag = value.getOffset();
@@ -694,7 +694,7 @@ void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
 				pixelPos.y = topPos + (_ports->_curPort->fontHeight >> 1) - 1;
 				pixelPos.x = _menuRect.left - 7;
 				while (pixelPos.x < (_menuRect.right - 1)) {
-					_screen->putPixel(pixelPos.x, pixelPos.y, GFX_SCREEN_MASK_VISUAL, 0, 0, 0);
+					_screen->putPixel(pixelPos.x, pixelPos.y, GFX_SCREEN_MASK_VISUAL, 0, 0, 0, true);
 					pixelPos.x += 2;
 				}
 			}
