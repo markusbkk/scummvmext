@@ -1027,6 +1027,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	g_sci->_gfxPalette16->overridePalette = false;
+	g_sci->backgroundIsVideo = false;
 	byte priority = _priority;
 	byte clearColor;
 	bool compression = true;
@@ -1065,6 +1066,24 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					}
 				}
 			}
+		}
+		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		if (folder.exists() && folder.getChild(_resource->name() + ".ogg").exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+			debug((fileName).c_str());
+			g_sci->_theoraDecoder = new Video::TheoraDecoder();
+			g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+			g_sci->_theoraDecoder->start();
+			int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
+			while (!g_sci->_theoraDecoder->isPlaying()) {
+				debug(("WAITING TO PLAY : " + fileName).c_str());
+				g_system->delayMillis(20);
+			}
+			debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
+			g_sci->backgroundIsVideo = true;
+			enhanced = false; // fix later
+		} else {
+			debug(10, "NO 'intro.ogg'");
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();

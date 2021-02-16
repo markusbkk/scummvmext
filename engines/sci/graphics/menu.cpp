@@ -570,6 +570,7 @@ GuiMenuItemEntry *GfxMenu::interactiveGetItem(uint16 menuId, uint16 itemId, bool
 }
 
 void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
+
 	GuiMenuEntry *listEntry;
 	GuiMenuList::iterator listIterator;
 	GuiMenuList::iterator listEnd = _list.end();
@@ -694,7 +695,7 @@ void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
 				pixelPos.y = topPos + (_ports->_curPort->fontHeight >> 1) - 1;
 				pixelPos.x = _menuRect.left - 7;
 				while (pixelPos.x < (_menuRect.right - 1)) {
-					_screen->putPixel(pixelPos.x, pixelPos.y, GFX_SCREEN_MASK_VISUAL, 0, 0, 0, true);
+					_screen->putPixel(pixelPos.x, pixelPos.y, GFX_SCREEN_MASK_VISUAL, 0, 0, 0, false);
 					pixelPos.x += 2;
 				}
 			}
@@ -718,6 +719,8 @@ void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
 	}
 	_menuRect.bottom++;
 	_paint16->bitsShow(_menuRect);
+
+		
 }
 
 void GfxMenu::invertMenuSelection(uint16 itemId) {

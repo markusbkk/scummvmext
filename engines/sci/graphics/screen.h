@@ -298,7 +298,14 @@ public:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
-				putScaledPixelOnDisplay(x, y, color, bg);
+				if (g_sci->backgroundIsVideo == false) {
+					putScaledPixelOnDisplay(x, y, color, false);
+				} else {
+					putScaledPixelOnDisplay(x, y, color, bg);
+				}
+				if (!bg)
+					putScaledPixelOnDisplay(x, y, color, false);
+				
 				break;
 			default:
 				break;
@@ -482,7 +489,7 @@ public:
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
-						_enhancedMatte[displayOffset] = 128;
+						_enhancedMatte[displayOffset] = 255;
 					}
 				} else {
 					//assert(_format.bytesPerPixel == 4);
@@ -494,7 +501,7 @@ public:
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
-						_enhancedMatte[displayOffset] = 128;
+						_enhancedMatte[displayOffset] = 255;
 					}
 				}
 
@@ -649,7 +656,7 @@ public:
 		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			// For regular upscaled modes forward to the regular putPixel
-			putPixel(x, y, drawMask, color, priority, control, true);
+			putPixel(x, y, drawMask, color, priority, control, false);
 			return;
 			break;
 

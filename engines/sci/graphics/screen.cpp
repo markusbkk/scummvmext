@@ -345,150 +345,163 @@ GfxScreen::~GfxScreen() {
 void GfxScreen::convertToRGB(const Common::Rect &rect) {
 	assert(_format.bytesPerPixel != 1);
 	if (g_sci->backgroundIsVideo) {
-		if (g_sci->_theoraDecoder->isPlaying() && g_sci->_theoraDecoder->endOfVideo()) {
-			g_sci->_theoraDecoder->seekToFrame(1);
+		if (!g_sci->_theoraDecoder->isPlaying()) {
+			g_sci->_theoraDecoder->rewind();
+			g_sci->_theoraDecoder->start();
+			while (!g_sci->_theoraDecoder->isPlaying()) {
+				debug("WAITING TO PLAY BACKGROUND OGG!");
+				g_system->delayMillis(20);
+			}
 		}
-		g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
-		debug(10, "Background IS Video! :)");
-		for (int y = rect.top; y < rect.bottom; ++y) {
-			const byte *inV = (const byte *)g_sci->_theoraSurface->getPixels() + ((y * _displayWidth + rect.left) * _format.bytesPerPixel);
-			const byte *inE = _enhancedMatte + y * _displayWidth + rect.left;
-			const byte *inP = _displayScreen + y * _displayWidth + rect.left;
-			const byte *inR = _displayedScreenR + y * _displayWidth + rect.left;
-			const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
-			const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
-			const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
-			byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
+		while (!g_sci->_theoraDecoder->isPlaying()) {
+			debug("WAITING TO PLAY BACKGROUND OGG!");
+			g_system->delayMillis(20);
+		}
+		if (g_sci->_theoraDecoder->isPlaying()) {
 
-			// TODO: Reduce code duplication here
+				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+				debug(10, "Background IS Video! :)");
+				for (int y = rect.top; y < rect.bottom; ++y) {
+					const byte *inV = (const byte *)g_sci->_theoraSurface->getPixels() + ((y * _displayWidth + rect.left) * _format.bytesPerPixel);
+					const byte *inE = _enhancedMatte + y * _displayWidth + rect.left;
+					const byte *inP = _displayScreen + y * _displayWidth + rect.left;
+					const byte *inR = _displayedScreenR + y * _displayWidth + rect.left;
+					const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
+					const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
+					const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
+					byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 
-			if (_format.bytesPerPixel == 2) {
-				if (_paletteMapScreen) {
-					const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
-					for (int x = 0; x < rect.width(); ++x) {
-						byte r = *inR;
-						byte g = *inG;
-						byte b = *inB;
-						if (*inE != 128) {
-							byte i = *inP;
-							r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+					// TODO: Reduce code duplication here
+
+					if (_format.bytesPerPixel == 2) {
+						if (_paletteMapScreen) {
+							const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
+							for (int x = 0; x < rect.width(); ++x) {
+								byte r = *inR;
+								byte g = *inG;
+								byte b = *inB;
+								if (*inE != 128) {
+									byte i = *inP;
+									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+								} else {
+									r = *(inV);
+									g = *(inV + 1);
+									b = *(inV + 2);
+								}
+								if (*mod) {
+									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
+									g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
+									b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
+								}
+
+								uint32 c = _format.RGBToColor(r, g, b);
+								WRITE_UINT32(out, c);
+								inV += 4;
+								inE += 1;
+								inP += 1;
+								inR += 1;
+								inG += 1;
+								inB += 1;
+								inA += 1;
+								out += 4;
+							}
 						} else {
-							r = *(inV + 2);
-							g = *(inV + 1);
-							b = *inV;
-						}
-						if (*mod) {
-							r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
-							g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
-							b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
+							for (int x = 0; x < rect.width(); ++x) {
+								byte r = *inR;
+								byte g = *inG;
+								byte b = *inB;
+								if (*inE != 128) {
+									byte i = *inP;
+									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+								} else {
+									r = *(inV);
+									g = *(inV + 1);
+									b = *(inV + 2);
+								}
+								uint16 c = (uint16)_format.RGBToColor(r, g, b);
+								WRITE_UINT16(out, c);
+								inV += 4;
+								inE += 1;
+								inP += 1;
+								inR += 1;
+								inG += 1;
+								inB += 1;
+								inA += 1;
+								out += 2;
+							}
 						}
 
-						uint32 c = _format.RGBToColor(r, g, b);
-						WRITE_UINT32(out, c);
-						inV += 4;
-						inE += 1;
-						inP += 1;
-						inR += 1;
-						inG += 1;
-						inB += 1;
-						inA += 1;
-						out += 4;
-					}
-				} else {
-					for (int x = 0; x < rect.width(); ++x) {
-						byte r = *inR;
-						byte g = *inG;
-						byte b = *inB;
-						if (*inE != 128) {
-							byte i = *inP;
-							r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+					} else {
+						assert(_format.bytesPerPixel == 4);
+
+						if (_paletteMapScreen) {
+							const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
+							for (int x = 0; x < rect.width(); ++x) {
+								byte r = *inR;
+								byte g = *inG;
+								byte b = *inB;
+								if (*inE != 128) {
+									byte i = *inP;
+									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+								} else {
+									r = *(inV);
+									g = *(inV + 1);
+									b = *(inV + 2);
+								}
+								if (*mod) {
+									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
+									g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
+									b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
+								}
+
+								uint32 c = _format.RGBToColor(r, g, b);
+								WRITE_UINT32(out, c);
+								inV += 4;
+								inE += 1;
+								inP += 1;
+								inR += 1;
+								inG += 1;
+								inB += 1;
+								inA += 1;
+								out += 4;
+							}
 						} else {
-							r = *(inV + 2);
-							g = *(inV + 1);
-							b = *inV;
+							for (int x = 0; x < rect.width(); ++x) {
+								byte r = *inR;
+								byte g = *inG;
+								byte b = *inB;
+								if (*inE != 128) {
+									byte i = *inP;
+									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+								} else {
+									r = *(inV);
+									g = *(inV + 1);
+									b = *(inV + 2);
+								}
+								uint32 c = _format.RGBToColor(r, g, b);
+								WRITE_UINT32(out, c);
+								inV += 4;
+								inE += 1;
+								inP += 1;
+								inR += 1;
+								inG += 1;
+								inB += 1;
+								inA += 1;
+								out += 4;
+							}
 						}
-						uint16 c = (uint16)_format.RGBToColor(r, g, b);
-						WRITE_UINT16(out, c);
-						inV += 4;
-						inE += 1;
-						inP += 1;
-						inR += 1;
-						inG += 1;
-						inB += 1;
-						inA += 1;
-						out += 2;
-					}
-				}
-
-			} else {
-				assert(_format.bytesPerPixel == 4);
-
-				if (_paletteMapScreen) {
-					const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
-					for (int x = 0; x < rect.width(); ++x) {
-						byte r = *inR;
-						byte g = *inG;
-						byte b = *inB;
-						if (*inE != 128) {
-							byte i = *inP;
-							r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						} else {
-							r = *(inV + 2);
-							g = *(inV + 1);
-							b = *inV;
-						}
-						if (*mod) {
-							r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
-							g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
-							b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
-						}
-
-						uint32 c = _format.RGBToColor(r, g, b);
-						WRITE_UINT32(out, c);
-						inV += 4;
-						inE += 1;
-						inP += 1;
-						inR += 1;
-						inG += 1;
-						inB += 1;
-						inA += 1;
-						out += 4;
-					}
-				} else {
-					for (int x = 0; x < rect.width(); ++x) {
-						byte r = *inR;
-						byte g = *inG;
-						byte b = *inB;
-						if (*inE != 128) {
-							byte i = *inP;
-							r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						} else {
-							r = *(inV + 2);
-							g = *(inV + 1);
-							b = *inV;
-						}
-						uint32 c = _format.RGBToColor(r, g, b);
-						WRITE_UINT32(out, c);
-						inV += 4;
-						inE += 1;
-						inP += 1;
-						inR += 1;
-						inG += 1;
-						inB += 1;
-						inA += 1;
-						out += 4;
 					}
 				}
 			}
-		}
+		
 	} else {
 		debug(10, "Background Is NOT Video");
 		for (int y = rect.top; y < rect.bottom; ++y) {
@@ -538,11 +551,11 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 						byte g = *inG;
 						byte b = *inB;
 
-							byte i = *inP;
-							r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						
+						byte i = *inP;
+						r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+						g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+						b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+
 						uint16 c = (uint16)_format.RGBToColor(r, g, b);
 						WRITE_UINT16(out, c);
 
@@ -565,12 +578,12 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 						byte r = *inR;
 						byte g = *inG;
 						byte b = *inB;
-						
-							byte i = *inP;
-							r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-						
+
+						byte i = *inP;
+						r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+						g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+						b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+
 						if (*mod) {
 							r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
 							g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
@@ -813,7 +826,7 @@ void GfxScreen::vectorPutLinePixel(int16 x, int16 y, byte drawMask, byte color, 
 	}
 
 	// For anything else forward to the regular putPixel
-	putPixel(x, y, drawMask, color, priority, control, true);
+	putPixel(x, y, drawMask, color, priority, control, false);
 }
 
 // Special 480x300 Mac putPixel for vector line drawing, also draws an additional pixel below the actual one
