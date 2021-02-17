@@ -366,11 +366,14 @@ reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 			openfile.open(fileName.c_str(), std::ios::in);
 			if (openfile.is_open()) {
 				std::string tp;
+				text = "";
 				while (std::getline(openfile, tp)) {
 					std::cout << tp;
-				}
+					tp += "\n";
+					text += tp.c_str();
+				}		
+				tp = "";
 				openfile.close();
-				text = tp.c_str();
 				replaceText = true;
 			}
 		}
@@ -908,12 +911,13 @@ void _k_GenericDrawControl(EngineState *s, reg_t controlObject, bool hilite) {
 			openfile.open(fileName.c_str(), std::ios::in);
 			if (openfile.is_open()) {
 				std::string tp;
+				text = "";
 				while (std::getline(openfile, tp)) {
 					std::cout << tp;
+					tp += "\n";
+					text += tp.c_str();
 				}
-				openfile.close();
-				text = tp.c_str();
-				replaceText = true;
+				tp = "";
 			}
 		} else {
 			std::ofstream newfile;
