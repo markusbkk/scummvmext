@@ -40,7 +40,34 @@
 namespace Sci {
 
 GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
-
+	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+	if (folder.exists() && folder.getChild("1x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 1;
+	}
+	if (folder.exists() && folder.getChild("2x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 2;
+	}
+	if (folder.exists() && folder.getChild("3x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 3;
+	}
+	if (folder.exists() && folder.getChild("4x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 4;
+	}
+	if (folder.exists() && folder.getChild("5x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 5;
+	}
+	if (folder.exists() && folder.getChild("6x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 6;
+	}
+	if (folder.exists() && folder.getChild("7x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 7;
+	}
+	if (folder.exists() && folder.getChild("8x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 8;
+	}
+	if (folder.exists() && folder.getChild("16x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 16; // lol u get teh idea...
+	}
 	// Scale the screen, if needed
 	_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_EGA;
 	if (_resMan->getViewType() != kViewEga) {
