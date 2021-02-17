@@ -213,6 +213,7 @@ public:
 
 	int _enhancementMultiplier;
 	const Graphics::Surface *_theoraSurface;
+	Common::String oggBackground;
 	bool enhanced;
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;

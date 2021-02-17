@@ -268,7 +268,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		
-			Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 		if (folder.exists() && folder.getChild(_resource->name() + ".ogg").exists()) {
 			    Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
 				debug((fileName).c_str());
@@ -283,9 +283,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			    debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
 			    g_sci->backgroundIsVideo = true;
 			    enhanced = false; // fix later
-			} else {
-				debug(10, "NO 'intro.ogg'");
-			}
+			    g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+			    g_sci->oggBackground = _resource->name() + ".ogg";
+		} else {
+			debug(10, ("No File " + _resource->name() + ".ogg").c_str());
+		}
 		
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();
@@ -1082,8 +1084,11 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
 			g_sci->backgroundIsVideo = true;
 			enhanced = false; // fix later
+			g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 3);
+			g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+			g_sci->oggBackground = _resource->name() + ".ogg";
 		} else {
-			debug(10, "NO 'intro.ogg'");
+			debug(10, ("No File " + _resource->name() + ".ogg").c_str());
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
 			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();

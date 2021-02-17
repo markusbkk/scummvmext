@@ -345,21 +345,12 @@ GfxScreen::~GfxScreen() {
 void GfxScreen::convertToRGB(const Common::Rect &rect) {
 	assert(_format.bytesPerPixel != 1);
 	if (g_sci->backgroundIsVideo) {
-		if (!g_sci->_theoraDecoder->isPlaying()) {
-			g_sci->_theoraDecoder->rewind();
-			g_sci->_theoraDecoder->start();
-			while (!g_sci->_theoraDecoder->isPlaying()) {
-				debug("WAITING TO PLAY BACKGROUND OGG!");
-				g_system->delayMillis(20);
-			}
-		}
-		while (!g_sci->_theoraDecoder->isPlaying()) {
-			debug("WAITING TO PLAY BACKGROUND OGG!");
-			g_system->delayMillis(20);
-		}
+
 		if (g_sci->_theoraDecoder->isPlaying()) {
 
+			if (!g_sci->_theoraDecoder->endOfVideo()) {
 				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+
 				debug(10, "Background IS Video! :)");
 				for (int y = rect.top; y < rect.bottom; ++y) {
 					const byte *inV = (const byte *)g_sci->_theoraSurface->getPixels() + ((y * _displayWidth + rect.left) * _format.bytesPerPixel);
@@ -501,7 +492,27 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					}
 				}
 			}
-		
+			if (!g_sci->_theoraDecoder->isPlaying() || g_sci->_theoraDecoder->endOfVideo()) {
+				Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+				if (folder.exists() && folder.getChild(g_sci->oggBackground).exists()) {
+					Common::String fileName = (folder.getPath() + folder.getChild(g_sci->oggBackground).getName()).c_str();
+					debug((fileName).c_str());
+					g_sci->_theoraDecoder = new Video::TheoraDecoder();
+					g_sci->_theoraDecoder->loadFile(g_sci->oggBackground);
+					g_sci->_theoraDecoder->start();
+					int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
+					while (!g_sci->_theoraDecoder->isPlaying()) {
+						debug(("WAITING TO PLAY : " + fileName).c_str());
+						g_system->delayMillis(20);
+					}
+					debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
+					g_sci->backgroundIsVideo = true;
+					g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+				} else {
+					debug(10, ("No File " + g_sci->oggBackground).c_str());
+				}
+			}
+		}
 	} else {
 		debug(10, "Background Is NOT Video");
 		for (int y = rect.top; y < rect.bottom; ++y) {
