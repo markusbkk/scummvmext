@@ -274,6 +274,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				debug((fileName).c_str());
 				g_sci->_theoraDecoder = new Video::TheoraDecoder();
 			    g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+			    g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 			    g_sci->_theoraDecoder->start();
 			    int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
 			    while (!g_sci->_theoraDecoder->isPlaying()) {

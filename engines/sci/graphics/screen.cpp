@@ -40,34 +40,7 @@
 namespace Sci {
 
 GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
-	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-	if (folder.exists() && folder.getChild("1x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 1;
-	}
-	if (folder.exists() && folder.getChild("2x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 2;
-	}
-	if (folder.exists() && folder.getChild("3x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 3;
-	}
-	if (folder.exists() && folder.getChild("4x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 4;
-	}
-	if (folder.exists() && folder.getChild("5x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 5;
-	}
-	if (folder.exists() && folder.getChild("6x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 6;
-	}
-	if (folder.exists() && folder.getChild("7x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 7;
-	}
-	if (folder.exists() && folder.getChild("8x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 8;
-	}
-	if (folder.exists() && folder.getChild("16x.cfg").exists()) {
-		g_sci->_enhancementMultiplier = 16; // lol u get teh idea...
-	}
+	
 	// Scale the screen, if needed
 	_upscaledHires = GFX_SCREEN_UPSCALED_320x200_X_EGA;
 	if (_resMan->getViewType() != kViewEga) {
@@ -372,7 +345,31 @@ GfxScreen::~GfxScreen() {
 void GfxScreen::convertToRGB(const Common::Rect &rect) {
 	assert(_format.bytesPerPixel != 1);
 	if (g_sci->backgroundIsVideo) {
-
+		if (!g_sci->_theoraDecoder->isPlaying() || g_sci->_theoraDecoder->endOfVideo()) {
+			g_sci->_theoraDecoder->stop();
+			Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+			if (folder.exists() && folder.getChild(g_sci->oggBackground).exists()) {
+				Common::String fileName = (folder.getPath() + folder.getChild(g_sci->oggBackground).getName()).c_str();
+				debug((fileName).c_str());
+				g_sci->_theoraDecoder = new Video::TheoraDecoder();
+				g_sci->_theoraDecoder->loadFile(g_sci->oggBackground);
+				g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 3);
+				g_sci->_theoraDecoder->start();
+				int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
+				while (!g_sci->_theoraDecoder->isPlaying()) {
+					debug(("WAITING TO PLAY : " + fileName).c_str());
+					g_system->delayMillis(20);
+				}
+				debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
+				g_sci->backgroundIsVideo = true;
+				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+			} else {
+				debug(10, ("No File " + g_sci->oggBackground).c_str());
+			}
+		}
+		while (!g_sci->_theoraDecoder->isPlaying()) {
+			g_system->delayMillis(20);
+		}
 		if (g_sci->_theoraDecoder->isPlaying()) {
 
 			if (!g_sci->_theoraDecoder->endOfVideo()) {
@@ -404,9 +401,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV);
+									r = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV + 2);
+									b = *(inV);
 								}
 								if (*mod) {
 									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
@@ -436,9 +433,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV);
+									r = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV + 2);
+									b = *(inV);
 								}
 								uint16 c = (uint16)_format.RGBToColor(r, g, b);
 								WRITE_UINT16(out, c);
@@ -468,9 +465,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV);
+									r = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV + 2);
+									b = *(inV);
 								}
 								if (*mod) {
 									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
@@ -500,9 +497,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV);
+									r = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV + 2);
+									b = *(inV);
 								}
 								uint32 c = _format.RGBToColor(r, g, b);
 								WRITE_UINT32(out, c);
@@ -520,12 +517,14 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 				}
 			}
 			if (!g_sci->_theoraDecoder->isPlaying() || g_sci->_theoraDecoder->endOfVideo()) {
+				g_sci->_theoraDecoder->stop();
 				Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 				if (folder.exists() && folder.getChild(g_sci->oggBackground).exists()) {
 					Common::String fileName = (folder.getPath() + folder.getChild(g_sci->oggBackground).getName()).c_str();
 					debug((fileName).c_str());
 					g_sci->_theoraDecoder = new Video::TheoraDecoder();
 					g_sci->_theoraDecoder->loadFile(g_sci->oggBackground);
+					g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 					g_sci->_theoraDecoder->start();
 					int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
 					while (!g_sci->_theoraDecoder->isPlaying()) {
@@ -538,6 +537,27 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 				} else {
 					debug(10, ("No File " + g_sci->oggBackground).c_str());
 				}
+			}
+		} else {
+			Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+			g_sci->_theoraDecoder->stop();
+			if (folder.exists() && folder.getChild(g_sci->oggBackground).exists()) {
+				Common::String fileName = (folder.getPath() + folder.getChild(g_sci->oggBackground).getName()).c_str();
+				debug((fileName).c_str());
+				g_sci->_theoraDecoder = new Video::TheoraDecoder();
+				g_sci->_theoraDecoder->loadFile(g_sci->oggBackground);
+				g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
+				g_sci->_theoraDecoder->start();
+				int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
+				while (!g_sci->_theoraDecoder->isPlaying()) {
+					debug(("WAITING TO PLAY : " + fileName).c_str());
+					g_system->delayMillis(20);
+				}
+				debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
+				g_sci->backgroundIsVideo = true;
+				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+			} else {
+				debug(10, ("No File " + g_sci->oggBackground).c_str());
 			}
 		}
 	} else {

@@ -89,7 +89,34 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 
 	assert(g_sci == 0);
 	g_sci = this;
-
+	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+	if (folder.exists() && folder.getChild("1x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 1;
+	}
+	if (folder.exists() && folder.getChild("2x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 2;
+	}
+	if (folder.exists() && folder.getChild("3x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 3;
+	}
+	if (folder.exists() && folder.getChild("4x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 4;
+	}
+	if (folder.exists() && folder.getChild("5x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 5;
+	}
+	if (folder.exists() && folder.getChild("6x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 6;
+	}
+	if (folder.exists() && folder.getChild("7x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 7;
+	}
+	if (folder.exists() && folder.getChild("8x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 8;
+	}
+	if (folder.exists() && folder.getChild("16x.cfg").exists()) {
+		g_sci->_enhancementMultiplier = 16; // lol u get teh idea...
+	}
 	_gfxMacIconBar = 0;
 
 	_audio = 0;
@@ -111,7 +138,6 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	_opcode_formats = 0;
 
 	_forceHiresGraphics = false;
-	_enhancementMultiplier = 4;
 	enhanced = false;
 	enhancedPrio = false;
 	// Set up the engine specific debug levels
