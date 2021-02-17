@@ -354,7 +354,8 @@ reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 	char trimmedTextStr[250] = {'\0'};
 	sprintf(trimmedTextStr, "%d", hash(text.c_str()));
 	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-	Common::String txtFileName = trimmedTextStr;
+	Common::String txtFileName = "text.";
+	txtFileName += trimmedTextStr;
 	txtFileName += ".txt";
 	debug(txtFileName.c_str());
 	bool replaceText = false;
@@ -899,7 +900,8 @@ void _k_GenericDrawControl(EngineState *s, reg_t controlObject, bool hilite) {
 	char trimmedTextStr[250] = {'\0'};
 	sprintf(trimmedTextStr, "%d", hash(text.c_str()));
 	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-	Common::String txtFileName = trimmedTextStr;
+	Common::String txtFileName = "text.";
+	txtFileName += trimmedTextStr;
 	txtFileName += ".txt";
 	debug(txtFileName.c_str());
 	bool replaceText = false;
