@@ -58,7 +58,9 @@
 #include <audio/audiostream.h>
 #include <sci/sound/audio.h>
 #include <sci/sound/music.h>
-
+#include <iostream>
+#include <fstream>
+#include <string>
 namespace Sci {
 
 static int16 adjustGraphColor(int16 color) {
@@ -348,8 +350,31 @@ hash(const char *str) {
 reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 	int16 textWidth, textHeight;
 	Common::String text = s->_segMan->getString(argv[1]);
+
 	char trimmedTextStr[250] = {'\0'};
 	sprintf(trimmedTextStr, "%d", hash(text.c_str()));
+	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+	Common::String txtFileName = trimmedTextStr;
+	txtFileName += ".txt";
+	debug(txtFileName.c_str());
+	bool replaceText = false;
+	if (folder.exists()) {
+		if (folder.getChild(txtFileName).exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
+			debug((fileName).c_str());
+			std::ifstream openfile;
+			openfile.open(fileName.c_str(), std::ios::in);
+			if (openfile.is_open()) {
+				std::string tp;
+				while (std::getline(openfile, tp)) {
+					std::cout << tp;
+				}
+				openfile.close();
+				text = tp.c_str();
+				replaceText = true;
+			}
+		}
+	}
 	g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
 	reg_t *dest = s->_segMan->derefRegPtr(argv[0], 4);
 	int maxwidth = (argc > 3) ? argv[3].toUint16() : 0;
@@ -868,6 +893,40 @@ void _k_GenericDrawControl(EngineState *s, reg_t controlObject, bool hilite) {
 	if (!textReference.isNull())
 		text = s->_segMan->getString(textReference);
 
+	char trimmedTextStr[250] = {'\0'};
+	sprintf(trimmedTextStr, "%d", hash(text.c_str()));
+	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+	Common::String txtFileName = trimmedTextStr;
+	txtFileName += ".txt";
+	debug(txtFileName.c_str());
+	bool replaceText = false;
+	if (folder.exists()) {
+		if (folder.getChild(txtFileName).exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
+			debug((fileName).c_str());
+			std::ifstream openfile;
+			openfile.open(fileName.c_str(), std::ios::in);
+			if (openfile.is_open()) {
+				std::string tp;
+				while (std::getline(openfile, tp)) {
+					std::cout << tp;
+				}
+				openfile.close();
+				text = tp.c_str();
+				replaceText = true;
+			}
+		} else {
+			std::ofstream newfile;
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
+			debug((fileName).c_str());
+			newfile.open(fileName.c_str(), std::ios::out);
+			if (newfile.is_open()) {
+				newfile << (text).c_str();
+				newfile.close();
+				debug(("WROTE : " + text).c_str());
+			}
+		}
+	}
 	uint16 languageSplitter = 0;
 	Common::String splitText;
 
