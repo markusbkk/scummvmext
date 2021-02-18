@@ -146,7 +146,7 @@ void SdlGraphicsManager::initSizeHint(const Graphics::ModeList &modes) {
 		// instead of checking the dimensions here like this, since not all
 		// 320x200/640x400 uses are with non-square pixels (e.g. DreamWeb).
 		if (ConfMan.getBool("aspect_ratio")) {
-			if (height % 200 == 0) {
+			if ((width >> 4) * 10 == height) {
 				height = real2Aspect(height);
 			}
 		}
