@@ -1,0 +1,1 @@
+C:\Projects\scummvm\devtools\create_project\msvc\Release\create_project.exe
