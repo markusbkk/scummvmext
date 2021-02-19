@@ -73,6 +73,7 @@ void GfxFontSjis::draw(uint16 chr, int16 top, int16 left, byte color, bool greye
 	//  If we don't do this, the characters will be slightly to the right, caused by "GetLongest()" inside GfxText16 that
 	//  leaves the last character that is causing a split into a new line within the current line instead of removing it.
 	//  That way the result will actually be too long (not our fault, sierra sci does it the same way)
+
 	_screen->putKanjiChar(_commonFont, left & 0xFFC, top, chr, color);
 }
 

@@ -89,6 +89,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 
 	assert(g_sci == 0);
 	g_sci = this;
+	g_sci->_enhancementMultiplier = 4;
 	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 	if (folder.exists() && folder.getChild("1x.cfg").exists()) {
 		g_sci->_enhancementMultiplier = 1;

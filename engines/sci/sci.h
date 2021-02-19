@@ -31,7 +31,6 @@
 #include "sci/debug.h"	// for DebugState
 #include "sci/detection.h" // Shared code between detection and engine
 #include "video/theora_decoder.h"
-
 struct ADGameDescription;
 
 /**

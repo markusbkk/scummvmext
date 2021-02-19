@@ -159,6 +159,11 @@ public:
 	void setPaletteMods(const PaletteMod *mods, unsigned int count);
 	bool paletteModsEnabled() const { return _paletteModsEnabled; }
 	void convertToRGB(const Common::Rect &rect);
+	/**
+	 * This variable defines, if upscaled hires is active and what upscaled mode
+	 * is used.
+	 */
+	GfxScreenUpscaledMode _upscaledHires;
 
 private:
 	uint16 _width;
@@ -244,11 +249,7 @@ private:
 	byte *_activeScreenR;
 	byte *_activeScreenG;
 	byte *_activeScreenB;
-	/**
-	 * This variable defines, if upscaled hires is active and what upscaled mode
-	 * is used.
-	 */
-	GfxScreenUpscaledMode _upscaledHires;
+	
 
 	/**
 	 * This here holds a translation for vertical+horizontal coordinates between native
@@ -274,7 +275,7 @@ public:
 
 		// Set pixel for visual, priority and control map directly, those are not upscaled
 		const int offset = y * _width + x;
-
+		
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 			_visualScreen[offset] = color;
 			if (_paletteMapScreen)
@@ -338,6 +339,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -378,6 +380,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -421,6 +424,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -449,6 +453,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -477,6 +482,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -520,6 +526,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -550,6 +557,7 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -583,20 +591,22 @@ public:
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
-			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
-				if (!g_sci->enhancedPrio)
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
+
 				_priorityScreenX[(y * _displayWidth) + x] = priority;
+				
 				break;
-			default:
-				if (!g_sci->enhancedPrio)
+			}
+			default: {
 				_priorityScreenX[(y * _displayWidth) + x] = priority;
+				
 				break;
+			}
 			}
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 			_controlScreen[offset] = control;
 		}
-		
 	}
 	void putPixelSurface(int16 x, int16 y, byte drawMask, byte surface) {
 
@@ -689,18 +699,54 @@ public:
 	 * the upscaled display screen (like japanese fonts, hires portraits, etc.).
 	 */
 	void putPixelOnDisplay(int16 x, int16 y, byte color, bool bg) {
-		int offset = y * _displayWidth + x;
-		_displayScreen[offset] = color;
-		if (g_sci->backgroundIsVideo == false) {
-			_enhancedMatte[offset] = 0;
-		} else {
-			_enhancedMatte[offset] = 128;
-		}
-		if (!bg)
-			_enhancedMatte[offset] = 0;
+
 		int displayOffset = 0;
 
 		switch (_upscaledHires) {
+		case GFX_SCREEN_UPSCALED_640x400: {
+			for (int yy = 0; yy < g_sci->_enhancementMultiplier * 2; yy++) {
+				for (int xx = 0; xx < g_sci->_enhancementMultiplier * 2; xx++) {
+					displayOffset = (((y * g_sci->_enhancementMultiplier * 2) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2) + xx; // straight 1 pixel -> 2 mapping
+					if (_format.bytesPerPixel == 2) {
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
+					} else {
+						assert(_format.bytesPerPixel == 4);
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreen[displayOffset] = color;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
+					}
+				}
+			}
+			break;
+		}
 		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -757,20 +803,71 @@ public:
 		int displayOffset = 0;
 
 		switch (_upscaledHires) {
-		case GFX_SCREEN_UPSCALED_640x400:
-			displayOffset = (y * 2) * _displayWidth + x * 2; // straight 1 pixel -> 2 mapping
+		case GFX_SCREEN_UPSCALED_640x400: {
+			for (int yy = 0; yy < g_sci->_enhancementMultiplier * 2; yy++) {
+				for (int xx = 0; xx < g_sci->_enhancementMultiplier * 2; xx++) {
+					displayOffset = (((y * g_sci->_enhancementMultiplier * 2) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2) + xx;
+					if (_format.bytesPerPixel == 2) {
 
-			_displayScreen[displayOffset] = color;
-			_displayScreen[displayOffset + 1] = color;
-			_displayScreen[displayOffset + _displayWidth] = color;
-			_displayScreen[displayOffset + _displayWidth + 1] = color;
-			
-			_enhancedMatte[displayOffset] = 0;
-			_enhancedMatte[displayOffset + 1] = 0;
-			_enhancedMatte[displayOffset + _displayWidth] = 0;
-			_enhancedMatte[displayOffset + _displayWidth + 1] = 0;
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreenA[displayOffset] = 0;
+						_displayScreen[displayOffset] = color;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
+
+					} else if (_format.bytesPerPixel == 4) {
+
+						byte i = color;
+						byte r = _palette[3 * i + 0];
+						byte g = _palette[3 * i + 1];
+						byte b = _palette[3 * i + 2];
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreenA[displayOffset] = 0;
+						_displayScreen[displayOffset] = color;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
+					} else {
+
+						byte r;
+						byte g;
+						byte b;
+						_format.colorToRGB(color, r, g, b);
+						_displayScreenR[displayOffset] = r;
+						_displayScreenG[displayOffset] = g;
+						_displayScreenB[displayOffset] = b;
+						_displayScreenA[displayOffset] = 0;
+						_displayScreen[displayOffset] = color;
+						if (g_sci->backgroundIsVideo == false) {
+							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_enhancedMatte[displayOffset] = 128;
+						}
+						if (!bg)
+							_enhancedMatte[displayOffset] = 0;
+					}
+				}
+			}
 			break;
-
+		}
 		case GFX_SCREEN_UPSCALED_640x440: {
 			int16 startY = (y * 11) / 5;
 			int16 endY = ((y + 1) * 11) / 5;
@@ -799,6 +896,7 @@ public:
 			}
 			break;
 		}
+		
 		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -876,14 +974,6 @@ public:
 		int priorityOffset = 0;
 
 		switch (_upscaledHires) {
-		case GFX_SCREEN_UPSCALED_640x400:
-			priorityOffset = (y * 2) * _displayWidth + x * 2; // straight 1 pixel -> 2 mapping
-
-			_priorityScreenX[priorityOffset] = priority;
-			_priorityScreenX[priorityOffset + 1] = priority;
-			_priorityScreenX[priorityOffset + _displayWidth] = priority;
-			_priorityScreenX[priorityOffset + _displayWidth + 1] = priority;
-			break;
 
 		case GFX_SCREEN_UPSCALED_640x440: {
 			int16 startY = (y * 11) / 5;
@@ -909,14 +999,33 @@ public:
 			}
 			break;
 		}
+		case GFX_SCREEN_UPSCALED_640x400: {
+			for (int yy = 0; yy < g_sci->_enhancementMultiplier * 2; yy++) {
+				for (int xx = 0; xx < g_sci->_enhancementMultiplier * 2; xx++) {
+					for (int yyy = 0; yyy < g_sci->_enhancementMultiplier; yyy++) {
+						for (int xxx = 0; xxx < g_sci->_enhancementMultiplier; xxx++) {
+							priorityOffset = (((y * g_sci->_enhancementMultiplier * 2) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2) + xx;
+
+							if (priorityOffset < _displayWidth * _displayHeight -1) {
+
+								_priorityScreenX[priorityOffset] = priority;
+								
+							}
+						}
+					}
+				}
+			}
+			break;
+		}
+		
 		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
 			for (int yy = 0; yy < g_sci->_enhancementMultiplier; yy++) {
 				for (int xx = 0; xx < g_sci->_enhancementMultiplier; xx++) {
 					priorityOffset = (((y * g_sci->_enhancementMultiplier) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier) + xx;
-					if (!g_sci->enhancedPrio)
 						_priorityScreenX[priorityOffset] = priority;
+					
 				}
 			}
 			break;
@@ -935,7 +1044,15 @@ public:
 		int16 actualY = startingY + y;
 		if (_fontIsUpscaled) {
 			// Do not scale ourselves, but put it on the display directly
-			putPixelOnDisplay(x, actualY, color, false);
+			switch (_upscaledHires) {
+				case GFX_SCREEN_UPSCALED_640x400: {
+					putScaledPixelOnDisplay(x, actualY, color, false);
+					break;
+				}
+				default: 
+					putPixelOnDisplay(x, actualY, color, false);
+					break;
+			}
 		} else {
 			if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 				putPixel480x300(x, actualY, GFX_SCREEN_MASK_VISUAL, color, 0, 0);
@@ -949,7 +1066,6 @@ public:
 			case GFX_SCREEN_UPSCALED_DISABLED:
 				_displayScreen[offset] = color;
 				break;
-			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480: {
 				// to 1-> 4 pixels upscaling for all of those, so that fonts won't look weird
@@ -975,7 +1091,15 @@ public:
 
 		if (_fontIsUpscaled) {
 			// Do not scale ourselves, but put it on the display directly
-			putPixelOnDisplay(x, actualY, color, false);
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+				putScaledPixelOnDisplay(x, actualY, color, false);
+				break;
+			}
+			default:
+				putPixelOnDisplay(x, actualY, color, false);
+				break;
+			}
 		} else {
 			if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
 				putPixel480x300(x, actualY, GFX_SCREEN_MASK_VISUAL, color, 0, 0);
@@ -989,20 +1113,64 @@ public:
 			case GFX_SCREEN_UPSCALED_DISABLED:
 				_displayScreen[offset] = color;
 				break;
-			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x400: {
+				// to 1-> 4 pixels upscaling for all of those, so that fonts won't look weird
+				int displayOffset = (_upscaledHeightMapping[startingY] + y * 2 * g_sci->_enhancementMultiplier) * _displayWidth + x * 2 * g_sci->_enhancementMultiplier;
+				byte i = color;
+				byte r = _palette[3 * i + 0];
+				byte g = _palette[3 * i + 1];
+				byte b = _palette[3 * i + 2];
+				_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
+				_displayScreen[displayOffset] = color;
+				_enhancedMatte[displayOffset] = 255;
+				_displayScreenR[displayOffset + 1] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset + 1] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset + 1] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
+				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset + 1] = 255;
+				displayOffset += _displayWidth;
+				_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
+				_displayScreen[displayOffset] = color;
+				_enhancedMatte[displayOffset] = 255;
+				_displayScreenR[displayOffset + 1] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset + 1] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset + 1] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
+				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset + 1] = 255;
+				break;
+			}
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480: {
 				// to 1-> 4 pixels upscaling for all of those, so that fonts won't look weird
 				int displayOffset = (_upscaledHeightMapping[startingY] + y * 2) * _displayWidth + x * 2;
+				byte i = color;
+				byte r = _palette[3 * i + 0];
+				byte g = _palette[3 * i + 1];
+				byte b = _palette[3 * i + 2];
+				_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
 				_displayScreen[displayOffset] = color;
-				_displayScreen[displayOffset + 1] = color;
-				displayOffset += _displayWidth;
-				_displayScreen[displayOffset] = color;
-				_displayScreen[displayOffset + 1] = color;
-				_enhancedMatte[displayOffset] = 0;
-				_enhancedMatte[displayOffset + 1] = 0;
-				displayOffset += _displayWidth;
 				_enhancedMatte[displayOffset] = 255;
+				_displayScreenR[displayOffset + 1] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset + 1] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset + 1] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));				
+				_displayScreen[displayOffset + 1] = color;
+				_enhancedMatte[displayOffset + 1] = 255;
+				displayOffset += _displayWidth;
+				_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
+				_displayScreen[displayOffset] = color;
+				_enhancedMatte[displayOffset] = 255;
+				_displayScreenR[displayOffset + 1] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (r * ((0.003921568627451) * A));
+				_displayScreenG[displayOffset + 1] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (g * ((0.003921568627451) * A));
+				_displayScreenB[displayOffset + 1] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - A))) + (b * ((0.003921568627451) * A));
+				_displayScreen[displayOffset + 1] = color;
 				_enhancedMatte[displayOffset + 1] = 255;
 				break;
 			}
@@ -1033,7 +1201,6 @@ public:
 			return screen[offset];
 			break;
 		}
-
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 			offset = (int)((y) * _width) + ((int)(x));
 
@@ -1055,7 +1222,12 @@ public:
 			return screen[offset];
 			break;
 		}
-
+		case GFX_SCREEN_UPSCALED_640x400: {
+			
+			offset = (((y * g_sci->_enhancementMultiplier * 2)) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2);
+			return screen[offset];
+			break;
+		}
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 			offset = (int)((y)*_displayWidth) + ((int)(x));
 
@@ -1077,7 +1249,8 @@ public:
 		return getPixelX(_surfaceScreen, (int)(x), (int)(y)); //
 	}
 	byte getPriority(int16 x, int16 y) {
-		return getPixelX(_priorityScreenX, x * g_sci->_enhancementMultiplier, y * g_sci->_enhancementMultiplier);
+		
+		return getPixel(_priorityScreenX, x, y);
 	}
 	byte getControl(int16 x, int16 y) {
 		return getPixel(_controlScreen, x, y);
@@ -1092,7 +1265,7 @@ public:
 		return vectorGetPixel(_visualScreen, x, y);
 	}
 	byte vectorGetPriority(int16 x, int16 y) {
-		return vectorGetPixel(_priorityScreenX, x * g_sci->_enhancementMultiplier, y * g_sci->_enhancementMultiplier);
+		return vectorGetPixel(_priorityScreenX, x * g_sci->_enhancementMultiplier * 2, y * g_sci->_enhancementMultiplier * 2); //idk
 	}
 	byte vectorGetControl(int16 x, int16 y) {
 		return vectorGetPixel(_controlScreen, x, y);

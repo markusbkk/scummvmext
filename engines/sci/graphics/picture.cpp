@@ -539,7 +539,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		}
 		if (enhanced || overlay || paletted || enhancedPrio || surface) {
 			y = (displayArea.top + drawY) * g_sci->_enhancementMultiplier;
-			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
+			if (g_sci->_gfxScreen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+				lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
+			} else {
+				lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier * 2) + y), displayArea.bottom * g_sci->_enhancementMultiplier * 2);
+			}
 			leftX = (displayArea.left + drawX) * g_sci->_enhancementMultiplier;
 			rightX = MIN<int16>((displayWidth * g_sci->_enhancementMultiplier + leftX), (displayArea.right * g_sci->_enhancementMultiplier));
 
@@ -584,7 +588,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					int offset = 0;
 					while (y < lastY) {
 
-						if (offset + 3 < pixelCountX - 1) {
+						
 
 							if (priority >= _screen->getPriorityX(x, y))
 							{
@@ -679,7 +683,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							    }
 								
 							
-						}
+						
 						x++;
 
 						if (x >= rightX) {
@@ -698,7 +702,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					int offset = 0;
 					while (y < lastY) {
 
-						if (offset + 3 < pixelCountX - 1) {
+						
 
 							if (priority >= _screen->getPriorityX(x, y))
 							{
@@ -791,7 +795,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								    _screen->putPixelSurface(x, y, drawMask, 0);
 							    }
 							
-						}
+						
 						if (x == leftX) {
 							offsetPal += sourcePixelSkipPerRow;
 							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
@@ -816,7 +820,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						//if (curByte != clearColor)
 
-						if (offset + 3 < pixelCountX - 1) {
+					 {
 							if (paletted) {
 								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 							}
@@ -922,7 +926,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					int offsetPal = 0;
 					int offset = 0;
 					while (y < lastY) {
-						if (offset + 3 < pixelCountX - 1) {
+						{
 							if (paletted) {
 								_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
 							}
@@ -1205,23 +1209,31 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 	}
-	if (enhanced) {
+	if (enhanced || overlay || paletted || enhancedPrio || surface) {
 
 		Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
 
 		// Horizontal clipping
 		uint16 skipCelBitmapPixels = 0;
 		int16 displayWidth = width;
-
+		
 		// Vertical clipping
 		uint16 skipCelBitmapLines = 0;
 		
+			
+		if (g_sci->_gfxScreen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
 			y = (displayArea.top) * g_sci->_enhancementMultiplier;
 			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
+		} else {
+			y = (displayArea.top * 2) * g_sci->_enhancementMultiplier * 2;
+			lastY = MIN<int16>(((height * 2 * g_sci->_enhancementMultiplier * 2) + y), displayArea.bottom * 2 * g_sci->_enhancementMultiplier * 2);
+		}
 			leftX = (displayArea.left) * g_sci->_enhancementMultiplier;
 			rightX = MIN<int16>((displayWidth * g_sci->_enhancementMultiplier + leftX), (displayArea.right * g_sci->_enhancementMultiplier));
 
 			uint16 sourcePixelSkipPerRow = 0;
+		    if (width > rightX - leftX)
+			    sourcePixelSkipPerRow = width - (rightX - leftX);
 			if (width * g_sci->_enhancementMultiplier > rightX - leftX)
 				sourcePixelSkipPerRow = (width * g_sci->_enhancementMultiplier) - (rightX - leftX);
 			enh += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();

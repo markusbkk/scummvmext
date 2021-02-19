@@ -951,7 +951,8 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 					if (color != clearKey) {
 						const int x2 = clipRectTranslated.left + x;
 						const int y2 = clipRectTranslated.top + y;
-						if (priority >= _screen->getPriority(x2, y2)) {
+						if (priority >= _screen->getPriorityX(x2, y2))
+						{
 							_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0, false);
 						}
 					}

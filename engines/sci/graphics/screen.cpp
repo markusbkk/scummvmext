@@ -66,12 +66,15 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	}
 
 	// Korean versions of games use hi-res font on upscaled version of the game.
-	if ((g_sci->getLanguage() == Common::KO_KOR) && (getSciVersion() <= SCI_VERSION_1_1))
+	if ((g_sci->getLanguage() == Common::KO_KOR) && (getSciVersion() <= SCI_VERSION_1_1)) {
 		_upscaledHires = GFX_SCREEN_UPSCALED_640x400;
+		g_sci->_enhancementMultiplier /= 2;
+	}
 	// Japanese versions of games use hi-res font on upscaled version of the game.
-	if ((g_sci->getLanguage() == Common::JA_JPN) && (getSciVersion() <= SCI_VERSION_1_1))
+	if ((g_sci->getLanguage() == Common::JA_JPN) && (getSciVersion() <= SCI_VERSION_1_1)) {
 		_upscaledHires = GFX_SCREEN_UPSCALED_640x400;
-
+		g_sci->_enhancementMultiplier /= 2;
+	}
 	// Macintosh SCI0 games used 480x300, while the scripts were running at 320x200
 	if (g_sci->getPlatform() == Common::kPlatformMacintosh) {
 		if (getSciVersion() <= SCI_VERSION_01) {
@@ -913,6 +916,9 @@ void GfxScreen::vectorPutLinePixel480x300(int16 x, int16 y, byte drawMask, byte 
 byte GfxScreen::vectorIsFillMatch(int16 x, int16 y, byte screenMask, byte checkForColor, byte checkForPriority, byte checkForControl, bool isEGA) {
 	int offset = y * _width + x;
 	int offsetPrio = ((y * g_sci->_enhancementMultiplier) * _displayWidth) + (x * g_sci->_enhancementMultiplier);
+	if (_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+		offsetPrio = ((y * g_sci->_enhancementMultiplier * 2) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2);
+	}
 	byte match = 0;
 
 	if (screenMask & GFX_SCREEN_MASK_VISUAL) {
@@ -1017,7 +1023,7 @@ void GfxScreen::drawLine(Common::Point startPoint, Common::Point endPoint, byte 
 // We put hires hangul chars onto upscaled background, so we need to adjust
 // coordinates. Caller gives use low-res ones.
 void GfxScreen::putHangulChar(Graphics::FontKorean *commonFont, int16 x, int16 y, uint16 chr, byte color) {
-	byte *displayPtr = _displayScreen + y * _displayWidth * 2 + x * 2;
+	byte *displayPtr = _displayScreen + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier);
 	// we don't use outline, so color 0 is actually not used
 	commonFont->drawChar(displayPtr, chr, _displayWidth, 1, color, 0, -1, -1);
 }
@@ -1025,7 +1031,7 @@ void GfxScreen::putHangulChar(Graphics::FontKorean *commonFont, int16 x, int16 y
 // We put hires kanji chars onto upscaled background, so we need to adjust
 // coordinates. Caller gives use low-res ones.
 void GfxScreen::putKanjiChar(Graphics::FontSJIS *commonFont, int16 x, int16 y, uint16 chr, byte color) {
-	byte *displayPtr = _displayScreen + y * _displayWidth * 2 + x * 2;
+	byte *displayPtr = _displayScreen + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier);
 	// we don't use outline, so color 0 is actually not used
 	commonFont->drawChar(displayPtr, chr, _displayWidth, 1, color, 0, -1, -1);
 }
@@ -1451,6 +1457,8 @@ void GfxScreen::adjustBackUpscaledCoordinates(int16 &y, int16 &x) {
 	case GFX_SCREEN_UPSCALED_640x400:
 		x /= 2;
 		y /= 2;
+		x /= g_sci->_enhancementMultiplier;
+		y /= g_sci->_enhancementMultiplier;
 		break;
 	case GFX_SCREEN_UPSCALED_640x440:
 		x /= 2;
