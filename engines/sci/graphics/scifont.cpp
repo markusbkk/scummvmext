@@ -386,7 +386,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 		}
 
 	}
-	if (enhancedFont) { ///UNDO TO HERE IF MESSED UPP!!!
+	if (enhancedFont) { 
 		extern byte *_palette;
 		left *= g_sci->_enhancementMultiplier;
 		top *= g_sci->_enhancementMultiplier;

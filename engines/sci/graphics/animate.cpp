@@ -740,9 +740,9 @@ void GfxAnimate::update() {
 			} else {
 				it->signal &= ~kSignalRemoveView;
 				if (it->signal & kSignalIgnoreActor)
-					bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
+					bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
 				else
-					bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
+					bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_ALL);
 				writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 			}
 		}
@@ -1008,7 +1008,16 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 				it->celRect.top = it->celRect.bottom;
 				it->celRect.bottom = t;
 			}
-
+			if (it->bitsRect.left > it->bitsRect.right) {
+				int l = it->bitsRect.left;
+				it->bitsRect.left = it->bitsRect.right;
+				it->bitsRect.right = l;
+			}
+			if (it->bitsRect.top > it->bitsRect.bottom) {
+				int t = it->bitsRect.top;
+				it->bitsRect.top = it->bitsRect.bottom;
+				it->bitsRect.bottom = t;
+			}
 
 			if (lsRect.left > lsRect.right) {
 				int l = lsRect.left;
@@ -1022,7 +1031,7 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 			}
 			workerRect = lsRect;
 			
-			workerRect.clip(it->celRect);
+			workerRect.clip(it->bitsRect);
 			
 			if (!workerRect.isEmpty()) {
 				workerRect = lsRect;
@@ -1036,15 +1045,15 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 					workerRect.top = workerRect.bottom;
 					workerRect.bottom = t;
 				}
-				workerRect.extend(it->celRect);
+				workerRect.extend(it->bitsRect);
 			} else {
 				_paint16->bitsShow(lsRect);
-				workerRect = it->celRect;
+				workerRect = it->bitsRect;
 			}
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->celRect.left);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->celRect.top);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->celRect.right);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->celRect.bottom);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->bitsRect.left);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->bitsRect.top);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->bitsRect.right);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->bitsRect.bottom);
 			// may get used for debugging
 			//_paint16->frameRect(workerRect);
 			_paint16->bitsShow(workerRect);
@@ -1054,10 +1063,14 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		}
 	}
 	// use this for debug purposes
-	//if (g_sci->backgroundIsVideo)
+	if (g_sci->backgroundIsVideo)
 	{	
-		//reAnimate(_ports->_curPort->rect);
+		reAnimate(_ports->_curPort->rect);
 		//_screen->convertToRGB(_ports->_curPort->rect);
+	}
+	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+		reAnimate(_ports->_curPort->rect);
+		_screen->convertToRGB(_ports->_curPort->rect);
 	}
 	 
 }
@@ -1096,7 +1109,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 		AnimateArray::iterator it;
 		AnimateArray::iterator end = _lastCastData.end();
 		for (it = _lastCastData.begin(); it != end; ++it) {
-			it->castHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
+			it->castHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
 			
 
 				Common::FSNode folder;

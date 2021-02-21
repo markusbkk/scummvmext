@@ -469,7 +469,7 @@ void GfxView::getCelRectEnhancedBits(Graphics::Surface *viewpng, bool viewEnhanc
 		outRect.bottom = (int16)((y + celInfo->displaceY - z + 1 + _adjustForSci0Early) / g_sci->_enhancementMultiplier);
 		outRect.top = (int16)(outRect.bottom - (int16)(viewpng->h / (g_sci->_enhancementMultiplier)) / 2);
 
-		outRect.left -= 8;
+		outRect.left -= 1;
 		outRect.right += 8;
 		outRect.bottom += 8;
 		outRect.top -= 8;
@@ -1187,7 +1187,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 						//const byte color = bitmapData[bmpoffset + (int)(x / g_sci->_enhancementMultiplier)];
 						//if (color != clearKey)
 						{
-							if ((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x <= _screen->getDisplayWidth() && ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y) <= _screen->getDisplayHeight())
+							if ((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x > 0 && (newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x <= _screen->getDisplayWidth() && (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y > 0 &&(g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y <= _screen->getDisplayHeight())
 							{
 
 								if (!enhancedIs256) {
@@ -1213,7 +1213,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 									}
 								}
 								if (y == (height - 1) * g_sci->_enhancementMultiplier && (x == (int)((width * g_sci->_enhancementMultiplier) / 2))) {
-									surfaceNumber = _screen->getSurface(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y));
+									surfaceNumber = _screen->getSurface(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)); 
 								}
 							}
 						}

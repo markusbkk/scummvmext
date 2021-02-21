@@ -83,6 +83,7 @@ void GfxText16::ClearChar(int16 chr) {
 	rect.left = _ports->_curPort->curLeft;
 	rect.right = rect.left + GetFont()->getCharWidth(chr);
 	_paint16->eraseRect(rect);
+	//_paint16->frameRect(rect);
 }
 
 // This internal function gets called as soon as a '|' is found in a text. It
