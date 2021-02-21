@@ -443,10 +443,38 @@ void GfxView::getCelRect(int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, C
 }
 void GfxView::getCelRectEnhanced(Graphics::Surface *viewpng, bool viewEnhanced, int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, Common::Rect &outRect) const {
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
-	outRect.left = x + celInfo->displaceX - ((int16)(viewpng->w / g_sci->_enhancementMultiplier) >> 1);
-	outRect.right = outRect.left + (int16)(viewpng->w / g_sci->_enhancementMultiplier);
-	outRect.bottom = y + celInfo->displaceY - z + 1 + _adjustForSci0Early;
-	outRect.top = outRect.bottom - (int16)(viewpng->h / g_sci->_enhancementMultiplier);
+	if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+		outRect.left = x + celInfo->displaceX - ((int16)(viewpng->w / g_sci->_enhancementMultiplier) >> 1);
+		outRect.right = outRect.left + (int16)(viewpng->w / g_sci->_enhancementMultiplier);
+		outRect.bottom = y + celInfo->displaceY - z + 1 + _adjustForSci0Early;
+		outRect.top = outRect.bottom - (int16)(viewpng->h / g_sci->_enhancementMultiplier);
+	} else {
+		outRect.left = ((x + celInfo->displaceX) * 2) - ((int16)(viewpng->w / g_sci->_enhancementMultiplier) >> 1);
+		outRect.right = outRect.left + (int16)(viewpng->w / g_sci->_enhancementMultiplier);
+		outRect.bottom = ((y + celInfo->displaceY) * 2) - z + 1 + _adjustForSci0Early;
+		outRect.top = outRect.bottom - (int16)(viewpng->h / g_sci->_enhancementMultiplier);
+	}
+}
+void GfxView::getCelRectEnhancedBits(Graphics::Surface *viewpng, bool viewEnhanced, int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, Common::Rect &outRect) const {
+	const CelInfo *celInfo = getCelInfo(loopNo, celNo);
+	if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+		outRect.left = x + celInfo->displaceX - ((int16)(viewpng->w / g_sci->_enhancementMultiplier) >> 1);
+		outRect.right = outRect.left + (int16)(viewpng->w / g_sci->_enhancementMultiplier);
+		outRect.bottom = y + celInfo->displaceY - z + 1 + _adjustForSci0Early;
+		outRect.top = outRect.bottom - (int16)(viewpng->h / g_sci->_enhancementMultiplier);
+	} else {
+		
+		outRect.left = (int16)((((x + celInfo->displaceX) * 4) - (int16)(viewpng->w / g_sci->_enhancementMultiplier) >> 1) / 2);
+		outRect.right = (int16)(outRect.left + (int16)(viewpng->w / (g_sci->_enhancementMultiplier)) / 2);
+		outRect.bottom = (int16)((y + celInfo->displaceY - z + 1 + _adjustForSci0Early) / g_sci->_enhancementMultiplier);
+		outRect.top = (int16)(outRect.bottom - (int16)(viewpng->h / (g_sci->_enhancementMultiplier)) / 2);
+
+		outRect.left -= 8;
+		outRect.right += 8;
+		outRect.bottom += 8;
+		outRect.top -= 8;
+	}
+	
 }
 void GfxView::getCelSpecialHoyle4Rect(int16 loopNo, int16 celNo, int16 x, int16 y, int16 z, Common::Rect &outRect) const {
 	const CelInfo *celInfo = getCelInfo(loopNo, celNo);

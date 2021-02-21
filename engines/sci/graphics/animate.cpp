@@ -259,8 +259,8 @@ void GfxAnimate::makeSortedList(List *list) {
 			listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 			listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		} else {
-			listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * 2;
-			listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * 2;
+			listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
+			listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 			listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		}
 		listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
@@ -673,14 +673,17 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 		} else {
 			if (!it->viewEnhanced) {
 				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
 			} else {
 				view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+				view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+				it->bitsRect.clip(_ports->_curPort->rect);
 			}
 		}
 	}
-
+	//_paint16->frameRect(it->bitsRect);
 	if (shouldSetNsRect) {
-		g_sci->_gfxCompare->setNSRect(it->object, it->celRect);
+		g_sci->_gfxCompare->setNSRect(it->object, it->bitsRect);
 	}
 }
 
@@ -723,6 +726,7 @@ void GfxAnimate::update() {
 			if (!(it->signal & kSignalIgnoreActor)) {
 				rect = it->celRect;
 				rect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, rect.top, rect.bottom - 1);
+				
 				_paint16->fillRect(rect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
 			}
 		}
@@ -771,7 +775,18 @@ void GfxAnimate::drawCels() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (!(it->signal & (kSignalNoUpdate | kSignalHidden | kSignalAlwaysUpdate))) {
 			// Save background
-			bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
+			//_paint16->frameRect(it->bitsRect);
+			if (it->bitsRect.left > it->bitsRect.right) {
+				int l = it->bitsRect.left;
+				it->bitsRect.left = it->bitsRect.right;
+				it->bitsRect.right = l;
+			}
+			if (it->bitsRect.top > it->bitsRect.bottom) {
+				int t = it->bitsRect.top;
+				it->bitsRect.top = it->bitsRect.bottom;
+				it->bitsRect.bottom = t;
+			}
+			bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_ALL);
 			writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 			// draw corresponding cel
 			
@@ -966,20 +981,61 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 	const AnimateList::iterator end = _list.end();
 	Common::Rect lsRect;
 	Common::Rect workerRect;
-
+	if (workerRect.left > workerRect.right) {
+		int l = workerRect.left;
+		workerRect.left = workerRect.right;
+		workerRect.right = l;
+	}
+	if (workerRect.top > workerRect.bottom) {
+		int t = workerRect.top;
+		workerRect.top = workerRect.bottom;
+		workerRect.bottom = t;
+	}
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->showBitsFlag || !(it->signal & (kSignalRemoveView | kSignalNoUpdate) ||
 										(!(it->signal & kSignalRemoveView) && (it->signal & kSignalNoUpdate) && oldPicNotValid))) {
-			lsRect.left = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft));
-			lsRect.top = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop));
-			lsRect.right = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight));
-			lsRect.bottom = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom));
+			lsRect.left = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft))/2;
+			lsRect.top = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop))/2;
+			lsRect.right = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight))/2;
+			lsRect.bottom = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom))/2;
+			if (it->celRect.left > it->celRect.right) {
+				int l = it->celRect.left;
+				it->celRect.left = it->celRect.right;
+				it->celRect.right = l;
+			}
+			if (it->celRect.top > it->celRect.bottom) {
+				int t = it->celRect.top;
+				it->celRect.top = it->celRect.bottom;
+				it->celRect.bottom = t;
+			}
 
+
+			if (lsRect.left > lsRect.right) {
+				int l = lsRect.left;
+				lsRect.left = lsRect.right;
+				lsRect.right = l;
+			}
+			if (lsRect.top > lsRect.bottom) {
+				int t = lsRect.top;
+				lsRect.top = lsRect.bottom;
+				lsRect.bottom = t;
+			}
 			workerRect = lsRect;
+			
 			workerRect.clip(it->celRect);
-
+			
 			if (!workerRect.isEmpty()) {
 				workerRect = lsRect;
+				if (workerRect.left > workerRect.right) {
+					int l = workerRect.left;
+					workerRect.left = workerRect.right;
+					workerRect.right = l;
+				}
+				if (workerRect.top > workerRect.bottom) {
+					int t = workerRect.top;
+					workerRect.top = workerRect.bottom;
+					workerRect.bottom = t;
+				}
 				workerRect.extend(it->celRect);
 			} else {
 				_paint16->bitsShow(lsRect);
@@ -998,15 +1054,11 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		}
 	}
 	// use this for debug purposes
-	if (g_sci->backgroundIsVideo)
+	//if (g_sci->backgroundIsVideo)
 	{	
-		reAnimate(_ports->_curPort->rect);
+		//reAnimate(_ports->_curPort->rect);
 		//_screen->convertToRGB(_ports->_curPort->rect);
 	}
-	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
-		_screen->copyToScreen();
-	}
-	//_screen->convertToRGB(_ports->_curPort->rect);
 	 
 }
 
@@ -1272,11 +1324,14 @@ void GfxAnimate::addToPicDrawCels() {
 		} else {
 			if (!it->viewEnhanced) {
 				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
 			} else {
 				view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+				view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+				it->bitsRect.clip(_ports->_curPort->rect);
 			}
 		}
-
+		//_paint16->frameRect(it->bitsRect);
 		// draw corresponding cel
 		_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, view, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 		if (!(it->signal & kSignalIgnoreActor)) {

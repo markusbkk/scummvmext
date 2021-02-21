@@ -69,6 +69,7 @@ struct AnimateEntry {
 	int16 scaleX;
 	int16 scaleY;
 	Common::Rect celRect;
+	Common::Rect bitsRect;
 	bool showBitsFlag;
 	reg_t castHandle;
 	Graphics::Surface *viewpng;

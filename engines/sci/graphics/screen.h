@@ -612,18 +612,7 @@ public:
 				break;
 			}
 		}
-		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			switch (_upscaledHires) {
-			case GFX_SCREEN_UPSCALED_640x400: {
-				int displayOffset = y * (_width * 2) + x;
-				_priorityScreenX[displayOffset] = priority;
-
-				break;
-			}
-			default:
-				break;
-			}
-		}
+	
 	}
 
 	void putPixelG640(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {

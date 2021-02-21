@@ -322,12 +322,12 @@ void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pi
 void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GfxView *view, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	Common::Rect clipRect = celRect;
 	Common::Rect curPortRectX;
-	curPortRectX.left = _ports->_curPort->rect.left * g_sci->_enhancementMultiplier * 2;
-	curPortRectX.right = _ports->_curPort->rect.right * g_sci->_enhancementMultiplier * 2;
-	curPortRectX.top = _ports->_curPort->rect.top * g_sci->_enhancementMultiplier * 2;
-	curPortRectX.bottom = _ports->_curPort->rect.bottom * g_sci->_enhancementMultiplier * 2;
+	curPortRectX.left = _ports->_curPort->rect.left * 2;
+	curPortRectX.right = _ports->_curPort->rect.right * 2;
+	curPortRectX.top = _ports->_curPort->rect.top * 2;
+	curPortRectX.bottom = _ports->_curPort->rect.bottom * 2;
 	//clipRect.clip(_ports->_curPort->rect);
-	clipRect.clip(curPortRectX);
+
 	_currentViewPort = _ports->_curPort->rect;
 	if (clipRect.isEmpty()) // nothing to draw
 		return;
@@ -671,7 +671,7 @@ void GfxPaint16::frameRect(const Common::Rect &rect) {
 
 void GfxPaint16::bitsShow(const Common::Rect &rect) {
 	Common::Rect workerRect(rect.left, rect.top, rect.right, rect.bottom);
-
+	
 	workerRect.clip(_ports->_curPort->rect);
 	if (workerRect.isEmpty()) // nothing to show
 		return;
@@ -722,6 +722,7 @@ reg_t GfxPaint16::bitsSave(const Common::Rect &rect, byte screenMask) {
 }
 
 void GfxPaint16::bitsGetRect(reg_t memoryHandle, Common::Rect *destRect) {
+	//g_sci->_gfxPaint16->frameRect(*destRect);
 	byte *memoryPtr = NULL;
 
 	if (!memoryHandle.isNull()) {
