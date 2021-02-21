@@ -68,12 +68,12 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	// Korean versions of games use hi-res font on upscaled version of the game.
 	if ((g_sci->getLanguage() == Common::KO_KOR) && (getSciVersion() <= SCI_VERSION_1_1)) {
 		_upscaledHires = GFX_SCREEN_UPSCALED_640x400;
-		g_sci->_enhancementMultiplier /= 2;
+		//g_sci->_enhancementMultiplier /= 2;
 	}
 	// Japanese versions of games use hi-res font on upscaled version of the game.
 	if ((g_sci->getLanguage() == Common::JA_JPN) && (getSciVersion() <= SCI_VERSION_1_1)) {
 		_upscaledHires = GFX_SCREEN_UPSCALED_640x400;
-		g_sci->_enhancementMultiplier /= 2;
+		//g_sci->_enhancementMultiplier /= 2;
 	}
 	// Macintosh SCI0 games used 480x300, while the scripts were running at 320x200
 	if (g_sci->getPlatform() == Common::kPlatformMacintosh) {

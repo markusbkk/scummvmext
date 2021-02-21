@@ -211,6 +211,7 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	int _enhancementMultiplier;
+	int _enhancementMultiplierView;
 	const Graphics::Surface *_theoraSurface;
 	Common::String oggBackground;
 	bool enhanced;

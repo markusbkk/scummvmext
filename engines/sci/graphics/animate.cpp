@@ -254,9 +254,15 @@ void GfxAnimate::makeSortedList(List *list) {
 		listEntry.celNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(cel));
 		listEntry.tweenNo = 0;
 		listEntry.paletteNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(palette));
-		listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-		listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
-		listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
+		if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+			listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
+			listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
+			listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
+		} else {
+			listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * 2;
+			listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * 2;
+			listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
+		}
 		listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
 		listEntry.processed = false;
 		listEntry.signal = readSelectorValue(_s->_segMan, curObject, SELECTOR(signal));
@@ -992,10 +998,15 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		}
 	}
 	// use this for debug purposes
-	if (g_sci->backgroundIsVideo) {	
+	if (g_sci->backgroundIsVideo)
+	{	
 		reAnimate(_ports->_curPort->rect);
 		//_screen->convertToRGB(_ports->_curPort->rect);
 	}
+	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+		_screen->copyToScreen();
+	}
+	//_screen->convertToRGB(_ports->_curPort->rect);
 	 
 }
 

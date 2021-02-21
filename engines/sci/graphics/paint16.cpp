@@ -321,7 +321,13 @@ void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pi
 // This version of drawCel is not supposed to call BitsShow()!
 void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GfxView *view, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	Common::Rect clipRect = celRect;
-	clipRect.clip(_ports->_curPort->rect);
+	Common::Rect curPortRectX;
+	curPortRectX.left = _ports->_curPort->rect.left * g_sci->_enhancementMultiplier * 2;
+	curPortRectX.right = _ports->_curPort->rect.right * g_sci->_enhancementMultiplier * 2;
+	curPortRectX.top = _ports->_curPort->rect.top * g_sci->_enhancementMultiplier * 2;
+	curPortRectX.bottom = _ports->_curPort->rect.bottom * g_sci->_enhancementMultiplier * 2;
+	//clipRect.clip(_ports->_curPort->rect);
+	clipRect.clip(curPortRectX);
 	_currentViewPort = _ports->_curPort->rect;
 	if (clipRect.isEmpty()) // nothing to draw
 		return;

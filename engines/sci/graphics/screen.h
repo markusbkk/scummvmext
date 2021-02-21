@@ -380,7 +380,35 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
-			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x400: {
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				}
+				break;
+			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -415,6 +443,18 @@ public:
 				break;
 			}
 		}
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+				int displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				_priorityScreenX[displayOffset] = priority;
+
+				break;
+			}
+			default:
+				break;
+			}
+		}
 	}
 
 	void putPixelG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
@@ -424,7 +464,20 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
-			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+				break;
+			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -453,7 +506,20 @@ public:
 			int displayOffset = 0;
 
 			switch (_upscaledHires) {
-			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+				}
+				break;
+			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
@@ -474,7 +540,175 @@ public:
 			}
 		}
 	}
+	void putPixelR640(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control, bool bg) {
 
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+				displayOffset = y * (_width * 2) + x;
+
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+					
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+					
+				}
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+				int displayOffset = y * (_width * 2) + x;
+				_priorityScreenX[displayOffset] = priority;
+
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	void putPixelG640(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = y * (_width * 2) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	void putPixelB640(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = y * (_width * 2) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
 	void putFontPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
@@ -517,6 +751,7 @@ public:
 				break;
 			}
 		}
+		
 	}
 
 	void putFontPixelG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
@@ -587,13 +822,19 @@ public:
 
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
 			switch (_upscaledHires) {
-			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				_priorityScreenX[((y) * (_width * 2)) + (x)] = priority;
+
+				break;
+			}
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
 
-				_priorityScreenX[(y * _displayWidth) + x] = priority;
+				_priorityScreenX[(y * _displayWidth) + x] = priority;	
+				
 				
 				break;
 			}
@@ -1224,7 +1465,7 @@ public:
 		}
 		case GFX_SCREEN_UPSCALED_640x400: {
 			
-			offset = (((y * g_sci->_enhancementMultiplier * 2)) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2);
+			offset = ((y) * (_width * 2)) + (x);
 			return screen[offset];
 			break;
 		}

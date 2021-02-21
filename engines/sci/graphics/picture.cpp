@@ -1267,6 +1267,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+							_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 						}
 					}
 					if (overlay) {
@@ -1372,6 +1373,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+							_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 						}
 					}
 					if (overlay) {
