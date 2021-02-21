@@ -677,7 +677,7 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 			} else {
 				view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
 				view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
-				it->bitsRect.clip(_ports->_curPort->rect);
+				//it->bitsRect.clip(_ports->_curPort->rect);
 			}
 		}
 	}
@@ -724,7 +724,7 @@ void GfxAnimate::update() {
 
 			it->signal &= ~(kSignalStopUpdate | kSignalViewUpdated | kSignalNoUpdate | kSignalForceUpdate);
 			if (!(it->signal & kSignalIgnoreActor)) {
-				rect = it->celRect;
+				rect = it->bitsRect;
 				rect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, rect.top, rect.bottom - 1);
 				
 				_paint16->fillRect(rect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
@@ -753,11 +753,11 @@ void GfxAnimate::update() {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
 			
-			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, it->tweenNo, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, it->tweenNo, it->bitsRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
 
 			if (!(it->signal & kSignalIgnoreActor)) {
-				rect = it->celRect;
+				rect = it->bitsRect;
 				rect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, rect.top, rect.bottom - 1);
 				_paint16->fillRect(rect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
 			}
@@ -1045,15 +1045,15 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 					workerRect.top = workerRect.bottom;
 					workerRect.bottom = t;
 				}
-				workerRect.extend(it->bitsRect);
+				workerRect.extend(it->celRect);
 			} else {
 				_paint16->bitsShow(lsRect);
 				workerRect = it->bitsRect;
 			}
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->bitsRect.left);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->bitsRect.top);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->bitsRect.right);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->bitsRect.bottom);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->celRect.left);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->celRect.top);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->celRect.right);
+			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->celRect.bottom); /// UNDO TO HERE
 			// may get used for debugging
 			//_paint16->frameRect(workerRect);
 			_paint16->bitsShow(workerRect);
@@ -1065,14 +1065,14 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 	// use this for debug purposes
 	if (g_sci->backgroundIsVideo)
 	{	
-		reAnimate(_ports->_curPort->rect);
+		//reAnimate(_ports->_curPort->rect);
 		//_screen->convertToRGB(_ports->_curPort->rect);
 	}
 	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
-		reAnimate(_ports->_curPort->rect);
+		//reAnimate(_ports->_curPort->rect);
 		_screen->convertToRGB(_ports->_curPort->rect);
 	}
-	 
+	reAnimate(_ports->_curPort->rect);
 }
 
 void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
@@ -1348,8 +1348,8 @@ void GfxAnimate::addToPicDrawCels() {
 		// draw corresponding cel
 		_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, view, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 		if (!(it->signal & kSignalIgnoreActor)) {
-			it->celRect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, it->celRect.top, it->celRect.bottom - 1);
-			_paint16->fillRect(it->celRect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
+			it->bitsRect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, it->bitsRect.top, it->bitsRect.bottom - 1);
+			_paint16->fillRect(it->bitsRect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
 		}
 	}
 }

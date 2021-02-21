@@ -469,7 +469,7 @@ void GfxView::getCelRectEnhancedBits(Graphics::Surface *viewpng, bool viewEnhanc
 		outRect.bottom = (int16)((y + celInfo->displaceY - z + 1 + _adjustForSci0Early) / g_sci->_enhancementMultiplier);
 		outRect.top = (int16)(outRect.bottom - (int16)(viewpng->h / (g_sci->_enhancementMultiplier)) / 2);
 
-		outRect.left -= 1;
+		outRect.left -= 8;
 		outRect.right += 8;
 		outRect.bottom += 8;
 		outRect.top -= 8;
@@ -1121,7 +1121,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			Common::Rect newClipRectTranslated = clipRectTranslated;
 
 			newClipRect = celRect;
-			//newClipRect.clip(_currentViewPort);
+			newClipRect.clip(_currentViewPort);
 
 			if (newClipRect.isEmpty()) // nothing to draw
 				return;
