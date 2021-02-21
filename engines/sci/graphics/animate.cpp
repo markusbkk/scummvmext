@@ -1045,15 +1045,26 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 					workerRect.top = workerRect.bottom;
 					workerRect.bottom = t;
 				}
-				workerRect.extend(it->celRect);
+				if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+					workerRect.extend(it->celRect);
+				} else {
+					workerRect.extend(it->bitsRect);
+				}
 			} else {
 				_paint16->bitsShow(lsRect);
 				workerRect = it->bitsRect;
 			}
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->celRect.left);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->celRect.top);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->celRect.right);
-			writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->celRect.bottom); /// UNDO TO HERE
+			if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->celRect.left);
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->celRect.top);
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->celRect.right);
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->celRect.bottom); /// UNDO TO HERE
+			} else {
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->bitsRect.left);
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->bitsRect.top);
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->bitsRect.right);
+				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->bitsRect.bottom); 
+			}
 			// may get used for debugging
 			//_paint16->frameRect(workerRect);
 			_paint16->bitsShow(workerRect);

@@ -994,8 +994,9 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			Common::Rect newClipRectTranslated = clipRectTranslated;
 
 			newClipRect = celRect;
-			newClipRect.clip(_currentViewPort);
-
+			
+				newClipRect.clip(_currentViewPort);
+			
 			if (newClipRect.isEmpty()) // nothing to draw
 				return;
 
@@ -1121,8 +1122,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			Common::Rect newClipRectTranslated = clipRectTranslated;
 
 			newClipRect = celRect;
-			newClipRect.clip(_currentViewPort);
-
+			
 			if (newClipRect.isEmpty()) // nothing to draw
 				return;
 
