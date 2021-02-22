@@ -330,8 +330,8 @@ void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pi
 	} else {
 		curPortRectX = _ports->_curPort->rect;
 	}
-	//clipRect.clip(_ports->_curPort->rect);
 	clipRect.clip(curPortRectX);
+
 	_currentViewPort = _ports->_curPort->rect;
 	if (clipRect.isEmpty()) // nothing to draw
 		return;
