@@ -361,7 +361,7 @@ reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 	bool replaceText = false;
 	if (folder.exists()) {
 		if (folder.getChild(txtFileName).exists()) {
-			Common::String fileName = (folder.getPath() + '/' + folder.getChild(txtFileName).getName()).c_str();
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
 			debug((fileName).c_str());
 			std::ifstream openfile;
 			openfile.open(fileName.c_str(), std::ios::in);
@@ -907,7 +907,7 @@ void _k_GenericDrawControl(EngineState *s, reg_t controlObject, bool hilite) {
 	bool replaceText = false;
 	if (folder.exists()) {
 		if (folder.getChild(txtFileName).exists()) {
-			Common::String fileName = (folder.getPath() + '/' + folder.getChild(txtFileName).getName()).c_str();
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
 			debug((fileName).c_str());
 			std::ifstream openfile;
 			openfile.open(fileName.c_str(), std::ios::in);
@@ -920,16 +920,6 @@ void _k_GenericDrawControl(EngineState *s, reg_t controlObject, bool hilite) {
 					text += tp.c_str();
 				}
 				tp = "";
-			}
-		} else {
-			std::ofstream newfile;
-			Common::String fileName = (folder.getPath() + '/' + folder.getChild(txtFileName).getName()).c_str();
-			debug((fileName).c_str());
-			newfile.open(fileName.c_str(), std::ios::out);
-			if (newfile.is_open()) {
-				newfile << (text).c_str();
-				newfile.close();
-				debug(("WROTE : " + text).c_str());
 			}
 		}
 	}
