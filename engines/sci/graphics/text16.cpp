@@ -480,6 +480,7 @@ int16 GfxText16::Size(Common::Rect &rect, const char *text, uint16 languageSplit
 // returns maximum font height used
 void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgFontId, int16 orgPenColor) {
 	uint16 curChar, charWidth;
+	char ifGlyphMissing = '*';
 	Common::Rect rect;
 
 	GetFont();
@@ -490,7 +491,8 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 	rect.bottom = rect.top + _ports->_curPort->fontHeight;
 	text += from;
 	while (len--) {
-		curChar = (*(const byte *)text++);
+		ifGlyphMissing = *text;
+		curChar = (*(const byte *)text++);	
 		if (_font->isDoubleByte(curChar)) {
 			curChar |= (*(const byte *)text++) << 8;
 			len--;
@@ -517,7 +519,7 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 				_paint16->eraseRect(rect);
 			}
 			// CharStd
-			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+			_font->draw(curChar, ifGlyphMissing, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}
@@ -669,7 +671,7 @@ void GfxText16::DrawString(const Common::String &textOrig) {
 //  In KQ4 the IV char is actually 0xA, which would otherwise get considered as linebreak and not printed
 void GfxText16::DrawStatus(const Common::String &strOrig) {
 	uint16 curChar, charWidth;
-
+	char ifGlyphMissing = '*';
 	Common::String str;
 	if (!g_sci->isLanguageRTL())
 		str = strOrig;
@@ -688,13 +690,14 @@ void GfxText16::DrawStatus(const Common::String &strOrig) {
 	rect.top = _ports->_curPort->curTop;
 	rect.bottom = rect.top + _ports->_curPort->fontHeight;
 	while (textLen--) {
+		ifGlyphMissing = *text;
 		curChar = *text++;
 		switch (curChar) {
 		case 0:
 			break;
 		default:
 			charWidth = _font->getCharWidth(curChar);
-			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+			_font->draw(curChar, ifGlyphMissing, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}

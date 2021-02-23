@@ -1,4 +1,4 @@
-/* ScummVM - Graphic Adventure Engine
+﻿/* ScummVM - Graphic Adventure Engine
  *
  * ScummVM is the legal property of its developers, whose names
  * are too numerous to list here. Please refer to the COPYRIGHT
@@ -26,6 +26,11 @@
 #include "sci/graphics/scifont.h"
 #include <common/config-manager.h>
 #include <image/png.h>
+#include <fstream>
+#include <iostream>
+#include <codecvt>
+#include <fcntl.h>
+#include <io.h>
 
 namespace Sci {
 
@@ -250,7 +255,7 @@ uint8 GfxFontFromResource::getHeight() {
 }
 
 uint8 GfxFontFromResource::getCharWidth(uint16 chr) {
-	return chr < _numChars ? _chars[chr].width : 0;
+	return chr < _numChars ? _chars[chr].width : _chars[42].width;
 }
 
 uint8 GfxFontFromResource::getCharHeight(uint16 chr) {
@@ -279,32 +284,24 @@ Graphics::Surface *loadFontPNG(Common::SeekableReadStream *s) {
 	return srf;
 }
 
-void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput) {
-	if (chr >= _numChars) {
-		// SSCI silently ignores attempts to draw characters that do not exist
-		// in the font; for now, emit warnings if this happens, to learn if
-		// it leads to any bugs
-		warning("%s is missing glyph %d", _resource->name().c_str(), chr);
-		return;
-	}
-
-	// Make sure we're comparing against the correct dimensions
-	// If the font we're drawing is already upscaled, make sure we use the full screen width/height
-	uint16 screenWidth = _screen->fontIsUpscaled() ? _screen->getDisplayWidth() : _screen->getWidth() * g_sci->_enhancementMultiplier;
-	uint16 screenHeight = _screen->fontIsUpscaled() ? _screen->getDisplayHeight() : _screen->getHeight() * g_sci->_enhancementMultiplier;
-
-	int charWidth = getCharWidth(chr);
-	int charHeight = getCharHeight(chr);
-	
-	byte b = 0, mask = 0xFF;
-	int16 greyedTop = top;
+void GfxFontFromResource::draw(uint16 chr, char ifGlyphMissing, int16 top, int16 left, byte color, bool greyedOutput) {
 
 	bool enhancedFont = false;
 	int pixelsLength = 0;
 
 	Common::FSNode folder;
+	bool stop = false;
+	Common::String chrstr = "";
 	char charNoStr[5];
 	sprintf(charNoStr, "%u", chr);
+	for (int n = 0; n < 5; n++) {
+		if (stop == false)
+			if (charNoStr[n] >= '0' && charNoStr[n] <= '9') {
+				chrstr += charNoStr[n];
+			} else {
+				stop = true;
+			}
+	}
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + charNoStr + ".png").exists()) {
 			Common::String fileName = folder.getChild(_resource->name() + '.' + charNoStr + ".png").getName();
@@ -324,6 +321,43 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			}
 		}
 	}
+
+	if (chr >= _numChars && enhancedFont == false) {
+		// SSCI silently ignores attempts to draw characters that do not exist
+		// in the font; for now, emit warnings if this happens, to learn if
+		// it leads to any bugs
+		warning("%s is missing glyph %d", _resource->name().c_str(), chr);
+		if (folder.exists()) {
+			if (!folder.getChild("missing_glyph." + _resource->name() + '.' + charNoStr + ".txt").exists()) {
+
+				std::string fileName = folder.getPath().c_str();
+				fileName += "missing_glyph.";
+				fileName += _resource->name().c_str();
+				fileName += '.';
+				fileName += chrstr.c_str();
+				fileName += ".txt";
+				std::wofstream wof;
+				wof.imbue(std::locale(std::locale::empty(), new std::codecvt_utf8<wchar_t, 0x10ffff, std::generate_header>));
+				wof.open(fileName);
+				wof << (L"%c", ifGlyphMissing);
+				wof.close();
+			}
+		}
+		chr = 42;
+	}
+
+	// Make sure we're comparing against the correct dimensions
+	// If the font we're drawing is already upscaled, make sure we use the full screen width/height
+	uint16 screenWidth = _screen->fontIsUpscaled() ? _screen->getDisplayWidth() : _screen->getWidth() * g_sci->_enhancementMultiplier;
+	uint16 screenHeight = _screen->fontIsUpscaled() ? _screen->getDisplayHeight() : _screen->getHeight() * g_sci->_enhancementMultiplier;
+
+	int charWidth = getCharWidth(chr);
+	int charHeight = getCharHeight(chr);
+	
+	byte b = 0, mask = 0xFF;
+	int16 greyedTop = top;
+
+	
 	/*
 	if (greyedOutput)
 	debug(10, "%d", (color));
