@@ -219,15 +219,15 @@ GfxFontFromResource::GfxFontFromResource(ResourceManager *resMan, GfxScreen *scr
 #endif
 
 	if (_resource) {
-		_numChars = _resourceData.getUint16SE32At(2) * 4;
+		_numChars = _resourceData.getUint16SE32At(2);
 		_fontHeight = _resourceData.getUint16SE32At(4);
 	} else {
-		_numChars = _resourceData.getUint16LEAt(2) * 4;
+		_numChars = _resourceData.getUint16LEAt(2);
 		_fontHeight = _resourceData.getUint16LEAt(4);
 	}
-	_chars = new Charinfo[_numChars];
+	_chars = new Charinfo[_numChars * 8];
 	// filling info for every char
-	for (int16 i = 0; i < _numChars / 4; i++) {
+	for (int16 i = 0; i < _numChars; i++) {
 		uint32 charOffsetIndex = 6 + i * 2;
 		if (_resource) {
 			_chars[i].offset = _resourceData.getUint16SE32At(charOffsetIndex);
@@ -237,7 +237,7 @@ GfxFontFromResource::GfxFontFromResource(ResourceManager *resMan, GfxScreen *scr
 		_chars[i].width = _resourceData.getUint8At(_chars[i].offset);
 		_chars[i].height = _resourceData.getUint8At(_chars[i].offset + 1);
 	}
-	for (int16 i = _numChars / 4; i < _numChars; i++) {
+	for (int16 i = _numChars; i < _numChars * 8; i++) {
 		uint32 charOffsetIndex = 6 + 42 * 2;
 		if (_resource) {
 			_chars[i].offset = _resourceData.getUint16SE32At(charOffsetIndex);
@@ -263,7 +263,9 @@ GuiResourceId GfxFontFromResource::getResourceId() {
 uint8 GfxFontFromResource::getHeight() {
 	return _fontHeight;
 }
-
+uint16 GfxFontFromResource::getNumChars() {
+	return _numChars;
+}
 uint8 GfxFontFromResource::getCharWidth(uint16 chr) {
 	return chr < _numChars ? _chars[chr].width : _chars[42].width;
 }
@@ -340,7 +342,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			// in the font; for now, emit warnings if this happens, to learn if
 			// it leads to any bugs
 			warning("%s is missing glyph %d", _resource->name().c_str(), chr);
-			chr = 42;
+			
 		}
 	}
 
@@ -404,8 +406,9 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	*/
 	if (!enhancedFont)
 	{
-		if (chr < 128) {
-
+		if (chr >= _numChars) {
+			chr = 1;
+		}
 			SciSpan<const byte> charData = getCharData(chr);
 			Common::String exportFileName;
 
@@ -427,7 +430,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 					b = b << 1;
 				}
 			}
-		}
+		
 	}
 	if (enhancedFont) { 
 		extern byte *_palette;
