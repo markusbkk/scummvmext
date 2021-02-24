@@ -511,6 +511,7 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 			// fall through
 			// FIXME: fall through intended?
 		default:
+
 			charWidth = _font->getCharWidth(curChar);
 			// clear char
 			if (_ports->_curPort->penMode == 1) {
@@ -519,7 +520,7 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 				_paint16->eraseRect(rect);
 			}
 			// CharStd
-			_font->draw(curChar, ifGlyphMissing, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}
@@ -697,7 +698,7 @@ void GfxText16::DrawStatus(const Common::String &strOrig) {
 			break;
 		default:
 			charWidth = _font->getCharWidth(curChar);
-			_font->draw(curChar, ifGlyphMissing, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}
