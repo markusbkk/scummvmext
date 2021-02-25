@@ -216,7 +216,10 @@ public:
 
 	MusicEntry *getSlot(reg_t obj);
 	MusicEntry *getActiveSci0MusicSlot();
-
+	Audio::SeekableAudioStream *musicStream = nullptr;
+	uint32 musicLoopIn = 0;
+	uint32 musicLoopOut = 999999;
+	uint32 musicPlayedLoops = 0;
 	void pushBackSlot(MusicEntry *slotEntry) {
 		Common::StackLock lock(_mutex);
 		_playList.push_back(slotEntry);

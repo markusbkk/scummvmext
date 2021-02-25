@@ -37,6 +37,9 @@
 #include <audio/decoders/wave.h>
 #include <engines/sci/sound/audio.h>
 #include <audio/decoders/mp3.h>
+#include <fstream>
+#include <string>
+#include <iostream>
 
 //#define DEBUG_REMAP
 
@@ -195,7 +198,10 @@ void SciMusic::init() {
 
 void SciMusic::miditimerCallback(void *p) {
 	SciMusic *sciMusic = (SciMusic *)p;
-
+	if (g_system->getMixer()->getElapsedTime(sciMusic->_audioHandle).msecs() > sciMusic->musicLoopIn + (sciMusic->musicPlayedLoops * (sciMusic->musicLoopOut - sciMusic->musicLoopIn))) {
+		sciMusic->musicStream->seek(sciMusic->musicLoopIn);
+		sciMusic->musicPlayedLoops++;
+	}
 	Common::StackLock lock(sciMusic->_mutex);
 	sciMusic->onTimer();
 }
@@ -441,12 +447,36 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 								fileName.setChar('/', i);
 						}
 						sciAudioFile->open(fileName);
-
-						Audio::RewindableAudioStream *audioStream = nullptr;
-						audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
-
-						if (audioStream) {
+						
+						musicStream = nullptr;
+						musicStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
+						musicLoopIn = 0;
+						musicLoopOut = musicStream->getLength().msecs();
+						if (musicStream) {
 							debug(("Found : " + fnStr + ".mp3").c_str());
+							std::ifstream openfile;
+							debug("Looking for : %s", (folder.getPath() + folder.getChild((fnStr + ".cfg").c_str()).getName().c_str()).c_str());
+							openfile.open((folder.getPath() + folder.getChild((fnStr + ".cfg").c_str()).getName()).c_str(), std::ios::in);
+							if (openfile.is_open()) {
+								
+								std::string tp;
+								std::string text = "";
+								std::string delimiter = "=inMs/outMs=";
+								while (std::getline(openfile, tp)) {
+									size_t pos = 0;
+									std::string token;
+									while ((pos = tp.find(delimiter)) != std::string::npos) {
+										token = tp.substr(0, pos);
+										musicLoopIn = atoi(token.c_str());
+										tp.erase(0, pos + delimiter.length());
+									}
+									musicLoopOut = atoi(tp.c_str());
+								}
+								tp = "";
+								openfile.close();
+							}
+							debug("Music Loop In : %u", musicLoopIn);
+							debug("Music Loop Out : %u", musicLoopOut);
 							Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
 							// We only support one audio handle
 							if (g_system->getMixer() && &_audioHandle != nullptr) {
@@ -455,7 +485,8 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 									g_system->getMixer()->stopID(wavID);
 								}
 
-								g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)audioStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
+								g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::SeekableAudioStream *)musicStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
+								musicPlayedLoops = 0;
 								wavID = pSnd->resourceId;
 								muteMidi = true;
 								isPlayingWav = true;
@@ -532,11 +563,35 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 						}
 						sciAudioFile->open(fileName);
 
-						Audio::RewindableAudioStream *audioStream = nullptr;
-						audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+						musicStream = nullptr;
+						musicStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+						musicLoopIn = 0;
+						musicLoopOut = musicStream->getLength().msecs();
+						if (musicStream) {
+							debug(("Found : " + fnStr + ".mp3").c_str());
+							std::ifstream openfile;
+							debug("Looking for : %s", (folder.getPath() + folder.getChild((fnStr + ".cfg").c_str()).getName().c_str()).c_str());
+							openfile.open((folder.getPath() + folder.getChild((fnStr + ".cfg").c_str()).getName()).c_str(), std::ios::in);
+							if (openfile.is_open()) {
 
-						if (audioStream) {
-							debug(("Found : " + fnStr + ".wav").c_str());
+								std::string tp;
+								std::string text = "";
+								std::string delimiter = "=inMs/outMs=";
+								while (std::getline(openfile, tp)) {
+									size_t pos = 0;
+									std::string token;
+									while ((pos = tp.find(delimiter)) != std::string::npos) {
+										token = tp.substr(0, pos);
+										musicLoopIn = atoi(token.c_str());
+										tp.erase(0, pos + delimiter.length());
+									}
+									musicLoopOut = atoi(tp.c_str());
+								}
+								tp = "";
+								openfile.close();
+							}
+							debug("Music Loop In : %u", musicLoopIn);
+							debug("Music Loop Out : %u", musicLoopOut);
 							Audio::Mixer::SoundType soundType = Audio::Mixer::kMusicSoundType;
 							// We only support one audio handle
 							if (g_system->getMixer() && &_audioHandle != nullptr) {
@@ -545,7 +600,8 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 									g_system->getMixer()->stopID(wavID);
 								}
 
-								g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)audioStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
+								g_system->getMixer()->playStream(soundType, &_audioHandle, Audio::makeLoopingAudioStream((Audio::RewindableAudioStream *)musicStream, 0), pSnd->resourceId, 127, 0, DisposeAfterUse::YES);
+								musicPlayedLoops = 0;
 								wavID = pSnd->resourceId;
 								muteMidi = true;
 								isPlayingWav = true;
