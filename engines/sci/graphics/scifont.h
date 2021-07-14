@@ -25,7 +25,7 @@
 
 #include "sci/graphics/helpers.h"
 #include "sci/util.h"
-
+#include <map>
 namespace Sci {
 
 #ifdef ENABLE_SCI32
@@ -46,7 +46,6 @@ public:
 	virtual byte getCharHeight(uint16 chr) { return 0; }
 	virtual void draw(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput) {}
 	virtual void drawToBuffer(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput, byte *buffer, int16 width, int16 height) {}
-	virtual uint16 getNumChars() { return 0; }
 };
 
 
@@ -58,17 +57,17 @@ class GfxFontFromResource : public GfxFont {
 public:
 	GfxFontFromResource(ResourceManager *resMan, GfxScreen *screen, GuiResourceId resourceId);
 	~GfxFontFromResource() override;
-
+	
 	GuiResourceId getResourceId() override;
 	uint8 getHeight() override;
 	uint8 getCharWidth(uint16 chr) override;
+
 	void draw(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput) override;
-	uint16 getNumChars() override;
-	uint16 _numChars;
 #ifdef ENABLE_SCI32
 	// SCI2/2.1 equivalent
 	void drawToBuffer(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput, byte *buffer, int16 width, int16 height) override;
 #endif
+	
 
 private:
 	uint8 getCharHeight(uint16 chr) override;
@@ -87,8 +86,9 @@ private:
 	};
 
 	uint8 _fontHeight;
-
+	uint16 _numChars;
 	Charinfo *_chars;
+
 	Graphics::Surface *pngfont;
 	const byte *enhfont;
 };

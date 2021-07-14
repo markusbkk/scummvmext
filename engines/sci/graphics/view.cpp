@@ -969,17 +969,21 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 					const byte color = bitmapData[x];
 					const int x2 = clipRectTranslated.left + x;
 					const int y2 = clipRectTranslated.top + y;
-					_screen->putPixelOnDisplay(x2, y2, palette->mapping[color], false);
+					if (priority >= _screen->getPriorityX((clipRectTranslated.left + x) * g_sci->_enhancementMultiplier, (clipRectTranslated.top + y) * g_sci->_enhancementMultiplier))
+					{
+						_screen->putPixelOnDisplay(x2, y2, palette->mapping[color], false);
+					}
 				}
 			}
 		} else {
 			for (int y = 0; y < height; y++, bitmapData += celWidth) {
 				for (int x = 0; x < width; x++) {
 					const byte color = bitmapData[x];
-					if (color != clearKey) {
+					if (color != clearKey)
+					{
 						const int x2 = clipRectTranslated.left + x;
 						const int y2 = clipRectTranslated.top + y;
-						if (priority >= _screen->getPriorityX(x2, y2))
+						if (priority >= _screen->getPriorityX((clipRectTranslated.left + x) * g_sci->_enhancementMultiplier, (clipRectTranslated.top + y) * g_sci->_enhancementMultiplier))
 						{
 							_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0, false);
 						}

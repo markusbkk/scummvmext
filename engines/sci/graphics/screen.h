@@ -343,7 +343,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreen[displayOffset] = c;
@@ -381,7 +381,7 @@ public:
 
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_640x400: {
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				
 				if (_format.bytesPerPixel == 2) {
 
@@ -412,7 +412,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-						displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+						displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 						if (_format.bytesPerPixel == 2) {
 			
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
@@ -446,7 +446,7 @@ public:
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_640x400: {
-				int displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				int displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				_priorityScreenX[displayOffset] = priority;
 
 				break;
@@ -466,7 +466,7 @@ public:
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_640x400: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
@@ -481,7 +481,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
@@ -508,7 +508,7 @@ public:
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_640x400: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
@@ -523,7 +523,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
@@ -581,7 +581,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
@@ -639,7 +639,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
@@ -681,7 +681,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
@@ -709,7 +709,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 					byte i = r;
 					byte ir = _palette[3 * i + 0];
@@ -754,7 +754,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 					byte i = g;
 					byte ig = _palette[3 * i + 1];
@@ -785,7 +785,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
-				displayOffset = y * (_width * g_sci->_enhancementMultiplier) + x;
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 					byte i = b;
 					byte ib = _palette[3 * i + 2];
@@ -822,13 +822,13 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
 
-				_priorityScreenX[(y * _displayWidth) + x] = priority;	
+				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
 				
 				
 				break;
 			}
 			default: {
-				_priorityScreenX[(y * _displayWidth) + x] = priority;
+				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
 				
 				break;
 			}
@@ -851,11 +851,11 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 				
-					_surfaceScreen[(y * _displayWidth) + x] = surface;
+					_surfaceScreen[(y * (_width * g_sci->_enhancementMultiplier)) + x] = surface;
 				break;
 			default:
 				
-					_surfaceScreen[(y * _displayWidth) + x] = surface;
+					_surfaceScreen[(y * (_width * g_sci->_enhancementMultiplier)) + x] = surface;
 				break;
 			}
 		}
@@ -1423,7 +1423,7 @@ public:
 	}
 
 	byte getPixel(byte *screen, int16 x, int16 y) {
-		int offset = y * _width + x;
+		int offset = (y * _width) + x;
 		switch (_upscaledHires) {
 		case GFX_SCREEN_UPSCALED_480x300: {
 			offset = ((y * 3) / 2) * _width + ((y * 3) / 2);
@@ -1444,7 +1444,7 @@ public:
 	}
 
 	byte getPixelX(byte *screen, int16 x, int16 y) {
-		int offset = y * _displayWidth + x;
+		int offset = (y * _displayWidth) + x;
 		switch (_upscaledHires) {
 		case GFX_SCREEN_UPSCALED_480x300: {
 			offset = ((y * 3) / 2) * _width + ((y * 3) / 2);
@@ -1454,7 +1454,7 @@ public:
 		}
 		case GFX_SCREEN_UPSCALED_640x400: {
 			
-			offset = ((y) * (_width * 2)) + (x);
+			offset = ((y) * (_displayWidth)) + (x);
 			return screen[offset];
 			break;
 		}

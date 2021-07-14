@@ -1,4 +1,4 @@
-﻿/* ScummVM - Graphic Adventure Engine
+/* ScummVM - Graphic Adventure Engine
  *
  * ScummVM is the legal property of its developers, whose names
  * are too numerous to list here. Please refer to the COPYRIGHT
@@ -26,12 +26,8 @@
 #include "sci/graphics/scifont.h"
 #include <common/config-manager.h>
 #include <image/png.h>
-#include <fstream>
+#include <map>
 #include <iostream>
-#include <codecvt>
-#include <fcntl.h>
-#include <io.h>
-
 namespace Sci {
 
 #ifdef ENABLE_SCI32
@@ -225,7 +221,7 @@ GfxFontFromResource::GfxFontFromResource(ResourceManager *resMan, GfxScreen *scr
 		_numChars = _resourceData.getUint16LEAt(2);
 		_fontHeight = _resourceData.getUint16LEAt(4);
 	}
-	_chars = new Charinfo[_numChars * 8];
+	_chars = new Charinfo[_numChars];
 	// filling info for every char
 	for (int16 i = 0; i < _numChars; i++) {
 		uint32 charOffsetIndex = 6 + i * 2;
@@ -236,16 +232,6 @@ GfxFontFromResource::GfxFontFromResource(ResourceManager *resMan, GfxScreen *scr
 		}
 		_chars[i].width = _resourceData.getUint8At(_chars[i].offset);
 		_chars[i].height = _resourceData.getUint8At(_chars[i].offset + 1);
-	}
-	for (int16 i = _numChars; i < _numChars * 8; i++) {
-		uint32 charOffsetIndex = 6 + 42 * 2;
-		if (_resource) {
-			_chars[i].offset = _resourceData.getUint16SE32At(charOffsetIndex);
-		} else {
-			_chars[i].offset = _resourceData.getUint16LEAt(charOffsetIndex);
-		}
-		_chars[i].width = 6;
-		_chars[i].height = _resourceData.getUint8At(_chars[42].offset + 1);
 	}
 }
 
@@ -263,16 +249,15 @@ GuiResourceId GfxFontFromResource::getResourceId() {
 uint8 GfxFontFromResource::getHeight() {
 	return _fontHeight;
 }
-uint16 GfxFontFromResource::getNumChars() {
-	return _numChars;
-}
+
 uint8 GfxFontFromResource::getCharWidth(uint16 chr) {
-	return chr < _numChars ? _chars[chr].width : _chars[42].width;
+	return chr < _numChars ? _chars[chr].width : 0;
 }
 
 uint8 GfxFontFromResource::getCharHeight(uint16 chr) {
-	return chr < _numChars ? _chars[chr].height : _chars[42].width;
+	return chr < _numChars ? _chars[chr].height : 0;
 }
+
 SciSpan<const byte> GfxFontFromResource::getCharData(uint16 chr) {
 	if (chr >= _numChars) {
 		return SciSpan<const byte>();
@@ -296,77 +281,89 @@ Graphics::Surface *loadFontPNG(Common::SeekableReadStream *s) {
 }
 
 void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput) {
-
-	bool enhancedFont = false;
-	int pixelsLength = 0;
-	bool newGlyph = false;
-	Common::FSNode folder;
-	bool stop = false;
-	Common::String chrstr = "";
-	char charNoStr[5];
-	sprintf(charNoStr, "%u", chr);
-	for (int n = 0; n < 5; n++) {
-		if (stop == false)
-			if (charNoStr[n] >= '0' && charNoStr[n] <= '9') {
-				chrstr += charNoStr[n];
-			} else {
-				stop = true;
-			}
-	}
-	if (ConfMan.hasKey("extrapath")) {
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + charNoStr + ".png").exists()) {
-			Common::String fileName = folder.getChild(_resource->name() + '.' + charNoStr + ".png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-			if (!file) {
-				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-			} else {
-				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-				pngfont = loadFontPNG(file);
-				
-				if (pngfont) {
-					enhfont = (const byte *)pngfont->getPixels();
-					enhancedFont = true;
-					if (enhfont) {
-						pixelsLength = pngfont->w * pngfont->h * 4;
-						
-					}
-				}
-			}
-		}
-	}
-
-	if (chr >= _numChars)
-	{
-		if (enhancedFont == false) {
-			// SSCI silently ignores attempts to draw characters that do not exist
-			// in the font; for now, emit warnings if this happens, to learn if
-			// it leads to any bugs
-			warning("%s is missing glyph %d", _resource->name().c_str(), chr);
-			
-		}
+	if (chr >= _numChars) {
+		// SSCI silently ignores attempts to draw characters that do not exist
+		// in the font; for now, emit warnings if this happens, to learn if
+		// it leads to any bugs
+		warning("%s is missing glyph %d", _resource->name().c_str(), chr);
+		return;
 	}
 
 	// Make sure we're comparing against the correct dimensions
 	// If the font we're drawing is already upscaled, make sure we use the full screen width/height
 	uint16 screenWidth = _screen->fontIsUpscaled() ? _screen->getDisplayWidth() : _screen->getWidth() * g_sci->_enhancementMultiplier;
 	uint16 screenHeight = _screen->fontIsUpscaled() ? _screen->getDisplayHeight() : _screen->getHeight() * g_sci->_enhancementMultiplier;
-	
-	int charWidth = 5;
-	int charHeight = 5;
 
-	if (enhancedFont) {
-		charWidth = (int)(pngfont->w);
-		charHeight = (int)(pngfont->h);
-		_chars[chr].width = (int)(pngfont->w / g_sci->_enhancementMultiplier);
-		_chars[chr].height = (int)(pngfont->h / g_sci->_enhancementMultiplier);
-	} else {
-		charWidth = _chars[chr].width;
-		charHeight = _chars[chr].width;
-	}
+	int charWidth = getCharWidth(chr);
+	int charHeight = getCharHeight(chr);
 	
 	byte b = 0, mask = 0xFF;
 	int16 greyedTop = top;
 
+	bool enhancedFont = false;
+	int pixelsLength = 0;
+
+	Common::FSNode folder;
+	char charNoStr[5];
+	sprintf(charNoStr, "%u", chr);
+	char mapStr[7];
+	sprintf(mapStr, "%u", fontsMap.size());
+	//debug(mapStr);
+
+	std::string search = _resource->name().c_str();
+	search += ".";
+	search += charNoStr;
+	search += ".png";
+	pngfont = NULL;
+	for (fontsMapit = fontsMap.begin();
+	     fontsMapit != fontsMap.end(); ++fontsMapit) {
+		
+		if (strcmp(fontsMapit->first.c_str(), search.c_str()) == 0) {
+
+			debug(fontsMapit->first.c_str());
+			std::pair<Graphics::Surface *, const byte *> tmp = fontsMapit->second;
+			pngfont = tmp.first;
+			if (pngfont) {
+				enhfont = tmp.second;
+				if (enhfont) {
+					std::pair<Graphics::Surface *, const byte *> tmp;
+					pixelsLength = pngfont->w * pngfont->h * 4;
+					enhancedFont = true;
+				}
+				debug("RELOADED FROM RAM");
+			}
+			
+		}
+	}
+	if (!pngfont) {
+		if (ConfMan.hasKey("extrapath")) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + charNoStr + ".png").exists()) {
+				Common::String fileName = folder.getChild(_resource->name() + '.' + charNoStr + ".png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (!file) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					Graphics::Surface *pngfonttmp = loadFontPNG(file);
+					if (pngfonttmp) {
+						enhfont = (const byte *)pngfonttmp->getPixels();
+						if (enhfont) {
+							std::pair<Graphics::Surface *, const byte *> tmp;
+							tmp.first = pngfonttmp;
+							tmp.second = enhfont;
+							pixelsLength = pngfonttmp->w * pngfonttmp->h * 4;
+							enhancedFont = true;
+							fontsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fileName.c_str(), tmp));
+
+							pngfont = pngfonttmp;
+							debug(fileName.c_str());
+							debug("LOADED FROM DISC");
+						}
+					}
+				}
+			}
+		}
+	}
 	
 	/*
 	if (greyedOutput)
@@ -406,54 +403,52 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	*/
 	if (!enhancedFont)
 	{
-		if (chr >= _numChars) {
-			chr = 1;
-		}
-			SciSpan<const byte> charData = getCharData(chr);
-			Common::String exportFileName;
+		SciSpan<const byte> charData = getCharData(chr);
+		bool exportFontToPNG = false;
+		Common::String exportFileName;
 
-			for (int y = 0; y < charHeight; y++) {
-				if (greyedOutput)
-					mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
-				for (int x = 0; x < charWidth; x++) {
-					if ((x & 7) == 0) // fetching next data byte
-						b = *(charData++) & mask;
-					if (b & 0x80) { // if MSB is set - paint it
-						int screenX = left + x;
-						int screenY = top + y;
-						if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
-							_screen->putFontPixel(top, screenX, y, color);
-						} else {
-							warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);
-						}
+		for (int y = 0; y < charHeight; y++) {
+			if (greyedOutput)
+				mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
+			for (int x = 0; x < charWidth; x++) {
+				if ((x & 7) == 0) // fetching next data byte
+					b = *(charData++) & mask;
+				if (b & 0x80) { // if MSB is set - paint it
+					int screenX = left + x;
+					int screenY = top + y;
+					if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
+						_screen->putFontPixel(top, screenX, y, color);
+					} else {
+						warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);
 					}
-					b = b << 1;
 				}
+				b = b << 1;
 			}
-		
+		}
+
 	}
 	if (enhancedFont) { 
 		extern byte *_palette;
 		left *= g_sci->_enhancementMultiplier;
 		top *= g_sci->_enhancementMultiplier;
-		for (int y = 0; y < charHeight; y++) {
+		for (int y = 0; y < charHeight * g_sci->_enhancementMultiplier; y++) {
 			if (greyedOutput) {				
 				if (y % 2 == 0) {
 					mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
 				}
 			}
-				for (int x = 0; x < charWidth; x++) {
+				for (int x = 0; x < charWidth * g_sci->_enhancementMultiplier; x++) {
 				if (greyedOutput)
 				mask = ((greyedTop++) % 2) ? 0xAA : 0x55;
-				b = enhfont[(((y * (charWidth)) + x) * 4) + 3] & mask;
+				b = enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3] & mask;
 					if (b & 0x80) {
 						int screenX = (left) + x;
 						int screenY = (top) + y;
 						if (0 <= screenX && screenX < screenWidth && 0 <= screenY && screenY < screenHeight) {
 
-						_screen->putFontPixelR(screenX, screenY, 255, color, enhfont[(((y * (charWidth)) + x) * 4) + 3], 15, 0);
-						_screen->putFontPixelG(screenX, screenY, 255, color, enhfont[(((y * (charWidth)) + x) * 4) + 3], 15, 0);
-						_screen->putFontPixelB(screenX, screenY, 255, color, enhfont[(((y * (charWidth)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelR(screenX, screenY, 255, color, enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelG(screenX, screenY, 255, color, enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
+						_screen->putFontPixelB(screenX, screenY, 255, color, enhfont[(((y * (charWidth * g_sci->_enhancementMultiplier)) + x) * 4) + 3], 15, 0);
 
 						} else {
 							warning("%s glpyh %d drawn out of bounds: %d, %d", _resource->name().c_str(), chr, screenX, screenY);

@@ -31,6 +31,14 @@
 #include "sci/debug.h"	// for DebugState
 #include "sci/detection.h" // Shared code between detection and engine
 #include "video/theora_decoder.h"
+#include <map>
+#include <string>
+
+#ifndef WIN32
+#include <dirent.h>
+#endif // !WIN32
+
+
 struct ADGameDescription;
 
 /**
@@ -135,6 +143,8 @@ enum kLanguage {
 class SciEngine : public Engine {
 	friend class Console;
 public:
+	void LoadAllExtraPNG();
+	
 	SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId);
 	~SciEngine() override;
 
@@ -217,6 +227,7 @@ public:
 	bool enhanced;
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
+	
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);
@@ -353,7 +364,10 @@ private:
  * but for now it's a pragmatic and simple way to achieve the goal.
  */
 extern SciEngine *g_sci;
-
+static std::map<std::string, std::pair<Graphics::Surface *, const byte *>> fontsMap;
+static std::map<std::string, std::pair<Graphics::Surface *, const byte *>> ::iterator fontsMapit;
+static std::map<std::string, std::pair<Graphics::Surface *, const byte *>> viewsMap;
+static std::map<std::string, std::pair<Graphics::Surface *, const byte *>>::iterator viewsMapit;
 /**
  * Convenience function to obtain the active SCI version.
  */

@@ -404,9 +404,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV + 2);
+									b = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV);
+									r = *(inV);
 								}
 								if (*mod) {
 									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
@@ -436,9 +436,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV + 2);
+									b = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV);
+									r = *(inV);
 								}
 								uint16 c = (uint16)_format.RGBToColor(r, g, b);
 								WRITE_UINT16(out, c);
@@ -468,9 +468,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV + 2);
+									b = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV);
+									r = *(inV);
 								}
 								if (*mod) {
 									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
@@ -500,9 +500,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 								} else {
-									r = *(inV + 2);
+									b = *(inV + 2);
 									g = *(inV + 1);
-									b = *(inV);
+									r = *(inV);
 								}
 								uint32 c = _format.RGBToColor(r, g, b);
 								WRITE_UINT32(out, c);

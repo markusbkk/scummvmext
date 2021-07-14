@@ -24,7 +24,9 @@
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
 #include "common/translation.h"
-
+#ifdef WIN32
+#include <boost/filesystem.hpp>
+#endif
 #include "engines/advancedDetector.h"
 #include "engines/util.h"
 
@@ -78,11 +80,97 @@
 #include "sci/graphics/video32.h"
 #include "sci/sound/audio32.h"
 #endif
+
+
 #include <common/events.h>
+#include <image/png.h>
+#include <map>
+#include <string>
+
 
 namespace Sci {
 
 SciEngine *g_sci = 0;
+
+Graphics::Surface *loadAllPNG(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+	if (srf)
+		debug("LOADED");
+	return srf;
+}
+
+bool hasEnding(std::string const &fullString, std::string const &ending) {
+	if (fullString.length() >= ending.length()) {
+		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
+	} else {
+		return false;
+	}
+}
+
+void SciEngine::LoadAllExtraPNG() {
+// ERRELEVANT CODE!
+	/*
+#ifdef WIN32
+	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+	 for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
+		
+			if (it->path().filename().string().rfind("font", 0) == 0 && hasEnding(it->path().generic_string(), ".png")) {
+
+			 Common::String cn = it->path().filename().string().c_str();
+			 Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			 Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			 while (!file)
+				 g_system->updateScreen();
+			 debug(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName().c_str());
+			    Graphics::Surface* load = loadAllPNG(file);
+			 //fontsMap.insert(std::pair<std::string, const byte *>(it->path().filename().string().c_str(), load));
+			}
+		    
+	}
+	 for (fontsMapit = fontsMap.begin();
+	     fontsMapit != fontsMap.end(); ++fontsMapit) {
+		debug(("!" + fontsMapit->first).c_str());
+		    }
+
+#else
+	DIR *dir;
+	class dirent *ent;
+	class stat st;
+
+	dir = opendir(directory.c_str());
+	while ((ent = readdir(dir)) != NULL) {
+		const std::string file_name = ent->d_name;
+		const std::string full_file_name = directory + "/" + file_name;
+
+		if (file_name[0] == '.')
+			continue;
+
+		if (stat(full_file_name.c_str(), &st) == -1)
+			continue;
+
+		const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+		if (is_directory)
+			continue;
+
+		if (hasEnding(file_name, ".png")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(full_file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			fontsMap.insert(std::pair<std::string, Graphics::Surface *>(file_name, loadFontPNG(file)));
+			//out.push_back(full_file_name);
+		}
+	}
+	closedir(dir);
+#endif
+*/
+} // GetFilesInDirectory
 
 SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId)
 		: Engine(syst), _gameDescription(desc), _gameId(gameId), _rng("sci") {
@@ -118,6 +206,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	if (folder.exists() && folder.getChild("16x.cfg").exists()) {
 		g_sci->_enhancementMultiplier = 16; // lol u get teh idea...
 	}
+	
 	_gfxMacIconBar = 0;
 
 	_audio = 0;
@@ -170,6 +259,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	DebugMan.addDebugChannel(kDebugLevelDebugMode, "DebugMode", "Enable game debug mode at start of game");
 
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
+	const Common::FSNode extrapathDir(ConfMan.get("extrapath"));
 
 	SearchMan.addSubDirectoryMatching(gameDataDir, "actors");	// KQ6 hi-res portraits
 	SearchMan.addSubDirectoryMatching(gameDataDir, "aud");	// resource.aud and audio files
@@ -193,7 +283,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	SearchMan.addSubDirectoryMatching(gameDataDir, "Voices"); // Mac audio36 files
 	SearchMan.addSubDirectoryMatching(gameDataDir, "Voices/AUD#"); // LSL6 Mac audio36 files
 	SearchMan.addSubDirectoryMatching(gameDataDir, "VMD Folder"); // Mac VMD files
-
+	SearchMan.addDirectory("extrapath" , extrapathDir);
 	// Add the patches directory, except for KQ6CD; The patches folder in some versions of KQ6CD
 	// (e.g. KQ Collection 1997) is for the demo of Phantasmagoria, included in the disk
 	if (_gameId != GID_KQ6) {
@@ -229,6 +319,7 @@ SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gam
 	default:
 		break;
 	}
+
 }
 
 SciEngine::~SciEngine() {
@@ -470,7 +561,7 @@ Common::Error SciEngine::run() {
 	if (getGameId() == GID_GK2 && ConfMan.getBool("subtitles") && !_resMan->testResource(ResourceId(kResourceTypeSync, 10))) {
 		suggestDownloadGK2SubTitlesPatch();
 	}
-	
+	//SciEngine::LoadAllExtraPNG();
 	runTheoraIntro();
 	runGame();
 	runTheoraOutro();

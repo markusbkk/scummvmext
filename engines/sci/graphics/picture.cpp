@@ -246,7 +246,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + ".png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -291,7 +291,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		}
 		
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -314,7 +314,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256RP.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256RP.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -338,7 +338,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
 
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_o.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_o.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -360,7 +360,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_p.png").exists()) {
-			Common::String fileNamePrio = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_p.png").getName();
+			Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(_resource->name() + "_p.png").getName();
 			Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
 			if (!filePrio) {
@@ -382,7 +382,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_s.png").exists()) {
-			Common::String fileNameSurf = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_s.png").getName();
+			Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(_resource->name() + "_s.png").getName();
 			Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
 			if (!fileSurf) {
@@ -1053,7 +1053,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + ".png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -1096,7 +1096,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			debug(10, ("No File " + _resource->name() + ".ogg").c_str());
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -1119,7 +1119,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256RP.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_256RP.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -1143,7 +1143,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
 
-			Common::String fileName = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_o.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_o.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
@@ -1165,7 +1165,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_p.png").exists()) {
-			Common::String fileNamePrio = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_p.png").getName();
+			Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(_resource->name() + "_p.png").getName();
 			Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
 			if (!filePrio) {
@@ -1187,7 +1187,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_s.png").exists()) {
-			Common::String fileNameSurf = folder.getPath().c_str() + '/' + folder.getChild(_resource->name() + "_s.png").getName();
+			Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(_resource->name() + "_s.png").getName();
 			Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
 			if (!fileSurf) {
@@ -1267,6 +1267,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+							if (!enhancedPrio)
 							_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 						}
 					}
@@ -1373,6 +1374,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
 							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
 							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+							if (!enhancedPrio)
 							_screen->putPixelXEtc(x, y, drawMask, priority, 0);
 						}
 					}
