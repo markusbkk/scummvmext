@@ -101,7 +101,8 @@ public:
 	bool isFastCastEnabled() {
 		return _fastCastEnabled;
 	}
-
+	void LoadAllExtraPNG();
+	bool preLoadedPNGs = false;
 	void disposeLastCast();
 	bool invoke(List *list, int argc, reg_t *argv);
 	void makeSortedList(List *list);

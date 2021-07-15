@@ -23,7 +23,11 @@
 #include "common/util.h"
 #include "common/stack.h"
 #include "graphics/primitives.h"
-
+#ifdef WIN32
+#include <boost/filesystem.hpp>
+#else
+#include <dirent.h>
+#endif
 #include "sci/console.h"
 #include "sci/sci.h"
 #include "sci/event.h"
@@ -44,7 +48,10 @@
 #include "sci/graphics/animate.h"
 #include <common/config-manager.h>
 #include <image/png.h>
+#include <map>
+#include <string>
 #include <cctype>
+
 
 namespace Sci {
 
@@ -193,6 +200,15 @@ bool sortHelper(const AnimateEntry &entry1, const AnimateEntry &entry2) {
 	return entry1.y < entry2.y;
 }
 
+bool hazEnding(std::string const &fullString, std::string const &ending) {
+	if (fullString.length() >= ending.length()) {
+		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
+	} else {
+		return false;
+	}
+}
+
+
 Graphics::Surface *loadCelPNG(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 
@@ -234,12 +250,89 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s, GfxScre
 	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
+void GfxAnimate::LoadAllExtraPNG() {
 
-void GfxAnimate::makeSortedList(List *list) {
+#ifdef WIN32
+	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
+
+		if (it->path().filename().string().rfind("view", 0) == 0 && hazEnding(it->path().generic_string(), ".png") && !strstr(it->path().generic_string().c_str(), "_256")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNG(file);
+				if (viewpngtmp) {
+					const byte* viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+	}
+
+#else
+
+	std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+
+	DIR *dir;
+	class dirent *ent;
+	//class stat st;
+
+	dir = opendir(directory.c_str());
+	while ((ent = readdir(dir)) != NULL) {
+		const std::string file_name = ent->d_name;
+		const std::string full_file_name = directory + "/" + file_name;
+
+		if (file_name[0] == '.')
+			continue;
+
+		//if (stat(full_file_name.c_str(), &st) == -1)
+			//continue;
+
+		//const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+		//if (is_directory)
+			//continue;
+
+		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && !strstr(file_name.c_str(), "_256")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNG(file);
+				if (viewpngtmp) {
+					const byte* viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+	}
+	closedir(dir);
+#endif
+	}
+
+	void GfxAnimate::makeSortedList(List *list) {
 	reg_t curAddress = list->first;
 	Node *curNode = _s->_segMan->lookupNode(curAddress);
 	int16 listNr;
-	
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNG();
+		preLoadedPNGs = true;
+	}
 	// Fill the list
 	for (listNr = 0; curNode != 0; listNr++) {
 		AnimateEntry listEntry;
