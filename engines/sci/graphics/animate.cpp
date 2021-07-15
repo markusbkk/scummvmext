@@ -589,7 +589,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 					}
 				}
 
-				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + ".png").exists()) {
+				else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + twn + ".png").exists()) {
 					{
 						Common::String fileName = folder.getChild(fn + ".t." + twn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);

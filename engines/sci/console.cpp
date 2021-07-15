@@ -2199,7 +2199,7 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 							}
 						}
 					}
-					if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+					else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
 						Common::String fileName = folder.getChild(fn + "_256.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
@@ -2217,7 +2217,7 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 							}
 						}
 					}
-					if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+					else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
 						Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
@@ -2236,7 +2236,7 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 							}
 						}
 					}
-					if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + ".png").exists()) {
+					else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + ".png").exists()) {
 						Common::String fileName = folder.getChild(fn + ".t." + tweenNoStr + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
@@ -2254,7 +2254,7 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 							}
 						}
 					}
-					if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + "_256.png").exists()) {
+					else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + "_256.png").exists()) {
 						Common::String fileName = folder.getChild(fn + ".t." + tweenNoStr + "_256.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
@@ -2273,7 +2273,7 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 							}
 						}
 					}
-					if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + "_256RP.png").exists()) {
+					else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".t." + tweenNoStr + "_256RP.png").exists()) {
 						Common::String fileName = folder.getChild(fn + ".t." + tweenNoStr + "_256RP.png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 						if (!file) {
