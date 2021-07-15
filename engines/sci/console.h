@@ -46,13 +46,15 @@ public:
 	 * is invoked, the debugger will activate and accept user input.
 	 */
 	void attach(const char *entry = nullptr) override;
-
+	void LoadAllExtraPNGConsole();
+	bool preLoadedPNGs = false;
 private:
 	void preEnter() override;
 	void postEnter() override;
 
 	// General
 	bool cmdHelp(int argc, const char **argv);
+
 	// Kernel
 //	bool cmdClasses(int argc, const char **argv);	// TODO
 	bool cmdOpcodes(int argc, const char **argv);
