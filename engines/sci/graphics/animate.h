@@ -59,7 +59,6 @@ struct AnimateEntry {
 	GuiResourceId viewId;
 	int16 loopNo;
 	int16 celNo;
-	int16 tweenNo = 0;
 	bool processed;
 	int16 paletteNo;
 	int16 x, y, z;
