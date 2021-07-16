@@ -364,10 +364,7 @@ private:
  * but for now it's a pragmatic and simple way to achieve the goal.
  */
 extern SciEngine *g_sci;
-static std::map<std::string, std::pair<Graphics::Surface *, const byte *>> fontsMap;
-static std::map<std::string, std::pair<Graphics::Surface *, const byte *>> ::iterator fontsMapit;
-static std::map<std::string, std::pair<Graphics::Surface *, const byte *>> viewsMap;
-static std::map<std::string, std::pair<Graphics::Surface *, const byte *>>::iterator viewsMapit;
+
 /**
  * Convenience function to obtain the active SCI version.
  */

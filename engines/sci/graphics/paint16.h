@@ -84,6 +84,7 @@ public:
 	void kernelPortraitShow(const Common::String &resourceName, Common::Point position, uint16 resourceNum, uint16 noun, uint16 verb, uint16 cond, uint16 seq);
 	void kernelPortraitUnload(uint16 portraitId);
 	GfxPorts *_ports;
+	void LoadAllExtraPNGPaint();
 
 private:
 	ResourceManager *_resMan;

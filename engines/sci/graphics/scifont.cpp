@@ -234,6 +234,11 @@ GfxFontFromResource::GfxFontFromResource(ResourceManager *resMan, GfxScreen *scr
 		_chars[i].height = _resourceData.getUint8At(_chars[i].offset + 1);
 	}
 }
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+extern bool preLoadedPNGs;
 
 GfxFontFromResource::~GfxFontFromResource() {
 	delete[] _chars;

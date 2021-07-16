@@ -92,17 +92,50 @@ namespace Sci {
 
 SciEngine *g_sci = 0;
 
-Graphics::Surface *loadAllPNG(Common::SeekableReadStream *s) {
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+bool preLoadedPNGs = false;
+Graphics::Surface *loadCelPNGSci(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 
 	if (!s)
 		return nullptr;
 	d.loadStream(*s);
 	delete s;
-	
+
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
-	if (srf)
-		debug("LOADED");
+	return srf;
+}
+Graphics::Surface *loadCelPNGCLUTSci(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	return srf;
+}
+
+Graphics::Surface *loadCelPNGCLUTOverrideSci(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), d.getPalette());
+
+	for (int16 i = 0; i < 256; i++) {
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].r = d.getPalette()[i * 3];
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].g = d.getPalette()[(i * 3) + 1];
+		g_sci->_gfxPalette16->_paletteOverride.colors[i].b = d.getPalette()[(i * 3) + 2];
+	}
+	g_sci->_gfxPalette16->_sysPalette = g_sci->_gfxPalette16->_paletteOverride;
+	//memcpy((void *)g_sci->_gfxPalette16->_paletteOverride, d.getPalette(), sizeof(d.getPalette()));
+	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
 
@@ -113,64 +146,169 @@ bool hasEnding(std::string const &fullString, std::string const &ending) {
 		return false;
 	}
 }
-
 void SciEngine::LoadAllExtraPNG() {
-// ERRELEVANT CODE!
-	/*
+
 #ifdef WIN32
 	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
-	 for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
-		
-			if (it->path().filename().string().rfind("font", 0) == 0 && hasEnding(it->path().generic_string(), ".png")) {
+	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
 
-			 Common::String cn = it->path().filename().string().c_str();
-			 Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
-			 Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
-			 while (!file)
-				 g_system->updateScreen();
-			 debug(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName().c_str());
-			    Graphics::Surface* load = loadAllPNG(file);
-			 //fontsMap.insert(std::pair<std::string, const byte *>(it->path().filename().string().c_str(), load));
+		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) == 0 && !strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGSci(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
 			}
-		    
+		}
+		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) == 0 && strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTSci(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) == 0 && strstr(it->path().generic_string().c_str(), "_256RP")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverrideSci(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
 	}
-	 for (fontsMapit = fontsMap.begin();
-	     fontsMapit != fontsMap.end(); ++fontsMapit) {
-		debug(("!" + fontsMapit->first).c_str());
-		    }
 
 #else
+
+	std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+
 	DIR *dir;
 	class dirent *ent;
-	class stat st;
+	//class stat st;
 
 	dir = opendir(directory.c_str());
 	while ((ent = readdir(dir)) != NULL) {
 		const std::string file_name = ent->d_name;
 		const std::string full_file_name = directory + "/" + file_name;
 
-		if (file_name[0] == '.')
-			continue;
+		//if (file_name[0] == '.')
+		//continue;
 
-		if (stat(full_file_name.c_str(), &st) == -1)
-			continue;
+		//if (stat(full_file_name.c_str(), &st) == -1)
+		//continue;
 
-		const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+		//const bool is_directory = (st.st_mode & S_IFDIR) != 0;
 
-		if (is_directory)
-			continue;
+		//if (is_directory)
+		//continue;
 
-		if (hasEnding(file_name, ".png")) {
-			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(full_file_name.c_str()).getName();
+		if (strstr(file_name.c_str(), ".png") && strstr(file_name.c_str(), "view") && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
-			fontsMap.insert(std::pair<std::string, Graphics::Surface *>(file_name, loadFontPNG(file)));
-			//out.push_back(full_file_name);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGSci(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+						std::string st = file_name.c_str();
+						st += " ";
+						st += '\n';
+						
+					}
+				}
+			}
+		}
+		if (strstr(file_name.c_str(), ".png") && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTSci(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+						std::string st = file_name.c_str();
+						st += " ";
+						st += '\n';
+						
+					}
+				}
+			}
+		}
+
+		if (strstr(file_name.c_str(), ".png") && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256RP")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverrideSci(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+						std::string st = file_name.c_str();
+						st += " ";
+						st += '\n';
+						
+					}
+				}
+			}
 		}
 	}
 	closedir(dir);
 #endif
-*/
-} // GetFilesInDirectory
+}
 
 SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId)
 		: Engine(syst), _gameDescription(desc), _gameId(gameId), _rng("sci") {
@@ -561,7 +699,7 @@ Common::Error SciEngine::run() {
 	if (getGameId() == GID_GK2 && ConfMan.getBool("subtitles") && !_resMan->testResource(ResourceId(kResourceTypeSync, 10))) {
 		suggestDownloadGK2SubTitlesPatch();
 	}
-	//SciEngine::LoadAllExtraPNG();
+	LoadAllExtraPNG();
 	runTheoraIntro();
 	runGame();
 	runTheoraOutro();

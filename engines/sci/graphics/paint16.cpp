@@ -41,7 +41,11 @@
 #include <common/config-manager.h>
 #include <image/png.h>
 #include "sci/graphics/scifx.h"
-
+#ifdef WIN32
+#include <boost/filesystem.hpp>
+#else
+#include <dirent.h>
+#endif
 namespace Sci {
 Common::Rect _currentViewPort;
 GfxPaint16::GfxPaint16(ResourceManager *resMan, SegManager *segMan, GfxCache *cache, GfxPorts *ports, GfxCoordAdjuster16 *coordAdjuster, GfxScreen *screen, GfxPalette *palette, GfxTransitions *transitions, AudioPlayer *audio)
@@ -56,7 +60,11 @@ GfxPaint16::GfxPaint16(ResourceManager *resMan, SegManager *segMan, GfxCache *ca
 
 GfxPaint16::~GfxPaint16() {
 }
-
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+extern bool preLoadedPNGs;
 void GfxPaint16::init(GfxAnimate *animate, GfxText16 *text16) {
 	_animate = animate;
 	_text16 = text16;
@@ -66,27 +74,14 @@ void GfxPaint16::debugSetEGAdrawingVisualize(bool state) {
 	_EGAdrawingVisualize = state;
 }
 
-void GfxPaint16::drawPicture(GuiResourceId pictureId, bool mirroredFlag, bool addToFlag, GuiResourceId paletteId) {
-	GfxPicture *picture = new GfxPicture(_resMan, _coordAdjuster, _ports, _screen, _palette, pictureId, _EGAdrawingVisualize);
-
-	// Set up custom per-picture palette mod
-	doCustomPicPalette(_screen, pictureId);
-
-	// do we add to a picture? if not -> clear screen with white
-	if (!addToFlag)
-		clearScreen(_screen->getColorWhite());
-
-	picture->draw(mirroredFlag, addToFlag, paletteId);
-	delete picture;
-
-	// We make a call to SciPalette here, for increasing sys timestamp and also loading targetpalette, if palvary active
-	//  (SCI1.1 only)
-	if (getSciVersion() == SCI_VERSION_1_1)
-		_palette->drewPicture(pictureId);
-
-	// Reset custom per-picture palette mod
-	_screen->setCurPaletteMapValue(0);
+bool havEnding(std::string const &fullString, std::string const &ending) {
+	if (fullString.length() >= ending.length()) {
+		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
+	} else {
+		return false;
+	}
 }
+
 Graphics::Surface *loadCelPNGPaint(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 
@@ -128,11 +123,186 @@ Graphics::Surface *loadCelPNGCLUTOverridePaint(Common::SeekableReadStream *s, Gf
 	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
+
+void GfxPaint16::LoadAllExtraPNGPaint() {
+
+#ifdef WIN32
+	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
+
+		if (it->path().filename().string().rfind("view", 0) == 0 && havEnding(it->path().generic_string(), ".png") && !strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGPaint(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		} else if (it->path().filename().string().rfind("view", 0) == 0 && havEnding(it->path().generic_string(), ".png") && strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTPaint(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		} else if (it->path().filename().string().rfind("view", 0) == 0 && havEnding(it->path().generic_string(), ".png") && strstr(it->path().generic_string().c_str(), "_256RP")) {
+
+			Common::String cn = it->path().filename().string().c_str();
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverridePaint(file, _screen);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+	}
+
+#else
+
+	std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+
+	DIR *dir;
+	class dirent *ent;
+	//class stat st;
+
+	dir = opendir(directory.c_str());
+	while ((ent = readdir(dir)) != NULL) {
+		const std::string file_name = ent->d_name;
+		const std::string full_file_name = directory + "/" + file_name;
+
+		//if (file_name[0] == '.')
+			//continue;
+
+		//if (stat(full_file_name.c_str(), &st) == -1)
+		//continue;
+
+		//const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+		//if (is_directory)
+		//continue;
+
+		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGPaint(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTPaint(file);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256RP")) {
+			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+			if (file) {
+				Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverridePaint(file, _screen);
+				if (viewpngtmp) {
+					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+					if (viewenh) {
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = viewpngtmp;
+						tmp.second = viewenh;
+						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+						debug(fn.c_str());
+						debug("LOADED FROM DISC");
+					}
+				}
+			}
+		}
+	}
+	closedir(dir);
+#endif
+}
+
+void GfxPaint16::drawPicture(GuiResourceId pictureId, bool mirroredFlag, bool addToFlag, GuiResourceId paletteId) {
+	GfxPicture *picture = new GfxPicture(_resMan, _coordAdjuster, _ports, _screen, _palette, pictureId, _EGAdrawingVisualize);
+
+	// Set up custom per-picture palette mod
+	doCustomPicPalette(_screen, pictureId);
+
+	// do we add to a picture? if not -> clear screen with white
+	if (!addToFlag)
+		clearScreen(_screen->getColorWhite());
+
+	picture->draw(mirroredFlag, addToFlag, paletteId);
+	delete picture;
+
+	// We make a call to SciPalette here, for increasing sys timestamp and also loading targetpalette, if palvary active
+	//  (SCI1.1 only)
+	if (getSciVersion() == SCI_VERSION_1_1)
+		_palette->drewPicture(pictureId);
+
+	// Reset custom per-picture palette mod
+	_screen->setCurPaletteMapValue(0);
+}
+
 // This one is the only one that updates screen!
 void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, uint16 leftPos, uint16 topPos, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	GfxView *view = _cache->getView(viewId);
 	Common::Rect celRect;
-
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNGPaint();
+		preLoadedPNGs = true;
+	}
 	if (view) {
 		celRect.left = leftPos;
 		celRect.top = topPos;
@@ -290,7 +460,10 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 	Common::Rect celRect, curPortRect, clipRect, clipRectTranslated;
 	Common::Point curPortPos;
 	bool upscaledHiresHack = false;
-	
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNGPaint();
+		preLoadedPNGs = true;
+	}
 	if (view) {
 		if ((leftPos == 0) && (topPos == 0)) {
 			// HACK: in kq6, we get leftPos&topPos == 0 SOMETIMES, that's why we

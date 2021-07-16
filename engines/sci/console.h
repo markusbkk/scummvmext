@@ -47,7 +47,8 @@ public:
 	 */
 	void attach(const char *entry = nullptr) override;
 	void LoadAllExtraPNGConsole();
-	bool preLoadedPNGs = false;
+
+
 private:
 	void preEnter() override;
 	void postEnter() override;

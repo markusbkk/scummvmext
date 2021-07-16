@@ -91,6 +91,7 @@ private:
 
 	Graphics::Surface *pngfont;
 	const byte *enhfont;
+
 };
 
 } // End of namespace Sci

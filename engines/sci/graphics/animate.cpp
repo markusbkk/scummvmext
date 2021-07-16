@@ -62,7 +62,11 @@ GfxAnimate::GfxAnimate(EngineState *state, ScriptPatcher *scriptPatcher, GfxCach
 
 GfxAnimate::~GfxAnimate() {
 }
-
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+extern bool preLoadedPNGs;
 void GfxAnimate::init() {
 	_lastCastData.clear();
 
@@ -256,7 +260,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
 	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
 
-		if (it->path().filename().string().rfind("view", 0) == 0 && hazEnding(it->path().generic_string(), ".png") && !strstr(it->path().generic_string().c_str(), "_256")) {
+		if (it->path().filename().string().rfind("view", 0) == 0 && hazEnding(it->path().generic_string(), ".png") && !strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
 
 			Common::String cn = it->path().filename().string().c_str();
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
@@ -275,7 +279,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 					}
 				}
 			}
-		} else if (it->path().filename().string().rfind("view", 0) == 0 && hazEnding(it->path().generic_string(), ".png") && strstr(it->path().generic_string().c_str(), "_256")) {
+		} else if (it->path().filename().string().rfind("view", 0) == 0 && hazEnding(it->path().generic_string(), ".png") && strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
 
 			Common::String cn = it->path().filename().string().c_str();
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
@@ -329,8 +333,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 		const std::string file_name = ent->d_name;
 		const std::string full_file_name = directory + "/" + file_name;
 
-		if (file_name[0] == '.')
-			continue;
+		//if (file_name[0] == '.')
+			//continue;
 
 		//if (stat(full_file_name.c_str(), &st) == -1)
 			//continue;
@@ -358,7 +362,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 				}
 			}
 		}
-		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256")) {
+		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
 				Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
 				if (file) {
@@ -403,10 +407,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 	reg_t curAddress = list->first;
 	Node *curNode = _s->_segMan->lookupNode(curAddress);
 	int16 listNr;
-	if (!preLoadedPNGs) {
-		LoadAllExtraPNG();
-		preLoadedPNGs = true;
-	}
+
 	// Fill the list
 	for (listNr = 0; curNode != 0; listNr++) {
 		AnimateEntry listEntry;
@@ -1126,6 +1127,7 @@ void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
 }
 
 void GfxAnimate::reAnimate(Common::Rect rect) {
+
 	if (!_lastCastData.empty()) {
 		AnimateArray::iterator it;
 		AnimateArray::iterator end = _lastCastData.end();

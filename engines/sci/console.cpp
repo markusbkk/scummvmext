@@ -267,7 +267,11 @@ Console::Console(SciEngine *engine) : GUI::Debugger(),
 
 Console::~Console() {
 }
-
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+extern bool preLoadedPNGs;
 void Console::attach(const char *entry) {
 	if (entry) {
 		// Attaching to display a severe error, let the engine know
@@ -310,6 +314,7 @@ void Console::postEnter() {
 }
 
 bool Console::cmdHelp(int argc, const char **argv) {
+
 	debugPrintf("\n");
 	debugPrintf("Variables\n");
 	debugPrintf("---------\n");
@@ -454,6 +459,20 @@ bool Console::cmdHelp(int argc, const char **argv) {
 	debugPrintf(" active_object - Shows information on the currently active object or class\n");
 	debugPrintf(" acc_object - Shows information on the object or class at the address indexed by the accumulator\n");
 	debugPrintf("\n");
+	debugPrintf("%d \n", viewsMap.size());
+	if (!preLoadedPNGs)
+	{
+		LoadAllExtraPNGConsole();
+		preLoadedPNGs = true;
+	}
+	for (viewsMapit = viewsMap.begin();
+	     viewsMapit != viewsMap.end(); ++viewsMapit) {
+
+		std::string st = viewsMapit->first.c_str();
+		st += " ";
+		st += '\n';
+		debugPrintf(st.c_str());
+	}
 	return true;
 }
 
@@ -2013,7 +2032,7 @@ void Console::LoadAllExtraPNGConsole() {
 	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
 	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
 
-		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) && !strstr(it->path().generic_string().c_str(), "_256")) {
+		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) == 0 && !strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
 
 			Common::String cn = it->path().filename().string().c_str();
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
@@ -2032,7 +2051,8 @@ void Console::LoadAllExtraPNGConsole() {
 					}
 				}
 			}
-		} else if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) && strstr(it->path().generic_string().c_str(), "_256")) {
+		}
+		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) == 0 && strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
 
 			Common::String cn = it->path().filename().string().c_str();
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
@@ -2051,7 +2071,8 @@ void Console::LoadAllExtraPNGConsole() {
 					}
 				}
 			}
-		} else if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) && strstr(it->path().generic_string().c_str(), "_256RP")) {
+		}
+		if (it->path().filename().string().rfind("view", 0) == 0 && it->path().filename().string().rfind(".png", 0) == 0 && strstr(it->path().generic_string().c_str(), "_256RP")) {
 
 			Common::String cn = it->path().filename().string().c_str();
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
@@ -2085,9 +2106,9 @@ void Console::LoadAllExtraPNGConsole() {
 	while ((ent = readdir(dir)) != NULL) {
 		const std::string file_name = ent->d_name;
 		const std::string full_file_name = directory + "/" + file_name;
-
-		if (file_name[0] == '.')
-			continue;
+		
+		//if (file_name[0] == '.')
+			//continue;
 
 		//if (stat(full_file_name.c_str(), &st) == -1)
 		//continue;
@@ -2097,7 +2118,7 @@ void Console::LoadAllExtraPNGConsole() {
 		//if (is_directory)
 		//continue;
 
-		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+		if (strstr(file_name.c_str(), ".png") && strstr(file_name.c_str(), "view") && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
 			if (file) {
@@ -2111,11 +2132,15 @@ void Console::LoadAllExtraPNGConsole() {
 						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
 						debug(fn.c_str());
 						debug("LOADED FROM DISC");
+						std::string st = file_name.c_str();
+						st += " ";
+						st += '\n';
+						debugPrintf(st.c_str());
 					}
 				}
 			}
 		}
-		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256")) {
+		if (strstr(file_name.c_str(), ".png") && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
 				Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
 				if (file) {
@@ -2129,12 +2154,16 @@ void Console::LoadAllExtraPNGConsole() {
 							viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
 							debug(fn.c_str());
 							debug("LOADED FROM DISC");
+						    std::string st = file_name.c_str();
+						    st += " ";
+						    st += '\n';
+						    debugPrintf(st.c_str());
 						}
 					}
 				}
 			}
 	
-	 if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256RP")) {
+	 if (strstr(file_name.c_str(), ".png") && strstr(file_name.c_str(), "view") && strstr(file_name.c_str(), "_256RP")) {
 				Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
 				if (file) {
@@ -2148,6 +2177,10 @@ void Console::LoadAllExtraPNGConsole() {
 							viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
 							debug(fn.c_str());
 							debug("LOADED FROM DISC");
+						    std::string st = file_name.c_str();
+						    st += " ";
+						    st += '\n';
+						    debugPrintf(st.c_str());
 						}
 					}
 				}
