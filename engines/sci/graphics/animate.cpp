@@ -1127,7 +1127,12 @@ void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
 }
 
 void GfxAnimate::reAnimate(Common::Rect rect) {
-
+#ifdef WIN32
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNG();
+		preLoadedPNGs = true;
+	}
+#endif // WIN32
 	if (!_lastCastData.empty()) {
 		AnimateArray::iterator it;
 		AnimateArray::iterator end = _lastCastData.end();
@@ -1243,7 +1248,12 @@ void GfxAnimate::addToPicDrawCels() {
 	GfxView *view = NULL;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
-
+#ifdef WIN32
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNG();
+		preLoadedPNGs = true;
+	}
+#endif // WIN32
 	for (it = _list.begin(); it != end; ++it) {
 		curObject = it->object;
 
@@ -1299,7 +1309,12 @@ void GfxAnimate::addToPicDrawCels() {
 void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loopNo, int16 celNo, int16 x, int16 y, int16 priority, int16 control) {
 	GfxView *view = _cache->getView(viewId);
 	Common::Rect celRect;
-
+#ifdef WIN32
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNG();
+		preLoadedPNGs = true;
+	}
+#endif // WIN32
 	if (priority == -1)
 		priority = _ports->kernelCoordinateToPriority(y);
 
