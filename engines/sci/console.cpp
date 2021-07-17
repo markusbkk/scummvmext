@@ -2625,7 +2625,7 @@ bool Console::cmdShowSavedBits(int argc, const char **argv) {
 		_engine->_gfxScreen->drawLine(bl, tl, 0, 255, 255);
 		_engine->_gfxScreen->copyRectToScreen(rect);
 		g_system->updateScreen();
-		g_sci->sleep(500);
+		//g_sci->sleep(500); HUH??
 		_engine->_gfxScreen->bitsRestore(bakMemory);
 		_engine->_gfxScreen->copyRectToScreen(rect);
 		g_system->updateScreen();

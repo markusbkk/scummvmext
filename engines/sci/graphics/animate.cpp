@@ -467,6 +467,9 @@ void GfxAnimate::LoadAllExtraPNG() {
 						listEntry.viewpng = NULL;
 						listEntry.viewenh = NULL;
 					}
+					listEntry.bitsRect = it->bitsRect;
+					listEntry.celRect = it->celRect;
+					listEntry.castHandle = it->castHandle; //??
 					it->processed = true;
 					listEntry.processed = true;
 					_newList.push_back(listEntry);
@@ -500,6 +503,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 		listEntry.viewId = itb->viewId;
 		listEntry.loopNo = itb->loopNo;
 		listEntry.celNo = itb->celNo;
+		listEntry.bitsRect = itb->bitsRect;
+		listEntry.celRect = itb->celRect;
 		listEntry.processed = false;
 		listEntry.paletteNo = itb->paletteNo;
 		listEntry.x = itb->x;
@@ -1138,7 +1143,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 		AnimateArray::iterator end = _lastCastData.end();
 		for (it = _lastCastData.begin(); it != end; ++it) {
 			it->castHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
-			
+			//_paint16->frameRect(it->bitsRect);
 
 				Common::FSNode folder;
 			if (ConfMan.hasKey("extrapath")) {
@@ -1181,6 +1186,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 				debug(fn.c_str());
 				bool preloaded = false;
 				if (it->viewpng == NULL) {
+					it->viewEnhanced = false;
 					for (viewsMapit = viewsMap.begin();
 					     viewsMapit != viewsMap.end(); ++viewsMapit) {
 
@@ -1360,6 +1366,7 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 		    }
 			debug(fn.c_str());
 		    bool preloaded = false;
+		    listEntry.viewEnhanced = false;
 		    if (listEntry.viewpng == NULL) {
 			    for (viewsMapit = viewsMap.begin();
 			         viewsMapit != viewsMap.end(); ++viewsMapit) {
@@ -1409,7 +1416,11 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 		    }
 		}
 	    // Create rect according to coordinates and given cel
-	    view->getCelRectEnhanced(listEntry.viewpng, listEntry.viewEnhanced,loopNo, celNo, x, y, 0, celRect);
+	    if (listEntry.viewEnhanced) {
+		    view->getCelRectEnhanced(listEntry.viewpng, listEntry.viewEnhanced, loopNo, celNo, x, y, 0, celRect);
+	    } else {
+		    view->getCelRect(loopNo, celNo, x, y, 0, celRect);
+		}
 	_paint16->drawCel(listEntry.viewpng, listEntry.viewenh, listEntry.pixelsLength, listEntry.viewEnhanced, listEntry.enhancedIs256, view, loopNo, celNo, 0, celRect, priority, 0);
 
 	if (control != -1) {
