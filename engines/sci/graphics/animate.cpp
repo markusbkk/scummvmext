@@ -466,10 +466,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 					} else {
 						listEntry.viewpng = NULL;
 						listEntry.viewenh = NULL;
+						listEntry.viewEnhanced = false;
 					}
-					listEntry.bitsRect = it->bitsRect;
-					listEntry.celRect = it->celRect;
-					listEntry.castHandle = it->castHandle; //??
 					it->processed = true;
 					listEntry.processed = true;
 					_newList.push_back(listEntry);
@@ -503,8 +501,6 @@ void GfxAnimate::LoadAllExtraPNG() {
 		listEntry.viewId = itb->viewId;
 		listEntry.loopNo = itb->loopNo;
 		listEntry.celNo = itb->celNo;
-		listEntry.bitsRect = itb->bitsRect;
-		listEntry.celRect = itb->celRect;
 		listEntry.processed = false;
 		listEntry.paletteNo = itb->paletteNo;
 		listEntry.x = itb->x;
@@ -512,8 +508,13 @@ void GfxAnimate::LoadAllExtraPNG() {
 		listEntry.z = itb->z;
 		listEntry.priority = itb->priority;
 		listEntry.signal = itb->signal;
-		listEntry.viewpng = itb->viewpng;
-		listEntry.viewenh = itb->viewenh;
+		if (itb->viewpng != NULL) {
+			listEntry.viewpng = itb->viewpng;
+			listEntry.viewenh = itb->viewenh;
+		} else {
+			listEntry.viewpng = NULL;
+			listEntry.viewenh = NULL;
+		}
 		listEntry.pixelsLength = itb->pixelsLength;
 		listEntry.viewEnhanced = itb->viewEnhanced;
 		listEntry.enhancedIs256 = itb->enhancedIs256;
