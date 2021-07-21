@@ -1249,8 +1249,8 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			}
 		}
 	}
-	//Common::String dbg = _resource->name() + '.' + loopNoStr + '.' + celNoStr + " / TWEEN NO = " + tweenNoStr;
-	//debug(dbg.c_str());
+	Common::String dbg = _resource->name() + '.' + loopNoStr + '.' + celNoStr + " / TWEEN NO = " + tweenNoStr;
+	debug(dbg.c_str());
 	// Reset custom per-view palette mod
 	_screen->setCurPaletteMapValue(oldpalvalue);
 	Common::String sfn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
