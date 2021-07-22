@@ -882,7 +882,7 @@ void SurfaceSdlGraphicsManager::setupHardwareSize() {
 	_videoMode.overlayWidth = _videoMode.screenWidth * _videoMode.scaleFactor;
 	_videoMode.overlayHeight = _videoMode.screenHeight * _videoMode.scaleFactor;
 
-	if ((_videoMode.screenWidth >> 4) * 10 != _videoMode.screenHeight)
+	if (_videoMode.screenHeight != 200 && _videoMode.screenHeight != 400)
 		_videoMode.aspectRatioCorrection = false;
 
 	_videoMode.hardwareWidth = _videoMode.screenWidth * _videoMode.scaleFactor;

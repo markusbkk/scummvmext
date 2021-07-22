@@ -59,7 +59,6 @@ struct AnimateEntry {
 	GuiResourceId viewId;
 	int16 loopNo;
 	int16 celNo;
-	int16 tweenNo = 0;
 	bool processed;
 	int16 paletteNo;
 	int16 x, y, z;
@@ -102,7 +101,7 @@ public:
 		return _fastCastEnabled;
 	}
 	void LoadAllExtraPNG();
-	bool preLoadedPNGs = false;
+
 	void disposeLastCast();
 	bool invoke(List *list, int argc, reg_t *argv);
 	void makeSortedList(List *list);

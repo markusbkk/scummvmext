@@ -2200,7 +2200,10 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 	uint16 resourceId = atoi(argv[1]);
 	uint16 loopNo = atoi(argv[2]);
 	uint16 celNo = atoi(argv[3]);
-
+	if (!preLoadedPNGs) {
+		LoadAllExtraPNGConsole();
+		preLoadedPNGs = true;
+	}
 	if (_engine->_gfxPaint16) {
 		_engine->_gfxPaint16->kernelDrawCel(resourceId, loopNo, celNo, 0, 50, 50, 0, 0, 128, 128, false, NULL_REG);
 	} else {
@@ -2257,7 +2260,6 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 			bool preloaded = false;
 			if (listEntry.viewpng == NULL)
 			{
-				listEntry.viewEnhanced = false;
 					for (viewsMapit = viewsMap.begin();
 					     viewsMapit != viewsMap.end(); ++viewsMapit) {
 
@@ -2623,7 +2625,7 @@ bool Console::cmdShowSavedBits(int argc, const char **argv) {
 		_engine->_gfxScreen->drawLine(bl, tl, 0, 255, 255);
 		_engine->_gfxScreen->copyRectToScreen(rect);
 		g_system->updateScreen();
-		//g_sci->sleep(500); HUH??
+		g_sci->sleep(500);
 		_engine->_gfxScreen->bitsRestore(bakMemory);
 		_engine->_gfxScreen->copyRectToScreen(rect);
 		g_system->updateScreen();

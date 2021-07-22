@@ -785,7 +785,7 @@ reg_t GfxPaint16::bitsSave(const Common::Rect &rect, byte screenMask) {
 }
 
 void GfxPaint16::bitsGetRect(reg_t memoryHandle, Common::Rect *destRect) {
-	g_sci->_gfxPaint16->frameRect(*destRect);
+	//g_sci->_gfxPaint16->frameRect(*destRect);
 	byte *memoryPtr = NULL;
 
 	if (!memoryHandle.isNull()) {

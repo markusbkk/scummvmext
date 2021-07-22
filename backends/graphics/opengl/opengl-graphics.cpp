@@ -1232,7 +1232,7 @@ bool OpenGLGraphicsManager::gameNeedsAspectRatioCorrection() const {
 		// In case we enable aspect ratio correction we force a 4/3 ratio.
 		// But just for 320x200 and 640x400 games, since other games do not need
 		// this.
-		return ((width >> 4) * 10 == height);
+		return (width == 320 && height == 200) || (width == 640 && height == 400);
 	}
 
 	return false;
