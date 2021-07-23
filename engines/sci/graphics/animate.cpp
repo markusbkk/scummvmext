@@ -637,7 +637,11 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 	}
 	//_paint16->frameRect(it->bitsRect);
 	if (shouldSetNsRect) {
-		g_sci->_gfxCompare->setNSRect(it->object, it->bitsRect);
+		if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+			g_sci->_gfxCompare->setNSRect(it->object, it->bitsRect);
+		} else {
+			g_sci->_gfxCompare->setNSRect(it->object, it->celRect);
+		}
 	}
 }
 
@@ -678,11 +682,9 @@ void GfxAnimate::update() {
 
 			it->signal &= ~(kSignalStopUpdate | kSignalViewUpdated | kSignalNoUpdate | kSignalForceUpdate);
 			if (!(it->signal & kSignalIgnoreActor)) {
-				if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
-					rect = it->bitsRect;
-				} else {
+				
 					rect = it->celRect;
-				}
+				
 				rect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, rect.top, rect.bottom - 1);
 				
 				_paint16->fillRect(rect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
@@ -697,11 +699,19 @@ void GfxAnimate::update() {
 				it->signal |= kSignalRemoveView;
 			} else {
 				it->signal &= ~kSignalRemoveView;
-				if (it->signal & kSignalIgnoreActor)
-					bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
-				else
-					bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_ALL);
-				writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
+				if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+					if (it->signal & kSignalIgnoreActor)
+						bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY);
+					else
+						bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_ALL);
+					writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
+				} else {
+					if (it->signal & kSignalIgnoreActor)
+						bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY);
+					else
+						bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
+					writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
+				}
 			}
 		}
 	}
@@ -710,11 +720,9 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
-			if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
-				_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->bitsRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
-			} else {
+
 				_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
-			}
+			
 			it->showBitsFlag = true;
 
 			if (!(it->signal & kSignalIgnoreActor)) {
@@ -933,8 +941,11 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 		AnimateArray::iterator it;
 		AnimateArray::iterator end = _lastCastData.end();
 		for (it = _lastCastData.begin(); it != end; ++it) {
-			it->castHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL|GFX_SCREEN_MASK_PRIORITY);
-			
+			if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+				it->castHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY);
+			} else {
+				it->castHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY);
+			}
 
 				Common::FSNode folder;
 			if (ConfMan.hasKey("extrapath")) {
@@ -993,31 +1004,49 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 								it->viewEnhanced = true;
 								it->enhancedIs256 = false;
 							}
-						} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
-
-							debug(viewsMapit->first.c_str());
-							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-							it->viewpng = tmp.first;
-							debug("RELOADED FROM RAM");
-							preloaded = true;
-							it->viewenh = tmp.second;
-							if (it->viewenh) {
-								it->pixelsLength = it->viewpng->w * it->viewpng->h;
-								it->viewEnhanced = true;
-								it->enhancedIs256 = true;
-							}
-						} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
-
-							debug(viewsMapit->first.c_str());
-							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-							it->viewpng = tmp.first;
-							debug("RELOADED FROM RAM");
-							preloaded = true;
-							it->viewenh = tmp.second;
-							if (it->viewenh) {
-								it->pixelsLength = it->viewpng->w * it->viewpng->h;
-								it->viewEnhanced = true;
-								it->enhancedIs256 = true;
+						}
+					}
+					if (!preloaded) {
+						Common::FSNode folder;
+						if (ConfMan.hasKey("extrapath")) {
+							if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+								if (!it->viewEnhanced) {
+									Common::String fileName = folder.getChild(fn + "_256.png").getName();
+									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+									if (!file) {
+										debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+									} else {
+										debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+										it->viewpng = loadCelPNGCLUT(file);
+										if (it->viewpng) {
+											it->viewenh = (const byte *)it->viewpng->getPixels();
+											if (it->viewenh) {
+												it->pixelsLength = it->viewpng->w * it->viewpng->h;
+												it->viewEnhanced = true;
+												it->enhancedIs256 = true;
+											}
+										}
+									}
+								}
+							} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+								if (!it->viewEnhanced) {
+									Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+									if (!file) {
+										debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+									} else {
+										debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+										it->viewpng = loadCelPNGCLUTOverride(file, _screen);
+										if (it->viewpng) {
+											it->viewenh = (const byte *)it->viewpng->getPixels();
+											if (it->viewenh) {
+												it->pixelsLength = it->viewpng->w * it->viewpng->h;
+												it->viewEnhanced = true;
+												it->enhancedIs256 = true;
+											}
+										}
+									}
+								}
 							}
 						}
 					}
@@ -1090,11 +1119,9 @@ void GfxAnimate::addToPicDrawCels() {
 		}
 		//_paint16->frameRect(it->bitsRect);
 		// draw corresponding cel
-		if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
-			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, view, it->loopNo, it->celNo, 0, it->bitsRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
-		} else {
+		
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, view, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
-		}
+		
 		if (!(it->signal & kSignalIgnoreActor)) {
 			it->celRect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(it->priority) - 1, it->celRect.top, it->celRect.bottom - 1);
 			_paint16->fillRect(it->celRect, GFX_SCREEN_MASK_CONTROL, 0, 0, 15);
@@ -1173,35 +1200,52 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 						    listEntry.viewEnhanced = true;
 						    listEntry.enhancedIs256 = false;
 					    }
-				    } else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
-
-					    debug(viewsMapit->first.c_str());
-					    std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-					    listEntry.viewpng = tmp.first;
-					    debug("RELOADED FROM RAM");
-					    preloaded = true;
-					    listEntry.viewenh = tmp.second;
-					    if (listEntry.viewenh) {
-						    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-						    listEntry.viewEnhanced = true;
-						    listEntry.enhancedIs256 = true;
-					    }
-				    } else if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
-
-					    debug(viewsMapit->first.c_str());
-					    std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-					    listEntry.viewpng = tmp.first;
-					    debug("RELOADED FROM RAM");
-					    preloaded = true;
-					    listEntry.viewenh = tmp.second;
-					    if (listEntry.viewenh) {
-						    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-						    listEntry.viewEnhanced = true;
-						    listEntry.enhancedIs256 = true;
+				    }
+			    }
+			    if (!preloaded) {
+				    Common::FSNode folder;
+				    if (ConfMan.hasKey("extrapath")) {
+					    if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+						    if (!listEntry.viewEnhanced) {
+							    Common::String fileName = folder.getChild(fn + "_256.png").getName();
+							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+							    if (!file) {
+								    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							    } else {
+								    debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+								    listEntry.viewpng = loadCelPNGCLUT(file);
+								    if (listEntry.viewpng) {
+									    listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+									    if (listEntry.viewenh) {
+										    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+										    listEntry.viewEnhanced = true;
+										    listEntry.enhancedIs256 = true;
+									    }
+								    }
+							    }
+						    }
+					    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+						    if (!listEntry.viewEnhanced) {
+							    Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+							    if (!file) {
+								    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							    } else {
+								    debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+								    listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
+								    if (listEntry.viewpng) {
+									    listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+									    if (listEntry.viewenh) {
+										    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+										    listEntry.viewEnhanced = true;
+										    listEntry.enhancedIs256 = true;
+									    }
+								    }
+							    }
+						    }
 					    }
 				    }
 			    }
-	
 		    }
 		}
 	    // Create rect according to coordinates and given cel
