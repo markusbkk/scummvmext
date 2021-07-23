@@ -33,7 +33,7 @@
 #include "sci/graphics/picture.h"
 #include "video/theora_decoder.h"
 #include <image/png.h>
-
+#include <map>
 namespace Sci {
 
 //#define DEBUG_PICTURE_DRAW
@@ -52,6 +52,8 @@ GfxPicture::GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuste
 GfxPicture::~GfxPicture() {
 	_resMan->unlockResource(_resource);
 }
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
+extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 
 void GfxPicture::initData(GuiResourceId resourceId) {
 	_resource = _resMan->findResource(ResourceId(kResourceTypePic, resourceId), true);
@@ -192,6 +194,7 @@ Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen 
 	return srf;
 }
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
+	viewsMap.clear();
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
@@ -1033,6 +1036,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 }
 
 void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
+	viewsMap.clear();
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
 	byte priority = _priority;

@@ -235,7 +235,7 @@ Graphics::Surface *loadCelPNGCLUT(Common::SeekableReadStream *s) {
 	return srf;
 }
 
-Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
+Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 
 	if (!s)
@@ -414,6 +414,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 		bool preloaded = false;
 		listEntry.viewpng = NULL;
 		listEntry.viewenh = NULL;
+		if (viewsMap.size() > 0)
 			for (viewsMapit = viewsMap.begin();
 			     viewsMapit != viewsMap.end(); ++viewsMapit) {
 
@@ -432,50 +433,93 @@ void GfxAnimate::LoadAllExtraPNG() {
 					}
 				}
 			}
-		    if (!preloaded) {
-			    Common::FSNode folder;
-			    if (ConfMan.hasKey("extrapath")) {
-				    if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
-					    if (!listEntry.viewEnhanced) {
-						    Common::String fileName = folder.getChild(fn + "_256.png").getName();
-						    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-						    if (!file) {
-							    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-						    } else {
-							    debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-							    listEntry.viewpng = loadCelPNGCLUT(file);
-							    if (listEntry.viewpng) {
-								    listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
-								    if (listEntry.viewenh) {
-									    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-									    listEntry.viewEnhanced = true;
-									    listEntry.enhancedIs256 = true;
-								    }
-							    }
-						    }
-					    }
-				    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
-					    if (!listEntry.viewEnhanced) {
-						    Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
-						    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-						    if (!file) {
-							    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-						    } else {
-							    debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-							    listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
-							    if (listEntry.viewpng) {
-								    listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
-								    if (listEntry.viewenh) {
-									    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
-									    listEntry.viewEnhanced = true;
-									    listEntry.enhancedIs256 = true;
-								    }
-							    }
-						    }
-					    }
-				    }
-			    }
-		    }
+		if (!preloaded) {
+			Common::FSNode folder;
+			if (ConfMan.hasKey("extrapath")) {
+				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+					if (!listEntry.viewEnhanced) {
+						Common::String fileName = folder.getChild(fn + ".png").getName();
+						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+						if (!file) {
+							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						} else {
+							//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							Graphics::Surface *viewpngtmp = loadCelPNG(file);
+							listEntry.viewpng = viewpngtmp;
+							if (listEntry.viewpng) {
+								const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+								listEntry.viewenh = viewenhtmp;
+								if (listEntry.viewenh) {
+									listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+									listEntry.viewEnhanced = true;
+									listEntry.enhancedIs256 = false;
+									std::pair<Graphics::Surface *, const byte *> tmp;
+									tmp.first = viewpngtmp;
+									tmp.second = viewenhtmp;
+									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+									debug(fn.c_str());
+									debug("LOADED FROM DISC");
+								}
+							}
+						}
+					}
+				} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+					if (!listEntry.viewEnhanced) {
+						Common::String fileName = folder.getChild(fn + "_256.png").getName();
+						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+						if (!file) {
+							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						} else {
+							//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							Graphics::Surface *viewpngtmp = loadCelPNGCLUT(file);
+							listEntry.viewpng = viewpngtmp;
+							if (listEntry.viewpng) {
+								const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+								listEntry.viewenh = viewenhtmp;
+								if (listEntry.viewenh) {
+									listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+									listEntry.viewEnhanced = true;
+									listEntry.enhancedIs256 = true;
+									std::pair<Graphics::Surface *, const byte *> tmp;
+									tmp.first = viewpngtmp;
+									tmp.second = viewenhtmp;
+									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256.png").c_str(), tmp));
+									debug(fn.c_str());
+									debug("LOADED FROM DISC");
+								}
+							}
+						}
+					}
+				} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+					if (!listEntry.viewEnhanced) {
+						Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+						if (!file) {
+							debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+						} else {
+							debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+							Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverride(file);
+							listEntry.viewpng = viewpngtmp;
+							if (listEntry.viewpng) {
+								const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+								listEntry.viewenh = viewenhtmp;
+								if (listEntry.viewenh) {
+									listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+									listEntry.viewEnhanced = true;
+									listEntry.enhancedIs256 = true;
+									std::pair<Graphics::Surface *, const byte *> tmp;
+									tmp.first = viewpngtmp;
+									tmp.second = viewenhtmp;
+									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256RP.png").c_str(), tmp));
+									debug(fn.c_str());
+									debug("LOADED FROM DISC");
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		
 
 	    _list.push_back(listEntry);
@@ -931,12 +975,7 @@ void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
 }
 
 void GfxAnimate::reAnimate(Common::Rect rect) {
-#ifdef WIN32
-	if (!preLoadedPNGs) {
-		LoadAllExtraPNG();
-		preLoadedPNGs = true;
-	}
-#endif // WIN32
+
 	if (!_lastCastData.empty()) {
 		AnimateArray::iterator it;
 		AnimateArray::iterator end = _lastCastData.end();
@@ -988,6 +1027,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 				debug(fn.c_str());
 				bool preloaded = false;
 				if (it->viewpng == NULL) {
+					if (viewsMap.size() > 0)
 					for (viewsMapit = viewsMap.begin();
 					     viewsMapit != viewsMap.end(); ++viewsMapit) {
 
@@ -1009,21 +1049,56 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 					if (!preloaded) {
 						Common::FSNode folder;
 						if (ConfMan.hasKey("extrapath")) {
-							if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+							if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+								if (!it->viewEnhanced) {
+									Common::String fileName = folder.getChild(fn + ".png").getName();
+									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+									if (!file) {
+										debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+									} else {
+										//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+										Graphics::Surface *viewpngtmp = loadCelPNG(file);
+										it->viewpng = viewpngtmp;
+										if (it->viewpng) {
+											const byte * viewenhtmp = (const byte *)viewpngtmp->getPixels();
+											it->viewenh = viewenhtmp;
+											if (it->viewenh) {
+												it->pixelsLength = it->viewpng->w * it->viewpng->h;
+												it->viewEnhanced = true;
+												it->enhancedIs256 = false;
+												std::pair<Graphics::Surface *, const byte *> tmp;
+												tmp.first = viewpngtmp;
+												tmp.second = viewenhtmp;
+												viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+												debug(fn.c_str());
+												debug("LOADED FROM DISC");
+											}
+										}
+									}
+								}
+							} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
 								if (!it->viewEnhanced) {
 									Common::String fileName = folder.getChild(fn + "_256.png").getName();
 									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 									if (!file) {
 										debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 									} else {
-										debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-										it->viewpng = loadCelPNGCLUT(file);
+										//debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+										Graphics::Surface *viewpngtmp = loadCelPNGCLUT(file);
+										it->viewpng = viewpngtmp;
 										if (it->viewpng) {
-											it->viewenh = (const byte *)it->viewpng->getPixels();
+											const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+											it->viewenh = viewenhtmp;
 											if (it->viewenh) {
 												it->pixelsLength = it->viewpng->w * it->viewpng->h;
 												it->viewEnhanced = true;
 												it->enhancedIs256 = true;
+												std::pair<Graphics::Surface *, const byte *> tmp;
+												tmp.first = viewpngtmp;
+												tmp.second = viewenhtmp;
+												viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256.png").c_str(), tmp));
+												debug(fn.c_str());
+												debug("LOADED FROM DISC");
 											}
 										}
 									}
@@ -1036,13 +1111,21 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 										debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 									} else {
 										debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-										it->viewpng = loadCelPNGCLUTOverride(file, _screen);
+										Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverride(file);
+										it->viewpng = viewpngtmp;
 										if (it->viewpng) {
-											it->viewenh = (const byte *)it->viewpng->getPixels();
+											const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+											it->viewenh = viewenhtmp;
 											if (it->viewenh) {
 												it->pixelsLength = it->viewpng->w * it->viewpng->h;
 												it->viewEnhanced = true;
 												it->enhancedIs256 = true;
+												std::pair<Graphics::Surface *, const byte *> tmp;
+												tmp.first = viewpngtmp;
+												tmp.second = viewenhtmp;
+												viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256RP.png").c_str(), tmp));
+												debug(fn.c_str());
+												debug("LOADED FROM DISC");
 											}
 										}
 									}
@@ -1073,12 +1156,7 @@ void GfxAnimate::addToPicDrawCels() {
 	GfxView *view = NULL;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
-#ifdef WIN32
-	if (!preLoadedPNGs) {
-		LoadAllExtraPNG();
-		preLoadedPNGs = true;
-	}
-#endif // WIN32
+
 	for (it = _list.begin(); it != end; ++it) {
 		curObject = it->object;
 
@@ -1132,12 +1210,7 @@ void GfxAnimate::addToPicDrawCels() {
 void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loopNo, int16 celNo, int16 x, int16 y, int16 priority, int16 control) {
 	GfxView *view = _cache->getView(viewId);
 	Common::Rect celRect;
-#ifdef WIN32
-	if (!preLoadedPNGs) {
-		LoadAllExtraPNG();
-		preLoadedPNGs = true;
-	}
-#endif // WIN32
+
 	if (priority == -1)
 		priority = _ports->kernelCoordinateToPriority(y);
 
@@ -1184,6 +1257,7 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 			debug(fn.c_str());
 		    bool preloaded = false;
 		    if (listEntry.viewpng == NULL) {
+			    if (viewsMap.size() > 0)
 			    for (viewsMapit = viewsMap.begin();
 			         viewsMapit != viewsMap.end(); ++viewsMapit) {
 
@@ -1205,21 +1279,56 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 			    if (!preloaded) {
 				    Common::FSNode folder;
 				    if (ConfMan.hasKey("extrapath")) {
-					    if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+					    if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+						    if (!listEntry.viewEnhanced) {
+							    Common::String fileName = folder.getChild(fn + ".png").getName();
+							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+							    if (!file) {
+								    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+							    } else {
+								    //debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+								    Graphics::Surface *viewpngtmp = loadCelPNG(file);
+								    listEntry.viewpng = viewpngtmp;
+								    if (listEntry.viewpng) {
+									    const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+									    listEntry.viewenh = viewenhtmp;
+									    if (listEntry.viewenh) {
+										    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
+										    listEntry.viewEnhanced = true;
+										    listEntry.enhancedIs256 = false;
+										    std::pair<Graphics::Surface *, const byte *> tmp;
+										    tmp.first = viewpngtmp;
+										    tmp.second = viewenhtmp;
+										    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+										    debug(fn.c_str());
+										    debug("LOADED FROM DISC");
+									    }
+								    }
+							    }
+						    }
+					    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
 						    if (!listEntry.viewEnhanced) {
 							    Common::String fileName = folder.getChild(fn + "_256.png").getName();
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 							    } else {
-								    debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-								    listEntry.viewpng = loadCelPNGCLUT(file);
+								    //debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+								    Graphics::Surface *viewpngtmp = loadCelPNGCLUT(file);
+								    listEntry.viewpng = viewpngtmp;
 								    if (listEntry.viewpng) {
-									    listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+									    const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+									    listEntry.viewenh = viewenhtmp;
 									    if (listEntry.viewenh) {
 										    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
 										    listEntry.viewEnhanced = true;
 										    listEntry.enhancedIs256 = true;
+										    std::pair<Graphics::Surface *, const byte *> tmp;
+										    tmp.first = viewpngtmp;
+										    tmp.second = viewenhtmp;
+										    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256.png").c_str(), tmp));
+										    debug(fn.c_str());
+										    debug("LOADED FROM DISC");
 									    }
 								    }
 							    }
@@ -1232,13 +1341,21 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 								    debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
 							    } else {
 								    debug("Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-								    listEntry.viewpng = loadCelPNGCLUTOverride(file, _screen);
+								    Graphics::Surface *viewpngtmp = loadCelPNGCLUTOverride(file);
+								    listEntry.viewpng = viewpngtmp;
 								    if (listEntry.viewpng) {
-									    listEntry.viewenh = (const byte *)listEntry.viewpng->getPixels();
+									    const byte *viewenhtmp = (const byte *)viewpngtmp->getPixels();
+									    listEntry.viewenh = viewenhtmp;
 									    if (listEntry.viewenh) {
 										    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
 										    listEntry.viewEnhanced = true;
 										    listEntry.enhancedIs256 = true;
+										    std::pair<Graphics::Surface *, const byte *> tmp;
+										    tmp.first = viewpngtmp;
+										    tmp.second = viewenhtmp;
+										    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256RP.png").c_str(), tmp));
+										    debug(fn.c_str());
+										    debug("LOADED FROM DISC");
 									    }
 								    }
 							    }
