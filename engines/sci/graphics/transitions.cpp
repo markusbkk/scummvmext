@@ -331,7 +331,7 @@ void GfxTransitions::fadeOut() {
 		//(float)((float)stepNr * 0.01);
 		
 		_screen->convertToRGB(_picRect);
-		//copyRectToScreen(_picRect, false);
+		copyRectToScreen(_picRect, false);
 		
 		g_sci->getEngineState()->sleep(2);
 	}
