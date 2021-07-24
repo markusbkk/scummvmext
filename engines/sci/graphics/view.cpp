@@ -1011,18 +1011,18 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			width = MIN(newClipRect.width(), (int16)(viewpng->w / g_sci->_enhancementMultiplier));
 			height = MIN(newClipRect.height(), (int16)(viewpng->h / g_sci->_enhancementMultiplier));
 			/*
-			debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
+			//debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
 			/*
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
@@ -1138,18 +1138,18 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 			width = MIN(newClipRect.width(), (int16)(viewpng->w / g_sci->_enhancementMultiplier));
 			height = MIN(newClipRect.height(), (int16)(viewpng->h / g_sci->_enhancementMultiplier));
 			/*
-			debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
+			//debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
 			/*
 		if (_EGAmapping) {
 			const SciSpan<const byte> EGAmapping = _EGAmapping.subspan(EGAmappingNr * SCI_VIEW_EGAMAPPING_SIZE, SCI_VIEW_EGAMAPPING_SIZE);
@@ -1250,7 +1250,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 		}
 	}
 	Common::String dbg = _resource->name() + '.' + loopNoStr + '.' + celNoStr + " / TWEEN NO = " + tweenNoStr;
-	debug(dbg.c_str());
+	//debug(dbg.c_str());
 	// Reset custom per-view palette mod
 	_screen->setCurPaletteMapValue(oldpalvalue);
 	Common::String sfn = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
@@ -1380,18 +1380,18 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 				scaledWidth = MIN((int16)newClipRect.width(), (int16)(scalingX.size() / g_sci->_enhancementMultiplier));
 				scaledHeight = MIN((int16)newClipRect.height(), (int16)(scalingY.size() / g_sci->_enhancementMultiplier));
 				/*
-			debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
+			//debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
 				//const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
 
 				if (scaledWidth * g_sci->_enhancementMultiplier > viewpng->w * 1.0) {
@@ -1507,18 +1507,18 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 					scaledWidth = MIN((int16)newClipRect.width(), (int16)(scalingX.size() / g_sci->_enhancementMultiplier));
 					scaledHeight = MIN((int16)newClipRect.height(), (int16)(scalingY.size() / g_sci->_enhancementMultiplier));
 					/*
-			debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
-			debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
-			debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
+			//debug(10, "rect.top = %d", rect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.top = %d", celRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "rect.left = %d", rect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newRect.left = %d", celRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.top = %d", clipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.top = %d", newClipRect.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRect.left = %d", clipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRect.left = %d", newClipRect.left * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.top = %d", clipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.top = %d", newClipRectTranslated.top * g_sci->_enhancementMultiplier);
+			//debug(10, "clipRectTranslated.left = %d", clipRectTranslated.left * g_sci->_enhancementMultiplier);
+			//debug(10, "newClipRectTranslated.left = %d", newClipRectTranslated.left * g_sci->_enhancementMultiplier);*/
 					//const byte *bitmapData = bitmap.getUnsafeDataAt(0, celWidth * celHeight);
 
 					if (scaledWidth * g_sci->_enhancementMultiplier > viewpng->w * 1.0) {
@@ -1629,7 +1629,7 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 		
 	
 	Common::String dbg = _resource->name() + '.' + loopNoStr + '.' + celNoStr + " /  TWEEN NO = " + tweenNoStr;
-	debug(dbg.c_str());
+	//debug(dbg.c_str());
 	Common::String fn2 = _resource->name() + '.' + loopNoStr + '.' + celNoStr;
 	g_sci->_audio->PlayEnhancedViewCelAudio(fn2, surfaceNumber, hashit((_resource->name() + '.' + loopNoStr + '.' + celNoStr).c_str()));
 }

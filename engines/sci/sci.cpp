@@ -699,7 +699,7 @@ Common::Error SciEngine::run() {
 	if (getGameId() == GID_GK2 && ConfMan.getBool("subtitles") && !_resMan->testResource(ResourceId(kResourceTypeSync, 10))) {
 		suggestDownloadGK2SubTitlesPatch();
 	}
-	LoadAllExtraPNG();
+
 	runTheoraIntro();
 	runGame();
 	runTheoraOutro();

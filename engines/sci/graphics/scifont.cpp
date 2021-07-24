@@ -311,8 +311,8 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	Common::FSNode folder;
 	char charNoStr[5];
 	sprintf(charNoStr, "%u", chr);
-	char mapStr[7];
-	sprintf(mapStr, "%u", fontsMap.size());
+	//char mapStr[7];
+	//sprintf(mapStr, "%u", fontsMap.size());
 	//debug(mapStr);
 
 	std::string search = _resource->name().c_str();

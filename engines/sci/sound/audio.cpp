@@ -212,7 +212,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 
 			if (audioStream) {
 				foundAudio = true;
-				debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
+				//debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
 				Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
 				// We only support one audio handle
 				if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -239,7 +239,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 
 				if (audioStream) {
 					foundAudio = true;
-					debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
+					//debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
 					Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
 					// We only support one audio handle
 					if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -254,7 +254,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 		}
 	}
 	if (foundAudio == false) {
-		debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
+		//debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
 	}
 }
 
@@ -271,7 +271,7 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 				sprintf(surfNoStr, "%d", surfaceNumber);
 				fnStrSurf += ".s.";
 				fnStrSurf += surfNoStr;
-				debug(("view + surface : " + fnStrSurf).c_str());
+				//debug(("view + surface : " + fnStrSurf).c_str());
 				if (folder.getChild((fnStrSurf + ".mp3").c_str()).exists()) {
 					hasSurface = true;
 					Common::File *sciAudioFile = new Common::File();
@@ -289,7 +289,7 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 
 					if (audioStream) {
 						foundAudio = true;
-						debug(("Found : " + fnStrSurf + ".mp3").c_str());
+						//debug(("Found : " + fnStrSurf + ".mp3").c_str());
 						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
 						// We only support one audio handle
 						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -320,7 +320,7 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 
 					if (audioStream) {
 						foundAudio = true;
-						debug(("Found : " + fnStrSurf + ".wav").c_str());
+						//debug(("Found : " + fnStrSurf + ".wav").c_str());
 						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
 						// We only support one audio handle
 						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -355,7 +355,7 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 
 						if (audioStream) {
 							foundAudio = true;
-							debug(("Found : " + fnStr + ".mp3").c_str());
+							//debug(("Found : " + fnStr + ".mp3").c_str());
 							Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
 							// We only support one audio handle
 							if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -384,7 +384,7 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 
 						if (audioStream) {
 							foundAudio = true;
-							debug(("Found : " + fnStr + ".wav").c_str());
+							//debug(("Found : " + fnStr + ".wav").c_str());
 							Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
 							// We only support one audio handle
 							if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
@@ -402,7 +402,7 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 				
 			}
 		}
-		debug(("view : " + fnStr).c_str());
+		//debug(("view : " + fnStr).c_str());
 	}
 }
 
