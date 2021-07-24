@@ -358,7 +358,7 @@ void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo,
 			}
 			//debug(fn.c_str());
 			bool preloaded = false;
-			if (listEntry.viewpng == NULL)
+			//if (listEntry.viewpng == NULL)
 			{
 				if (viewsMap.size() > 0)
 					for (viewsMapit = viewsMap.begin();
@@ -370,9 +370,9 @@ void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo,
 							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 							listEntry.viewpng = tmp.first;
 							//debug("RELOADED FROM RAM");
-							preloaded = true;
 							listEntry.viewenh = tmp.second;
 							if (listEntry.viewenh) {
+								preloaded = true;
 								listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
 								listEntry.viewEnhanced = true;
 								listEntry.enhancedIs256 = false;
@@ -598,18 +598,6 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 						stop = true;
 					}
 			}
-			stop = false;
-			char tweenNoStr[5];
-			Common::String twn = "";
-			sprintf(tweenNoStr, "%u", tweenNo);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-						twn += tweenNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
 			//debug(fn.c_str());
 			bool preloaded = false;
 			if (listEntry.viewpng == NULL) {
@@ -623,9 +611,9 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 							listEntry.viewpng = tmp.first;
 							//debug("RELOADED FROM RAM");
-							preloaded = true;
 							listEntry.viewenh = tmp.second;
 							if (listEntry.viewenh) {
+								preloaded = true;
 								listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
 								listEntry.viewEnhanced = true;
 								listEntry.enhancedIs256 = false;

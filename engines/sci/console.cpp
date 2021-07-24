@@ -2243,7 +2243,7 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 			}
 			//debug(fn.c_str());
 			bool preloaded = false;
-			if (listEntry.viewpng == NULL)
+			//if (listEntry.viewpng == NULL)
 			{
 				if (viewsMap.size() > 0)
 					for (viewsMapit = viewsMap.begin();

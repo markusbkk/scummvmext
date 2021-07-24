@@ -425,9 +425,9 @@ void GfxAnimate::LoadAllExtraPNG() {
 					std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 					listEntry.viewpng = tmp.first;
 					//debug("RELOADED FROM RAM");
-					preloaded = true;
 					listEntry.viewenh = tmp.second;
 					if (listEntry.viewenh) {
+						preloaded = true;
 						listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
 						listEntry.viewEnhanced = true;
 						listEntry.enhancedIs256 = false;
@@ -1038,9 +1038,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 							it->viewpng = tmp.first;
 							//debug("RELOADED FROM RAM");
-							preloaded = true;
 							it->viewenh = tmp.second;
 							if (it->viewenh) {
+								preloaded = true;
 								it->pixelsLength = it->viewpng->w * it->viewpng->h;
 								it->viewEnhanced = true;
 								it->enhancedIs256 = false;
@@ -1268,9 +1268,10 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 					    std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 					    listEntry.viewpng = tmp.first;
 					    //debug("RELOADED FROM RAM");
-					    preloaded = true;
+					    
 					    listEntry.viewenh = tmp.second;
 					    if (listEntry.viewenh) {
+							preloaded = true;
 						    listEntry.pixelsLength = listEntry.viewpng->w * listEntry.viewpng->h;
 						    listEntry.viewEnhanced = true;
 						    listEntry.enhancedIs256 = false;
