@@ -81,7 +81,7 @@ public:
 	uint16 getDisplayHeight() { return _displayHeight; }
 	byte getColorWhite() { return _colorWhite; }
 	byte getColorDefaultVectorData() { return _colorDefaultVectorData; }
-
+	
 	void clearForRestoreGame();
 	void copyToScreen();
 	void kernelSyncWithFramebuffer();

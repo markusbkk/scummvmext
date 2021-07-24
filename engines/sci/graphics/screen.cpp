@@ -344,7 +344,7 @@ GfxScreen::~GfxScreen() {
 	delete[] _palette;
 	delete[] _backupScreen;
 }
-
+extern float blackFade;
 void GfxScreen::convertToRGB(const Common::Rect &rect) {
 	assert(_format.bytesPerPixel != 1);
 	if (g_sci->backgroundIsVideo) {
@@ -414,7 +414,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
 								}
 
-								uint32 c = _format.RGBToColor(r, g, b);
+								uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 								WRITE_UINT32(out, c);
 								inV += 4;
 								inE += 1;
@@ -440,7 +440,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = *(inV + 1);
 									r = *(inV);
 								}
-								uint16 c = (uint16)_format.RGBToColor(r, g, b);
+								uint16 c = (uint16)_format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 								WRITE_UINT16(out, c);
 								inV += 4;
 								inE += 1;
@@ -478,7 +478,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
 								}
 
-								uint32 c = _format.RGBToColor(r, g, b);
+								uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 								WRITE_UINT32(out, c);
 								inV += 4;
 								inE += 1;
@@ -504,7 +504,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 									g = *(inV + 1);
 									r = *(inV);
 								}
-								uint32 c = _format.RGBToColor(r, g, b);
+								uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 								WRITE_UINT32(out, c);
 								inV += 4;
 								inE += 1;
@@ -595,7 +595,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
 						}
 
-						uint16 c = (uint16)_format.RGBToColor(r, g, b);
+						uint16 c = (uint16)_format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 
 						WRITE_UINT16(out, c);
 						inE += 1;
@@ -617,7 +617,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 						g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 						b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 
-						uint16 c = (uint16)_format.RGBToColor(r, g, b);
+						uint16 c = (uint16)_format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 						WRITE_UINT16(out, c);
 
 						inE += 1;
@@ -651,7 +651,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
 						}
 
-						uint32 c = _format.RGBToColor(r, g, b);
+						uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 						WRITE_UINT32(out, c);
 
 						inE += 1;
@@ -674,7 +674,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 							b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
 						}
-						uint32 c = _format.RGBToColor(r, g, b);
+						uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
 						WRITE_UINT32(out, c);
 						inE += 1;
 						inP += 1;
@@ -1526,7 +1526,7 @@ void GfxScreen::setPalette(const byte *buffer, uint start, uint num, bool update
 
 
 void GfxScreen::bakCreateBackup() {
-	assert(!_backupScreen);
+	//assert(!_backupScreen);
 	_backupScreen = new byte[_format.bytesPerPixel * _displayPixels];
 	if (_format.bytesPerPixel == 1) {
 		Graphics::Surface *screen = g_system->lockScreen();

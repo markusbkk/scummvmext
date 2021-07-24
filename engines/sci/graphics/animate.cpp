@@ -1382,7 +1382,7 @@ void GfxAnimate::animateShowPic() {
 	Port *picPort = _ports->_picWind;
 	Common::Rect picRect = picPort->rect;
 	bool previousCursorState = _cursor->isVisible();
-
+	
 	if (previousCursorState)
 		_cursor->kernelHide();
 	// Adjust picRect to become relative to screen

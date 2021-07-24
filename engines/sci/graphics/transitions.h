@@ -67,6 +67,7 @@ public:
 
 	void setup(int16 number, bool blackoutFlag);
 	void doit(Common::Rect picRect);
+	
 
 private:
 	void init();
@@ -102,6 +103,7 @@ private:
 	byte *_oldScreen; // buffer for saving current active screen data to, has dimenions of _screen->_displayScreen
 
 	uint32 _transitionStartTime; // when the current transition started in milliseconds
+	
 };
 
 } // End of namespace Sci

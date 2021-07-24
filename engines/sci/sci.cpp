@@ -97,6 +97,8 @@ std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator f
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 bool preLoadedPNGs = false;
+float blackFade = 1.0;
+
 Graphics::Surface *loadCelPNGSci(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 

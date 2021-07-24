@@ -121,6 +121,7 @@ public:
 	virtual void kernelAddToPicView(GuiResourceId viewId, int16 viewNo, int16 loopNo, int16 celNo, int16 leftPos, int16 topPos, int16 priority, int16 control);
 	
 		GfxScreen *_screen;
+		GfxPorts *_ports;
 
 private:
 	void init();
@@ -136,7 +137,7 @@ private:
 	EngineState *_s;
 	ScriptPatcher *_scriptPatcher;
 	GfxCache *_cache;
-	GfxPorts *_ports;
+	
 	GfxPaint16 *_paint16;
 	GfxPalette *_palette;
 
