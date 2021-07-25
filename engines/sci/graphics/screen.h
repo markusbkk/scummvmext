@@ -443,18 +443,7 @@ public:
 				break;
 			}
 		}
-		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			switch (_upscaledHires) {
-			case GFX_SCREEN_UPSCALED_640x400: {
-				int displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
-				_priorityScreenX[displayOffset] = priority;
-
-				break;
-			}
-			default:
-				break;
-			}
-		}
+		
 	}
 
 	void putPixelG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
@@ -819,12 +808,10 @@ public:
 			}
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
-			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
-			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 
 				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
-				
-				
+
 				break;
 			}
 			default: {
