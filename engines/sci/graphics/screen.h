@@ -1418,6 +1418,7 @@ public:
 			return screen[offset];
 			break;
 		}
+		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 			offset = (int)((y) * _width) + ((int)(x));
 

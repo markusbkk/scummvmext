@@ -821,12 +821,12 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 
 	_oldPort = _ports->setPort(_ports->_menuPort);
 	calculateMenuAndItemWidth();
-	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 
 	_ports->penColor(0);
 	_ports->backColor(_screen->getColorWhite());
 
 	drawBar();
+	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	drawMenu(0, curItemEntry->menuId);
 	invertMenuSelection(curItemEntry->id);
 	_paint16->bitsShow(_ports->_menuRect);
@@ -956,12 +956,12 @@ GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
 
 	_oldPort = _ports->setPort(_ports->_menuPort);
 	calculateMenuAndItemWidth();
-	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 
 	_ports->penColor(0);
 	_ports->backColor(_screen->getColorWhite());
 
 	drawBar();
+	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	_paint16->bitsShow(_ports->_menuRect);
 
 	while (true) {
