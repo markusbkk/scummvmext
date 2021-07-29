@@ -26,6 +26,7 @@
 #include "common/config-manager.h"
 #include "sci/sci.h"
 #include "sci/engine/state.h"
+#include "sci/graphics/menu.h"
 #include "sci/graphics/screen.h"
 #include "sci/graphics/palette.h"
 #include "sci/graphics/coordadjuster.h"
@@ -37,7 +38,8 @@
 namespace Sci {
 
 //#define DEBUG_PICTURE_DRAW
-
+extern GfxPaint16 _paint16;
+extern reg_t _barSaveHandle;
 GfxPicture::GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuster, GfxPorts *ports, GfxScreen *screen, GfxPalette *palette, GuiResourceId resourceId, bool EGAdrawingVisualize)
 	: _resMan(resMan), _coordAdjuster(coordAdjuster), _ports(ports), _screen(screen), _palette(palette), _resourceId(resourceId), _EGAdrawingVisualize(EGAdrawingVisualize) {
 	assert(resourceId != -1);
@@ -1036,6 +1038,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 }
 
 void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
+	//g_sci->_gfxMenu->SaveMenuBits();
 	viewsMap.clear();
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
@@ -1470,6 +1473,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 	}
+	
 }
 
 	enum {

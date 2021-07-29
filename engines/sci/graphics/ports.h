@@ -109,6 +109,7 @@ public:
 	Port *_menuPort;
 	Common::Rect _menuBarRect;
 	Common::Rect _menuRect;
+	Common::Rect _statusRect;
 	Common::Rect _menuLine;
 	Port *_curPort;
 

@@ -39,7 +39,9 @@
 #include "sci/graphics/menu.h"
 
 namespace Sci {
-
+int16 colorBackPrev;
+int16 colorPenPrev;
+const char *statustext;
 GfxMenu::GfxMenu(EventManager *event, SegManager *segMan, GfxPorts *ports, GfxPaint16 *paint16, GfxText16 *text16, GfxScreen *screen, GfxCursor *cursor)
 	: _event(event), _segMan(segMan), _ports(ports), _paint16(paint16), _text16(text16), _screen(screen), _cursor(cursor) {
 
@@ -62,7 +64,12 @@ GfxMenu::~GfxMenu() {
 
 	_list.clear();
 }
+void GfxMenu::SaveMenuBits() {
+	_statusSaveHandle = _paint16->bitsSave(_ports->_statusRect, GFX_SCREEN_MASK_VISUAL);
+	_paint16->bitsRestore(_statusSaveHandle);
+	_paint16->bitsShow(_ports->_statusRect);
 
+}
 void GfxMenu::reset() {
 	_list.clear();
 	_itemList.clear();
@@ -538,6 +545,8 @@ reg_t GfxMenu::kernelSelect(reg_t eventObject, bool pauseSound) {
 	if (itemEntry)
 		return make_reg(0, (itemEntry->menuId << 8) | (itemEntry->id));
 	return NULL_REG;
+	_paint16->bitsRestore(_statusSaveHandle);
+	_paint16->bitsShow(_ports->_statusRect);
 }
 
 GuiMenuItemEntry *GfxMenu::interactiveGetItem(uint16 menuId, uint16 itemId, bool menuChanged) {
@@ -570,7 +579,7 @@ GuiMenuItemEntry *GfxMenu::interactiveGetItem(uint16 menuId, uint16 itemId, bool
 }
 
 void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
-
+	
 	GuiMenuEntry *listEntry;
 	GuiMenuList::iterator listIterator;
 	GuiMenuList::iterator listEnd = _list.end();
@@ -718,7 +727,10 @@ void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
 		_menuRect.left++;
 	}
 	_menuRect.bottom++;
+	_paint16->bitsRestore(_statusSaveHandle);
+	_paint16->bitsShow(_ports->_statusRect);
 	_paint16->bitsShow(_menuRect);
+
 
 		
 }
@@ -749,6 +761,8 @@ void GfxMenu::interactiveEnd(bool pauseSound) {
 		g_sci->_soundCmd->pauseAll(false);
 	if (!_mouseOldState)
 		_cursor->kernelHide();
+	_paint16->bitsRestore(_statusSaveHandle);
+	_paint16->bitsShow(_ports->_statusRect);
 }
 
 uint16 GfxMenu::mouseFindMenuSelection(Common::Point mousePosition) {
@@ -825,12 +839,28 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 	_ports->penColor(0);
 	_ports->backColor(_screen->getColorWhite());
 
+	_paint16->fillRect(_ports->_menuBarRect, 1, _screen->getColorWhite());
+	_ports->penColor(colorBackPrev);
+
+	_ports->_statusRect = _ports->_menuBarRect;
+	_paint16->fillRect(_ports->_menuBarRect, 1, colorBackPrev);
+	_ports->penColor(colorPenPrev);
+	if (!g_sci->isLanguageRTL()) {
+		_ports->moveTo(0, 1);
+	} else {
+		int16 textWidth;
+		int16 textHeight;
+		_text16->StringWidth("  https://github.com/MiLO83/scummvmx/release", _text16->GetFontId(), textWidth, textHeight);
+		_ports->moveTo(_screen->getWidth() - textWidth, 1);
+	}
+	_text16->DrawStatus("  https://github.com/MiLO83/scummvmx/release");
+	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	drawBar();
+	
 	drawMenu(0, curItemEntry->menuId);
 	invertMenuSelection(curItemEntry->id);
-	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
+	
 	_paint16->bitsShow(_ports->_menuRect);
-	_paint16->bitsShow(_menuRect);
 
 	int multiplier = !g_sci->isLanguageRTL() ? 1 : -1;
 
@@ -934,6 +964,7 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 			} break;
 
 		case kSciEventNone:
+			_paint16->bitsShow(_ports->_statusRect);
 			g_sci->sleep(2500 / 1000);
 			break;
 
@@ -948,20 +979,41 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 // chosen. If no menu item is selected we cancel. No keyboard interaction is
 // allowed, cause that wouldnt make any sense at all.
 GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
+	
 	SciEvent curEvent;
 	uint16 newMenuId = 0, newItemId = 0;
 	uint16 curMenuId = 0, curItemId = 0;
 	bool firstMenuChange = true;
 	GuiMenuItemEntry *curItemEntry = NULL;
-
+	//SaveMenuBits();
 	_oldPort = _ports->setPort(_ports->_menuPort);
 	calculateMenuAndItemWidth();
 
+	_ports->_statusRect = _ports->_menuBarRect;
 	_ports->penColor(0);
 	_ports->backColor(_screen->getColorWhite());
+	
+	_paint16->fillRect(_ports->_menuBarRect, 1, _screen->getColorWhite());
+	_ports->penColor(colorBackPrev);
 
-	drawBar();
+	_paint16->bitsShow(_ports->_menuBarRect);
+	_paint16->fillRect(_ports->_menuBarRect, 1, colorBackPrev);
+	_ports->penColor(colorPenPrev);
+	if (!g_sci->isLanguageRTL()) {
+		_ports->moveTo(0, 1);
+	} else {
+		int16 textWidth;
+		int16 textHeight;
+		_text16->StringWidth("  https://github.com/MiLO83/scummvmx/release", _text16->GetFontId(), textWidth, textHeight);
+		_ports->moveTo(_screen->getWidth() - textWidth, 1);
+	}
+	_text16->DrawStatus("  https://github.com/MiLO83/scummvmx/release");
+
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
+
+	//_statusSaveHandle = _paint16->bitsSave(_ports->_statusRect, GFX_SCREEN_MASK_VISUAL);
+	drawBar();
+	
 	_paint16->bitsShow(_ports->_menuRect);
 
 	while (true) {
@@ -969,13 +1021,21 @@ GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
 
 		switch (curEvent.type) {
 		case kSciEventMouseRelease:
-			if ((curMenuId == 0) || (curItemId == 0))
+			if ((curMenuId == 0) || (curItemId == 0)) {
+				_paint16->bitsRestore(_statusSaveHandle);
+				_paint16->bitsShow(_ports->_statusRect);
 				return NULL;
-			if ((!curItemEntry->enabled) || (curItemEntry->separatorLine))
+			}
+			if ((!curItemEntry->enabled) || (curItemEntry->separatorLine)) {
+				_paint16->bitsRestore(_statusSaveHandle);
+				_paint16->bitsShow(_ports->_statusRect);
 				return NULL;
+			}
 			return curItemEntry;
 
 		case kSciEventNone:
+			_paint16->bitsRestore(_statusSaveHandle);
+			_paint16->bitsShow(_ports->_statusRect);
 			g_sci->sleep(2500 / 1000);
 			break;
 
@@ -1018,6 +1078,9 @@ GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
 
 void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack) {
 	Port *oldPort = _ports->setPort(_ports->_menuPort);
+	colorBackPrev = colorBack;
+	colorPenPrev = colorPen;
+	_ports->_statusRect = _ports->_menuBarRect;
 
 	_paint16->fillRect(_ports->_menuBarRect, 1, colorBack);
 	_ports->penColor(colorPen);
@@ -1038,7 +1101,9 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	// achieving the same effect.
 	_paint16->fillRect(_ports->_menuLine, 1, 0);
 	_paint16->bitsShow(_ports->_menuLine);
+	std::string str = text;
 	_ports->setPort(oldPort);
+	SaveMenuBits();
 }
 
 void GfxMenu::kernelDrawMenuBar(bool clear) {
@@ -1049,7 +1114,17 @@ void GfxMenu::kernelDrawMenuBar(bool clear) {
 		_paint16->bitsShow(_ports->_menuBarRect);
 		_ports->setPort(oldPort);
 	} else {
-		kernelDrawStatus("", 0, 0);
+		_paint16->fillRect(_ports->_menuBarRect, 1, colorBackPrev);
+		_ports->penColor(colorPenPrev);
+		if (!g_sci->isLanguageRTL()) {
+			_ports->moveTo(0, 1);
+		} else {
+			int16 textWidth;
+			int16 textHeight;
+			_text16->StringWidth("  https://github.com/MiLO83/scummvmx/release", _text16->GetFontId(), textWidth, textHeight);
+			_ports->moveTo(_screen->getWidth() - textWidth, 1);
+		}
+		_text16->DrawStatus("  https://github.com/MiLO83/scummvmx/release");
 	}
 }
 
