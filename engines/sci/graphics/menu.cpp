@@ -826,9 +826,9 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 	_ports->backColor(_screen->getColorWhite());
 
 	drawBar();
-	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	drawMenu(0, curItemEntry->menuId);
 	invertMenuSelection(curItemEntry->id);
+	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	_paint16->bitsShow(_ports->_menuRect);
 	_paint16->bitsShow(_menuRect);
 
