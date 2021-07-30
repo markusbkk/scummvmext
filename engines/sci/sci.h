@@ -303,7 +303,7 @@ public:
 	DebugState _debugState;
 
 	Common::MacResManager *getMacExecutable() { return &_macExecutable; }
-
+	const SciGameId _gameId;
 private:
 	/**
 	 * Initializes a SCI game
@@ -341,7 +341,7 @@ private:
 	void setLauncherLanguage();
 
 	const ADGameDescription *_gameDescription;
-	const SciGameId _gameId;
+	
 	ResourceManager *_resMan; /**< The resource manager */
 	ScriptPatcher *_scriptPatcher; /**< The script patcher */
 	EngineState *_gamestate;

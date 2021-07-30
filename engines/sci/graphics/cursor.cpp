@@ -161,7 +161,7 @@ void GfxCursor::kernelSetShape(GuiResourceId resourceId) {
 
 	heightWidth = SCI_CURSOR_SCI0_HEIGHTWIDTH;
 
-	if (_upscaledHires != GFX_SCREEN_UPSCALED_DISABLED && _upscaledHires != GFX_SCREEN_UPSCALED_480x300) {
+	if (_upscaledHires != GFX_SCREEN_UPSCALED_DISABLED && _upscaledHires != GFX_SCREEN_UPSCALED_480x300 && g_sci->_gameId != GID_KQ4) {
 		// Scale cursor by 2x - note: sierra didn't do this, but it looks much better
 		heightWidth *= 2;
 		hotspot.x *= 2;
