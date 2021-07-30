@@ -850,10 +850,10 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 	} else {
 		int16 textWidth;
 		int16 textHeight;
-		_text16->StringWidth("  https://github.com/MiLO83/scummvmx/release", _text16->GetFontId(), textWidth, textHeight);
+		_text16->StringWidth("https://github.com/MiLO83/scummvmext/releases/", _text16->GetFontId(), textWidth, textHeight);
 		_ports->moveTo(_screen->getWidth() - textWidth, 1);
 	}
-	_text16->DrawStatus("  https://github.com/MiLO83/scummvmx/release");
+	_text16->DrawStatus("https://github.com/MiLO83/scummvmext/releases/");
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	drawBar();
 	
@@ -1004,10 +1004,10 @@ GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
 	} else {
 		int16 textWidth;
 		int16 textHeight;
-		_text16->StringWidth("  https://github.com/MiLO83/scummvmx/release", _text16->GetFontId(), textWidth, textHeight);
+		_text16->StringWidth("https://github.com/MiLO83/scummvmext/releases/", _text16->GetFontId(), textWidth, textHeight);
 		_ports->moveTo(_screen->getWidth() - textWidth, 1);
 	}
-	_text16->DrawStatus("  https://github.com/MiLO83/scummvmx/release");
+	_text16->DrawStatus("https://github.com/MiLO83/scummvmext/releases/");
 
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 
@@ -1121,10 +1121,10 @@ void GfxMenu::kernelDrawMenuBar(bool clear) {
 		} else {
 			int16 textWidth;
 			int16 textHeight;
-			_text16->StringWidth("  https://github.com/MiLO83/scummvmx/release", _text16->GetFontId(), textWidth, textHeight);
+			_text16->StringWidth("https://github.com/MiLO83/scummvmext/releases/", _text16->GetFontId(), textWidth, textHeight);
 			_ports->moveTo(_screen->getWidth() - textWidth, 1);
 		}
-		_text16->DrawStatus("  https://github.com/MiLO83/scummvmx/release");
+		_text16->DrawStatus("https://github.com/MiLO83/scummvmext/releases/");
 	}
 }
 
