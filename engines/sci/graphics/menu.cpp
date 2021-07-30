@@ -41,7 +41,7 @@
 namespace Sci {
 int16 colorBackPrev;
 int16 colorPenPrev;
-const char *statustext;
+Common::String statusText = "SCUMMVMEXT BETA";
 GfxMenu::GfxMenu(EventManager *event, SegManager *segMan, GfxPorts *ports, GfxPaint16 *paint16, GfxText16 *text16, GfxScreen *screen, GfxCursor *cursor)
 	: _event(event), _segMan(segMan), _ports(ports), _paint16(paint16), _text16(text16), _screen(screen), _cursor(cursor) {
 
@@ -845,15 +845,21 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 	_ports->_statusRect = _ports->_menuBarRect;
 	_paint16->fillRect(_ports->_menuBarRect, 1, colorBackPrev);
 	_ports->penColor(colorPenPrev);
+	Common::String score = "Score : " + Common::String::format("%u", g_sci->getEngineState()->variables[VAR_GLOBAL][kGlobalVarScore].toUint16());
 	if (!g_sci->isLanguageRTL()) {
 		_ports->moveTo(0, 1);
 	} else {
 		int16 textWidth;
 		int16 textHeight;
-		_text16->StringWidth("https://github.com/MiLO83/scummvmext/releases/", _text16->GetFontId(), textWidth, textHeight);
+		_text16->StringWidth(statusText, _text16->GetFontId(), textWidth, textHeight);
 		_ports->moveTo(_screen->getWidth() - textWidth, 1);
 	}
-	_text16->DrawStatus("https://github.com/MiLO83/scummvmext/releases/");
+	//_text16->DrawStatus(score);
+	_text16->DrawStatus(statusText);
+	_paint16->fillRect(_ports->_menuLine, 1, 0);
+	_paint16->bitsShow(_ports->_menuLine);
+	_paint16->bitsShow(_ports->_menuBarRect);
+	debug(statusText.c_str());
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 	drawBar();
 	
@@ -999,16 +1005,21 @@ GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
 	_paint16->bitsShow(_ports->_menuBarRect);
 	_paint16->fillRect(_ports->_menuBarRect, 1, colorBackPrev);
 	_ports->penColor(colorPenPrev);
+	Common::String score = "Score : " + Common::String::format("%u", g_sci->getEngineState()->variables[VAR_GLOBAL][kGlobalVarScore].toUint16());
 	if (!g_sci->isLanguageRTL()) {
 		_ports->moveTo(0, 1);
 	} else {
 		int16 textWidth;
 		int16 textHeight;
-		_text16->StringWidth("https://github.com/MiLO83/scummvmext/releases/", _text16->GetFontId(), textWidth, textHeight);
+		_text16->StringWidth(statusText, _text16->GetFontId(), textWidth, textHeight);
 		_ports->moveTo(_screen->getWidth() - textWidth, 1);
 	}
-	_text16->DrawStatus("https://github.com/MiLO83/scummvmext/releases/");
-
+	//_text16->DrawStatus(score);
+	_text16->DrawStatus(statusText);
+	_paint16->fillRect(_ports->_menuLine, 1, 0);
+	_paint16->bitsShow(_ports->_menuLine);
+	_paint16->bitsShow(_ports->_menuBarRect);
+	debug(statusText.c_str());
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
 
 	//_statusSaveHandle = _paint16->bitsSave(_ports->_statusRect, GFX_SCREEN_MASK_VISUAL);
@@ -1081,7 +1092,9 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	colorBackPrev = colorBack;
 	colorPenPrev = colorPen;
 	_ports->_statusRect = _ports->_menuBarRect;
-
+	Common::String sttmp = text;
+	if (sttmp.contains("Score"))
+		statusText = text;
 	_paint16->fillRect(_ports->_menuBarRect, 1, colorBack);
 	_ports->penColor(colorPen);
 	if (!g_sci->isLanguageRTL()) {
@@ -1089,11 +1102,15 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	} else {
 		int16 textWidth;
 		int16 textHeight;
-		_text16->StringWidth(text, _text16->GetFontId(), textWidth, textHeight);
+		_text16->StringWidth(statusText, _text16->GetFontId(), textWidth, textHeight);
 		_ports->moveTo(_screen->getWidth() - textWidth, 1);
 	}
-	_text16->DrawStatus(text);
+	
+	_text16->DrawStatus(statusText);
+	_paint16->fillRect(_ports->_menuLine, 1, 0);
+	_paint16->bitsShow(_ports->_menuLine);
 	_paint16->bitsShow(_ports->_menuBarRect);
+	_ports->setPort(oldPort);
 	// Also draw the line under the status bar. Normally, this is never drawn,
 	// but we need it to be drawn because Dr. Brain 1 Mac draws over it when
 	// it displays the icon bar. SSCI used negative rectangles to erase the
@@ -1101,14 +1118,15 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	// achieving the same effect.
 	_paint16->fillRect(_ports->_menuLine, 1, 0);
 	_paint16->bitsShow(_ports->_menuLine);
-	std::string str = text;
+	debug(statusText.c_str());
 	_ports->setPort(oldPort);
 	SaveMenuBits();
 }
 
 void GfxMenu::kernelDrawMenuBar(bool clear) {
+	Port *oldPort = _ports->setPort(_ports->_menuPort);
 	if (!clear) {
-		Port *oldPort = _ports->setPort(_ports->_menuPort);
+		
 		calculateMenuWidth();
 		drawBar();
 		_paint16->bitsShow(_ports->_menuBarRect);
@@ -1121,10 +1139,24 @@ void GfxMenu::kernelDrawMenuBar(bool clear) {
 		} else {
 			int16 textWidth;
 			int16 textHeight;
-			_text16->StringWidth("https://github.com/MiLO83/scummvmext/releases/", _text16->GetFontId(), textWidth, textHeight);
+			_text16->StringWidth(statusText, _text16->GetFontId(), textWidth, textHeight);
 			_ports->moveTo(_screen->getWidth() - textWidth, 1);
 		}
-		_text16->DrawStatus("https://github.com/MiLO83/scummvmext/releases/");
+
+		_text16->DrawStatus(statusText);
+		_paint16->fillRect(_ports->_menuLine, 1, 0);
+		_paint16->bitsShow(_ports->_menuLine);
+		_paint16->bitsShow(_ports->_menuBarRect);
+		_ports->setPort(oldPort);
+		// Also draw the line under the status bar. Normally, this is never drawn,
+		// but we need it to be drawn because Dr. Brain 1 Mac draws over it when
+		// it displays the icon bar. SSCI used negative rectangles to erase the
+		// area after drawing the icon bar, but this is a much cleaner way of
+		// achieving the same effect.
+
+		debug(statusText.c_str());
+		SaveMenuBits();
+		_ports->setPort(oldPort);
 	}
 }
 
