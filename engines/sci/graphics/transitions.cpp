@@ -327,8 +327,7 @@ void GfxTransitions::fadeOut() {
 		}
 		_screen->setPalette(workPalette + 3, 1, tillColorNr);*/
 		
-		blackFade = 1.0;
-		//(float)((float)stepNr * 0.01);
+		blackFade = (float)((float)stepNr * 0.01);
 		
 		_screen->convertToRGB(_picRect);
 		copyRectToScreen(_picRect, false);

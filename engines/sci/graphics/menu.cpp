@@ -856,8 +856,7 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 	}
 	//_text16->DrawStatus(score);
 	_text16->DrawStatus(statusText);
-	_paint16->fillRect(_ports->_menuLine, 1, 0);
-	_paint16->bitsShow(_ports->_menuLine);
+
 	_paint16->bitsShow(_ports->_menuBarRect);
 	debug(statusText.c_str());
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
@@ -1017,7 +1016,7 @@ GuiMenuItemEntry *GfxMenu::interactiveWithMouse() {
 	//_text16->DrawStatus(score);
 	_text16->DrawStatus(statusText);
 	_paint16->fillRect(_ports->_menuLine, 1, 0);
-	_paint16->bitsShow(_ports->_menuLine);
+
 	_paint16->bitsShow(_ports->_menuBarRect);
 	debug(statusText.c_str());
 	_barSaveHandle = _paint16->bitsSave(_ports->_menuRect, GFX_SCREEN_MASK_VISUAL);
@@ -1107,8 +1106,8 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	}
 	
 	_text16->DrawStatus(statusText);
-	_paint16->fillRect(_ports->_menuLine, 1, 0);
-	_paint16->bitsShow(_ports->_menuLine);
+
+
 	_paint16->bitsShow(_ports->_menuBarRect);
 	_ports->setPort(oldPort);
 	// Also draw the line under the status bar. Normally, this is never drawn,
@@ -1116,11 +1115,10 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	// it displays the icon bar. SSCI used negative rectangles to erase the
 	// area after drawing the icon bar, but this is a much cleaner way of
 	// achieving the same effect.
-	_paint16->fillRect(_ports->_menuLine, 1, 0);
-	_paint16->bitsShow(_ports->_menuLine);
+
 	debug(statusText.c_str());
 	_ports->setPort(oldPort);
-	SaveMenuBits();
+
 }
 
 void GfxMenu::kernelDrawMenuBar(bool clear) {
@@ -1144,8 +1142,7 @@ void GfxMenu::kernelDrawMenuBar(bool clear) {
 		}
 
 		_text16->DrawStatus(statusText);
-		_paint16->fillRect(_ports->_menuLine, 1, 0);
-		_paint16->bitsShow(_ports->_menuLine);
+
 		_paint16->bitsShow(_ports->_menuBarRect);
 		_ports->setPort(oldPort);
 		// Also draw the line under the status bar. Normally, this is never drawn,
@@ -1155,7 +1152,7 @@ void GfxMenu::kernelDrawMenuBar(bool clear) {
 		// achieving the same effect.
 
 		debug(statusText.c_str());
-		SaveMenuBits();
+
 		_ports->setPort(oldPort);
 	}
 }

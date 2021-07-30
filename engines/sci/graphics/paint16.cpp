@@ -926,8 +926,15 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 
 	if (_ports->isFrontWindow(_ports->_picWind)) {
 		_screen->_picNotValid = 1;
-		drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
-		_transitions->setup(animationNr, animationBlackoutFlag);
+		debug("- TRANSITION %u -", animationNr);
+		if (animationNr != 10) {
+			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
+			_transitions->setup(animationNr, animationBlackoutFlag);
+		} else {
+			_transitions->fadeOut();
+			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
+			_transitions->fadeIn();
+		}
 	} else {
 		// We need to set it for SCI1EARLY+ (sierra sci also did so), otherwise we get at least the following issues:
 		//  LSL5 (english) - last wakeup (taj mahal flute dream)
