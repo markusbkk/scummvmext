@@ -1093,7 +1093,7 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	colorPenPrev = colorPen;
 	_ports->_statusRect = _ports->_menuBarRect;
 	Common::String sttmp = text;
-	if (sttmp.contains("Score"))
+	if (sttmp.contains("Score") || sttmp.contains("Quest"))
 		statusText = text;
 	_paint16->fillRect(_ports->_menuBarRect, 1, colorBack);
 	_ports->penColor(colorPen);
