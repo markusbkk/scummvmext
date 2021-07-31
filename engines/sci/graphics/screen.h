@@ -164,10 +164,17 @@ public:
 	 * is used.
 	 */
 	GfxScreenUpscaledMode _upscaledHires;
-
-private:
 	uint16 _width;
 	uint16 _height;
+	byte *_displayScreenR;
+	byte *_displayedScreenR;
+	byte *_displayScreenG;
+	byte *_displayedScreenG;
+	byte *_displayScreenB;
+	byte *_displayedScreenB;
+
+private:
+	
 	uint _pixels;
 	uint16 _scriptWidth;
 	uint16 _scriptHeight;
@@ -214,12 +221,7 @@ private:
 	byte *_displayScreen;
 
 	// Display screen copies in r g & b format
-	byte *_displayScreenR;
-	byte *_displayedScreenR;
-	byte *_displayScreenG;
-	byte *_displayedScreenG;
-	byte *_displayScreenB;
-	byte *_displayedScreenB;
+
 	byte *_displayScreenA;
 	byte *_enhancedMatte;
 	// Screens for RGB mode support
@@ -876,21 +878,22 @@ public:
 
 	// This is called from vector drawing to put a pixel at a certain location
 	void vectorPutPixel(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control) {
-		switch (_upscaledHires) {
-		case GFX_SCREEN_UPSCALED_640x400:
-		case GFX_SCREEN_UPSCALED_640x440:
-		case GFX_SCREEN_UPSCALED_640x480:
-		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
-		case GFX_SCREEN_UPSCALED_320x200_X_VGA:
-			// For regular upscaled modes forward to the regular putPixel
-			putPixel(x, y, drawMask, color, priority, control, false);
-			return;
-			break;
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x440:
+			case GFX_SCREEN_UPSCALED_640x480:
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+				// For regular upscaled modes forward to the regular putPixel
+				putPixel(x, y, drawMask, color, priority, control, false);
+				return;
+				break;
 
-		default:
-			break;
+			default:
+				break;
+			}
 		}
-
 		// For non-upscaled mode and 480x300 Mac put pixels directly
 		int offset = y * _width + x;
 
@@ -1446,6 +1449,7 @@ public:
 			return screen[offset];
 			break;
 		}
+		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 			offset = (int)((y)*_displayWidth) + ((int)(x));
 

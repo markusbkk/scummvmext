@@ -729,21 +729,10 @@ void GfxPaint16::invertRect(const Common::Rect &rect) {
 
 // used in SCI0early exclusively
 void GfxPaint16::invertRectViaXOR(const Common::Rect &rect) {
-	Common::Rect r = rect;
-	int16 x, y;
-	byte curVisual;
-
-	r.clip(_ports->_curPort->rect);
-	if (r.isEmpty()) // nothing to invert
-		return;
-
-	_ports->offsetRect(r);
-	for (y = r.top; y < r.bottom; y++) {
-		for (x = r.left; x < r.right; x++) {
-			curVisual = _screen->getVisual(x, y);
-			_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, curVisual ^ 0x0f, 0, 0, false);
-		}
-	}
+	int16 oldpenmode = _ports->_curPort->penMode;
+	_ports->_curPort->penMode = 2;
+	fillRect(rect, GFX_SCREEN_MASK_VISUAL, _ports->_curPort->penClr, _ports->_curPort->backClr);
+	_ports->_curPort->penMode = oldpenmode;
 }
 
 void GfxPaint16::eraseRect(const Common::Rect &rect) {
@@ -768,20 +757,35 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 	// Doing visual first
 	if (drawFlags & GFX_SCREEN_MASK_VISUAL) {
 		if (oldPenMode == 2) { // invert mode
-			for (y = r.top; y < r.bottom; y++) {
-				for (x = r.left; x < r.right; x++) {
-					curVisual = _screen->getVisual(x, y);
-					if (curVisual == color) {
-						_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, priority, 0, 0, false);
-					} else if (curVisual == priority) {
-						_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
+			switch (_screen->_upscaledHires) {
+				case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
+					for (y = r.top * g_sci->_enhancementMultiplier; y < r.bottom * g_sci->_enhancementMultiplier; y++) {
+						for (x = r.left * g_sci->_enhancementMultiplier; x < r.right * g_sci->_enhancementMultiplier; x++) {
+							_screen->putPixelR(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenR[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, true);
+							_screen->putPixelG(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenG[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0);
+							_screen->putPixelB(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenB[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0);
+						}
 					}
+					break;
+				}
+				default: {
+					for (y = r.top; y < r.bottom; y++) {
+						for (x = r.left; x < r.right; x++) {
+							curVisual = _screen->getVisual(x, y);
+							if (curVisual == color) {
+								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, priority, 0, 0, false);
+							} else if (curVisual == priority) {
+								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
+							}
+						}
+					}
+					break;
 				}
 			}
 		} else { // just fill rect with color
 			for (y = r.top; y < r.bottom; y++) {
 				for (x = r.left; x < r.right; x++) {
-					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
+					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, true);
 				}
 			}
 		}
