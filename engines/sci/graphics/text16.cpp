@@ -498,37 +498,7 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 	uint16 curChar, charWidth;
 	char ifGlyphMissing = '*';
 	Common::Rect rect;
-	char trimmedTextStr[250] = {'\0'};
-	sprintf(trimmedTextStr, "%d", txthash(text));
-	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-	Common::String txtFileName = "text.";
-	txtFileName += trimmedTextStr;
-	txtFileName += ".txt";
-	//debug(txtFileName.c_str());
-	bool replaceText = false;
-	if (folder.exists()) {
-		if (folder.getChild(txtFileName).exists()) {
-			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
-			//debug((fileName).c_str());
-			std::ifstream openfile;
-			openfile.open(fileName.c_str(), std::ios::in);
-			if (openfile.is_open()) {
-				std::string tp;
-				std::string tout;
-				text = "";
-				while (std::getline(openfile, tp)) {
-					std::cout << tp;
-					tp += "\n";
-					tout += tp.c_str();
-				}
-				text = tout.c_str();
-				tp = "";
-				openfile.close();
-				replaceText = true;
-			}
-		}
-	}
-	g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
+	
 	GetFont();
 	if (!_font)
 		return;
@@ -586,118 +556,260 @@ void GfxText16::Show(const char *text, int16 from, int16 len, GuiResourceId orgF
 
 // Draws a text in rect.
 void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const Common::Rect &rect, TextAlignment alignment, GuiResourceId fontId) {
-	int16 textWidth, maxTextWidth, textHeight, charCount;
-	int16 offset = 0;
-	int16 hline = 0;
-	GuiResourceId previousFontId = GetFontId();
-	int16 previousPenColor = _ports->_curPort->penClr;
-	bool doubleByteMode = false;
-	const char *curTextPos = text;
-	const char *curTextLine = text;
+	const char *data;
+	char trimmedTextStr[250] = {'\0'};
+	sprintf(trimmedTextStr, "%d", txthash(text));
+	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+	Common::String txtFileName = "text.";
+	txtFileName += trimmedTextStr;
+	txtFileName += ".txt";
+	//debug(txtFileName.c_str());
+	bool replaceText = false;
+	if (folder.exists()) {
+		if (folder.getChild(txtFileName).exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
+			debug((fileName).c_str());
+			std::ifstream openfile;
+			openfile.open(fileName.c_str(), std::ios::in);
+			if (openfile.is_open()) {
+				std::string line, texttmp;
+				while (std::getline(openfile, line)) {
+					texttmp += line + "\n";
+				}
+				data = texttmp.c_str();
 
-	if (fontId != -1)
-		SetFont(fontId);
-	else
-		fontId = previousFontId;
+				g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
+				int16 textWidth, maxTextWidth, textHeight, charCount;
+				int16 offset = 0;
+				int16 hline = 0;
+				GuiResourceId previousFontId = GetFontId();
+				int16 previousPenColor = _ports->_curPort->penClr;
+				bool doubleByteMode = false;
+				const char *curTextPos = data;
+				const char *curTextLine = data;
 
-	// Check for Korean text
-	if (g_sci->getLanguage() == Common::KO_KOR) {
-		if (SwitchToFont1001OnKorean(curTextPos, languageSplitter)) {
-			doubleByteMode = true;
-			fontId = 1001;
-		}
-	}
+				if (fontId != -1)
+					SetFont(fontId);
+				else
+					fontId = previousFontId;
 
-	// Reset reference code rects
-	_codeRefRects.clear();
-	_codeRefTempRect.left = _codeRefTempRect.top = -1;
+				// Check for Korean text
+				if (g_sci->getLanguage() == Common::KO_KOR) {
+					if (SwitchToFont1001OnKorean(curTextPos, languageSplitter)) {
+						doubleByteMode = true;
+						fontId = 1001;
+					}
+				}
 
-	maxTextWidth = 0;
-	while (*curTextPos) {
-		// We need to check for Shift-JIS every line
-		//  Police Quest 2 PC-9801 often draws English + Japanese text during the same call
-		if (g_sci->getLanguage() == Common::JA_JPN) {
-			if (SwitchToFont900OnSjis(curTextPos, languageSplitter))
-				doubleByteMode = true;
-		}
+				// Reset reference code rects
+				_codeRefRects.clear();
+				_codeRefTempRect.left = _codeRefTempRect.top = -1;
 
-		charCount = GetLongest(curTextPos, rect.width(), fontId);
-		if (charCount == 0)
-			break;
-		Width(curTextLine, 0, charCount, fontId, textWidth, textHeight, true);
-		maxTextWidth = MAX<int16>(maxTextWidth, textWidth);
-		switch (alignment) {
-		case SCI_TEXT16_ALIGNMENT_RIGHT:
-			if (!g_sci->isLanguageRTL())
-				offset = rect.width() - textWidth;
-			else
-				offset = 0;
-			break;
-		case SCI_TEXT16_ALIGNMENT_CENTER:
-			offset = (rect.width() - textWidth) / 2;
-			break;
-		case SCI_TEXT16_ALIGNMENT_LEFT:
-			if (!g_sci->isLanguageRTL())
-				offset = 0;
-			else
-				offset = rect.width() - textWidth;
-			break;
+				maxTextWidth = 0;
+				while (*curTextPos) {
+					// We need to check for Shift-JIS every line
+					//  Police Quest 2 PC-9801 often draws English + Japanese text during the same call
+					if (g_sci->getLanguage() == Common::JA_JPN) {
+						if (SwitchToFont900OnSjis(curTextPos, languageSplitter))
+							doubleByteMode = true;
+					}
 
-		default:
-			warning("Invalid alignment %d used in TextBox()", alignment);
-		}
+					charCount = GetLongest(curTextPos, rect.width(), fontId);
+					if (charCount == 0)
+						break;
+					Width(curTextLine, 0, charCount, fontId, textWidth, textHeight, true);
+					maxTextWidth = MAX<int16>(maxTextWidth, textWidth);
+					switch (alignment) {
+					case SCI_TEXT16_ALIGNMENT_RIGHT:
+						if (!g_sci->isLanguageRTL())
+							offset = rect.width() - textWidth;
+						else
+							offset = 0;
+						break;
+					case SCI_TEXT16_ALIGNMENT_CENTER:
+						offset = (rect.width() - textWidth) / 2;
+						break;
+					case SCI_TEXT16_ALIGNMENT_LEFT:
+						if (!g_sci->isLanguageRTL())
+							offset = 0;
+						else
+							offset = rect.width() - textWidth;
+						break;
 
+					default:
+						warning("Invalid alignment %d used in TextBox()", alignment);
+					}
 
-		if (g_sci->isLanguageRTL())
-			// In the game fonts, characters have spacing on the left, and no spacing on the right,
-			// therefore, when we start drawing from the right, they "start from the border"
-			// e.g., in SQ3 Hebrew user's input prompt.
-			// We can't add spacing on the right of the Hebrew letters, because then characters in mixed
-			// English-Hebrew text might be stuck together.
-			// Therefore, we shift one pixel to the left, for proper spacing
-			offset--;
+					if (g_sci->isLanguageRTL())
+						// In the game fonts, characters have spacing on the left, and no spacing on the right,
+						// therefore, when we start drawing from the right, they "start from the border"
+						// e.g., in SQ3 Hebrew user's input prompt.
+						// We can't add spacing on the right of the Hebrew letters, because then characters in mixed
+						// English-Hebrew text might be stuck together.
+						// Therefore, we shift one pixel to the left, for proper spacing
+						offset--;
 
-		_ports->moveTo(rect.left + offset, rect.top + hline);
+					_ports->moveTo(rect.left + offset, rect.top + hline);
 
-		Common::String textString;
-		if (g_sci->isLanguageRTL()) {
-			const char *curTextLineOrig = curTextLine;
-			Common::String textLogical = Common::String(curTextLineOrig, (uint32)charCount);
-			textString = Common::convertBiDiString(textLogical, g_sci->getLanguage());
-			curTextLine = textString.c_str();
-		}
+					Common::String textString;
+					if (g_sci->isLanguageRTL()) {
+						const char *curTextLineOrig = curTextLine;
+						Common::String textLogical = Common::String(curTextLineOrig, (uint32)charCount);
+						textString = Common::convertBiDiString(textLogical, g_sci->getLanguage());
+						curTextLine = textString.c_str();
+					}
 
-		if (show) {
-			Show(curTextLine, 0, charCount, fontId, previousPenColor);
+					if (show) {
+						Show(curTextLine, 0, charCount, fontId, previousPenColor);
+					} else {
+						Draw(curTextLine, 0, charCount, fontId, previousPenColor);
+					}
+
+					hline += textHeight;
+					curTextLine = curTextPos;
+				}
+				SetFont(previousFontId);
+				_ports->penColor(previousPenColor);
+
+				if (doubleByteMode) {
+					// Kanji is written by pc98 rom to screen directly. Because of
+					// GetLongest() behavior (not cutting off the last char, that causes a
+					// new line), results in the script thinking that the text would need
+					// less space. The coordinate adjustment in fontsjis.cpp handles the
+					// incorrect centering because of that and this code actually shows all
+					// of the chars - if we don't do this, the scripts will only show most
+					// of the chars, but the last few pixels won't get shown most of the
+					// time.
+					Common::Rect kanjiRect = rect;
+					_ports->offsetRect(kanjiRect);
+					kanjiRect.left &= 0xFFC;
+					kanjiRect.right = kanjiRect.left + maxTextWidth;
+					kanjiRect.bottom = kanjiRect.top + hline;
+					kanjiRect.left *= 2;
+					kanjiRect.right *= 2;
+					kanjiRect.top *= 2;
+					kanjiRect.bottom *= 2;
+					_screen->copyDisplayRectToScreen(kanjiRect);
+				}
+			}
 		} else {
-			Draw(curTextLine, 0, charCount, fontId, previousPenColor);
+			g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
+			int16 textWidth, maxTextWidth, textHeight, charCount;
+			int16 offset = 0;
+			int16 hline = 0;
+			GuiResourceId previousFontId = GetFontId();
+			int16 previousPenColor = _ports->_curPort->penClr;
+			bool doubleByteMode = false;
+			const char *curTextPos = text;
+			const char *curTextLine = text;
+
+			if (fontId != -1)
+				SetFont(fontId);
+			else
+				fontId = previousFontId;
+
+			// Check for Korean text
+			if (g_sci->getLanguage() == Common::KO_KOR) {
+				if (SwitchToFont1001OnKorean(curTextPos, languageSplitter)) {
+					doubleByteMode = true;
+					fontId = 1001;
+				}
+			}
+
+			// Reset reference code rects
+			_codeRefRects.clear();
+			_codeRefTempRect.left = _codeRefTempRect.top = -1;
+
+			maxTextWidth = 0;
+			while (*curTextPos) {
+				// We need to check for Shift-JIS every line
+				//  Police Quest 2 PC-9801 often draws English + Japanese text during the same call
+				if (g_sci->getLanguage() == Common::JA_JPN) {
+					if (SwitchToFont900OnSjis(curTextPos, languageSplitter))
+						doubleByteMode = true;
+				}
+
+				charCount = GetLongest(curTextPos, rect.width(), fontId);
+				if (charCount == 0)
+					break;
+				Width(curTextLine, 0, charCount, fontId, textWidth, textHeight, true);
+				maxTextWidth = MAX<int16>(maxTextWidth, textWidth);
+				switch (alignment) {
+				case SCI_TEXT16_ALIGNMENT_RIGHT:
+					if (!g_sci->isLanguageRTL())
+						offset = rect.width() - textWidth;
+					else
+						offset = 0;
+					break;
+				case SCI_TEXT16_ALIGNMENT_CENTER:
+					offset = (rect.width() - textWidth) / 2;
+					break;
+				case SCI_TEXT16_ALIGNMENT_LEFT:
+					if (!g_sci->isLanguageRTL())
+						offset = 0;
+					else
+						offset = rect.width() - textWidth;
+					break;
+
+				default:
+					warning("Invalid alignment %d used in TextBox()", alignment);
+				}
+
+				if (g_sci->isLanguageRTL())
+					// In the game fonts, characters have spacing on the left, and no spacing on the right,
+					// therefore, when we start drawing from the right, they "start from the border"
+					// e.g., in SQ3 Hebrew user's input prompt.
+					// We can't add spacing on the right of the Hebrew letters, because then characters in mixed
+					// English-Hebrew text might be stuck together.
+					// Therefore, we shift one pixel to the left, for proper spacing
+					offset--;
+
+				_ports->moveTo(rect.left + offset, rect.top + hline);
+
+				Common::String textString;
+				if (g_sci->isLanguageRTL()) {
+					const char *curTextLineOrig = curTextLine;
+					Common::String textLogical = Common::String(curTextLineOrig, (uint32)charCount);
+					textString = Common::convertBiDiString(textLogical, g_sci->getLanguage());
+					curTextLine = textString.c_str();
+				}
+
+				if (show) {
+					Show(curTextLine, 0, charCount, fontId, previousPenColor);
+				} else {
+					Draw(curTextLine, 0, charCount, fontId, previousPenColor);
+				}
+
+				hline += textHeight;
+				curTextLine = curTextPos;
+			}
+			SetFont(previousFontId);
+			_ports->penColor(previousPenColor);
+
+			if (doubleByteMode) {
+				// Kanji is written by pc98 rom to screen directly. Because of
+				// GetLongest() behavior (not cutting off the last char, that causes a
+				// new line), results in the script thinking that the text would need
+				// less space. The coordinate adjustment in fontsjis.cpp handles the
+				// incorrect centering because of that and this code actually shows all
+				// of the chars - if we don't do this, the scripts will only show most
+				// of the chars, but the last few pixels won't get shown most of the
+				// time.
+				Common::Rect kanjiRect = rect;
+				_ports->offsetRect(kanjiRect);
+				kanjiRect.left &= 0xFFC;
+				kanjiRect.right = kanjiRect.left + maxTextWidth;
+				kanjiRect.bottom = kanjiRect.top + hline;
+				kanjiRect.left *= 2;
+				kanjiRect.right *= 2;
+				kanjiRect.top *= 2;
+				kanjiRect.bottom *= 2;
+				_screen->copyDisplayRectToScreen(kanjiRect);
+			}
 		}
-
-		hline += textHeight;
-		curTextLine = curTextPos;
-	}
-	SetFont(previousFontId);
-	_ports->penColor(previousPenColor);
-
-	if (doubleByteMode) {
-		// Kanji is written by pc98 rom to screen directly. Because of
-		// GetLongest() behavior (not cutting off the last char, that causes a
-		// new line), results in the script thinking that the text would need
-		// less space. The coordinate adjustment in fontsjis.cpp handles the
-		// incorrect centering because of that and this code actually shows all
-		// of the chars - if we don't do this, the scripts will only show most
-		// of the chars, but the last few pixels won't get shown most of the
-		// time.
-		Common::Rect kanjiRect = rect;
-		_ports->offsetRect(kanjiRect);
-		kanjiRect.left &= 0xFFC;
-		kanjiRect.right = kanjiRect.left + maxTextWidth;
-		kanjiRect.bottom = kanjiRect.top + hline;
-		kanjiRect.left *= 2; kanjiRect.right *= 2;
-		kanjiRect.top *= 2; kanjiRect.bottom *= 2;
-		_screen->copyDisplayRectToScreen(kanjiRect);
 	}
 }
+
 
 void GfxText16::DrawString(const Common::String &textOrig) {
 	GuiResourceId previousFontId = GetFontId();
