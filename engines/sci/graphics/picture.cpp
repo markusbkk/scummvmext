@@ -1216,7 +1216,260 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 	}
+	if (enhanced || overlay || paletted || enhancedPrio || surface) {
 
+		Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
+
+		// Horizontal clipping
+		uint16 skipCelBitmapPixels = 0;
+		int16 displayWidth = width;
+
+		// Vertical clipping
+		uint16 skipCelBitmapLines = 0;
+
+		if (g_sci->_gfxScreen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+			y = (displayArea.top) * g_sci->_enhancementMultiplier;
+			lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
+		} else {
+			y = (displayArea.top * 2) * g_sci->_enhancementMultiplier * 2;
+			lastY = MIN<int16>(((height * 2 * g_sci->_enhancementMultiplier * 2) + y), displayArea.bottom * 2 * g_sci->_enhancementMultiplier * 2);
+		}
+		leftX = (displayArea.left) * g_sci->_enhancementMultiplier;
+		rightX = MIN<int16>((displayWidth * g_sci->_enhancementMultiplier + leftX), (displayArea.right * g_sci->_enhancementMultiplier));
+
+		uint16 sourcePixelSkipPerRow = 0;
+		if (width > rightX - leftX)
+			sourcePixelSkipPerRow = width - (rightX - leftX);
+		if (width * g_sci->_enhancementMultiplier > rightX - leftX)
+			sourcePixelSkipPerRow = (width * g_sci->_enhancementMultiplier) - (rightX - leftX);
+		enh += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+		enh += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
+
+		// Change clearcolor to white, if we dont add to an existing picture. That way we will paint everything on screen
+		// but white and that won't matter because the screen is supposed to be already white. It seems that most (if not all)
+		// SCI1.1 games use color 0 as transparency and SCI1 games use color 255 as transparency. Sierra SCI seems to paint
+		// the whole data to screen and wont skip over transparent pixels. So this will actually make it work like Sierra.
+		if (!_addToFlag)
+			clearColor = _screen->getColorWhite();
+
+		byte drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY;
+		// EGA, when priority is above 15
+		//  we don't check priority and also won't set priority at all
+		//  fixes picture 48 of kq5 (island overview). Bug #5182
+		if (!_mirroredFlag) {
+			// EGA+priority>15: Draw bitmap to screen
+			x = leftX;
+			int offset = 0;
+			int offsetPal = 0;
+			while (y < lastY) {
+
+				//if (curByte != clearColor)
+				if (offset + 3 < pixelCountX - 1) {
+					if (paletted) {
+						_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
+					}
+					if (enhanced) {
+						if (enh[offset + 3] != 0) {
+							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
+							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+						}
+					}
+					if (overlay) {
+						if (enhOverlay[offset + 3] == 255) {
+							_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
+							_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
+							_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
+						}
+					}
+					if (enhancedPrio) {
+						if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 0, 0);
+						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 1, 0);
+						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 2, 0);
+						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 3, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 4, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 5, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 6, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 7, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
+							_screen->putPixelXEtc(x, y, drawMask, 8, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 9, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 10, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 11, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
+							_screen->putPixelXEtc(x, y, drawMask, 12, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 13, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 80)
+							_screen->putPixelXEtc(x, y, drawMask, 14, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 15, 0);
+					}
+					if (surface) {
+						if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 0);
+						else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 1);
+						else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 2);
+						else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 3);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 4);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 5);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 6);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 7);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
+							_screen->putPixelSurface(x, y, drawMask, 8);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 9);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 10);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 11);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
+							_screen->putPixelSurface(x, y, drawMask, 12);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 13);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 80)
+							_screen->putPixelSurface(x, y, drawMask, 14);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 15);
+					} else {
+						_screen->putPixelSurface(x, y, drawMask, 0);
+					}
+				}
+				x++;
+				if (x >= rightX) {
+					offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
+					offsetPal += sourcePixelSkipPerRow;
+					x = leftX;
+					y++;
+				}
+				offset += 4;
+				offsetPal += 1;
+			}
+		} else {
+			// EGA+priority>15: Draw bitmap to screen (mirrored)
+			x = rightX - 1;
+			int offset = 0;
+			int offsetPal = 0;
+			while (y < lastY) {
+				if (offset + 3 < pixelCountX - 1) {
+					if (paletted) {
+						_screen->putPixelPaletted(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
+					}
+					if (enhanced) {
+						if (enh[offset + 3] != 0) {
+							_screen->putPixelR(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
+							_screen->putPixelG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
+							_screen->putPixelB(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
+						}
+					}
+					if (overlay) {
+						if (enhOverlay[offset + 3] == 255) {
+							_screen->putPixelR(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
+							_screen->putPixelG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
+							_screen->putPixelB(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
+						}
+					}
+					if (enhancedPrio) {
+						if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 0, 0);
+						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 1, 0);
+						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 2, 0);
+						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 3, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 4, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 5, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 6, 0);
+						else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
+							_screen->putPixelXEtc(x, y, drawMask, 7, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
+							_screen->putPixelXEtc(x, y, drawMask, 8, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 9, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 0)
+							_screen->putPixelXEtc(x, y, drawMask, 10, 0);
+						else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 11, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
+							_screen->putPixelXEtc(x, y, drawMask, 12, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 13, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 80)
+							_screen->putPixelXEtc(x, y, drawMask, 14, 0);
+						else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
+							_screen->putPixelXEtc(x, y, drawMask, 15, 0);
+					}
+					if (surface) {
+						if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 0);
+						else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 1);
+						else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 2);
+						else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 3);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 4);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 5);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 6);
+						else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
+							_screen->putPixelSurface(x, y, drawMask, 7);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
+							_screen->putPixelSurface(x, y, drawMask, 8);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 9);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 0)
+							_screen->putPixelSurface(x, y, drawMask, 10);
+						else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 11);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
+							_screen->putPixelSurface(x, y, drawMask, 12);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 13);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 80)
+							_screen->putPixelSurface(x, y, drawMask, 14);
+						else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
+							_screen->putPixelSurface(x, y, drawMask, 15);
+					} else {
+						_screen->putPixelSurface(x, y, drawMask, 0);
+					}
+				}
+				if (x == leftX) {
+					offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
+					offsetPal += sourcePixelSkipPerRow;
+					x = rightX;
+					y++;
+				}
+				offset += 4;
+				offsetPal += 1;
+				x--;
+			}
+		}
+	}
 	
 }
 
