@@ -567,14 +567,13 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 	bool replaceText = false;
 	if (folder.exists()) {
 		if (folder.getChild(txtFileName).exists()) {
-			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
+			Common::String fileName = Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName.c_str()).getName();
 			debug((fileName).c_str());
-			std::ifstream openfile;
-			openfile.open(fileName.c_str(), std::ios::in);
-			if (openfile.is_open()) {
-				std::string line, texttmp;
-				while (std::getline(openfile, line)) {
-					texttmp += line + "\n";
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			if (file) {
+				Common::String line, texttmp;
+				while (!file->eos()) {
+					texttmp += file->readLine() + "\n";
 				}
 				data = texttmp.c_str();
 
