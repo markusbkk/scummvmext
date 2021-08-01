@@ -35,6 +35,13 @@
 #include "sci/graphics/scifont.h"
 #include "sci/graphics/screen.h"
 #include "sci/graphics/text16.h"
+#include <common/config-manager.h>
+#include <audio/audiostream.h>
+#include <sci/sound/audio.h>
+#include <sci/sound/music.h>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 namespace Sci {
 
@@ -476,13 +483,51 @@ int16 GfxText16::Size(Common::Rect &rect, const char *text, uint16 languageSplit
 	_ports->penColor(previousPenColor);
 	return rect.right;
 }
+int hash(const char *str) {
+	unsigned long hash = 5381;
+	int c;
 
+	while (c = *str++)
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+	return hash;
+}
 // returns maximum font height used
 void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgFontId, int16 orgPenColor) {
 	uint16 curChar, charWidth;
 	char ifGlyphMissing = '*';
 	Common::Rect rect;
-
+	char trimmedTextStr[250] = {'\0'};
+	sprintf(trimmedTextStr, "%d", hash(text));
+	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+	Common::String txtFileName = "text.";
+	txtFileName += trimmedTextStr;
+	txtFileName += ".txt";
+	debug(txtFileName.c_str());
+	bool replaceText = false;
+	if (folder.exists()) {
+		if (folder.getChild(txtFileName).exists()) {
+			Common::String fileName = (folder.getPath() + folder.getChild(txtFileName).getName()).c_str();
+			debug((fileName).c_str());
+			std::ifstream openfile;
+			openfile.open(fileName.c_str(), std::ios::in);
+			if (openfile.is_open()) {
+				std::string tp;
+				std::string tout;
+				text = "";
+				while (std::getline(openfile, tp)) {
+					std::cout << tp;
+					tp += "\n";
+					tout += tp.c_str();
+				}
+				text = tout.c_str();
+				tp = "";
+				openfile.close();
+				replaceText = true;
+			}
+		}
+	}
+	g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
 	GetFont();
 	if (!_font)
 		return;

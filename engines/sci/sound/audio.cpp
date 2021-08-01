@@ -254,7 +254,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 		}
 	}
 	if (foundAudio == false) {
-		//debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
+		debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
 	}
 }
 

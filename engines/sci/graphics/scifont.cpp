@@ -325,7 +325,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 		
 		if (strcmp(fontsMapit->first.c_str(), search.c_str()) == 0) {
 
-			debug(fontsMapit->first.c_str());
+			//debug(fontsMapit->first.c_str());
 			std::pair<Graphics::Surface *, const byte *> tmp = fontsMapit->second;
 			pngfont = tmp.first;
 			if (pngfont) {
@@ -335,7 +335,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 					pixelsLength = pngfont->w * pngfont->h * 4;
 					enhancedFont = true;
 				}
-				debug("RELOADED FROM RAM");
+				//debug("RELOADED FROM RAM");
 			}
 			
 		}
@@ -361,8 +361,8 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 							fontsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fileName.c_str(), tmp));
 
 							pngfont = pngfonttmp;
-							debug(fileName.c_str());
-							debug("LOADED FROM DISC");
+							//debug(fileName.c_str());
+							//debug("LOADED FROM DISC");
 						}
 					}
 				}
