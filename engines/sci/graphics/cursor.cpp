@@ -364,14 +364,13 @@ void GfxCursor::kernelSetShape(GuiResourceId resourceId) {
 	} else {
 		Graphics::PixelFormat pf = Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
 		const Graphics::PixelFormat *format = &pf;
-		if (_upscaledHires != GFX_SCREEN_UPSCALED_DISABLED && _upscaledHires != GFX_SCREEN_UPSCALED_480x300 && !_useOriginalKQ6WinCursors) {
+		if (_upscaledHires != GFX_SCREEN_UPSCALED_DISABLED && _upscaledHires != GFX_SCREEN_UPSCALED_480x300 && g_sci->_gameId != GID_KQ4) {
 			// Scale cursor by 2x - note: sierra didn't do this, but it looks much better
-			heightWidth *= 2;
-			hotspot.x *= 2;
-			hotspot.y *= 2;
-			CursorMan.replaceCursor(listEntry.viewenh, heightWidth, heightWidth, hotspot.x, hotspot.y, SCI_CURSOR_SCI0_TRANSPARENCYCOLOR, false, format);
+			hotspot.x *= (listEntry.viewpng->w / heightWidth);
+			hotspot.y *= (listEntry.viewpng->h / heightWidth);
+			CursorMan.replaceCursor(listEntry.viewenh, listEntry.viewpng->w, listEntry.viewpng->h, hotspot.x, hotspot.y, SCI_CURSOR_SCI0_TRANSPARENCYCOLOR, false, format);
 		} else {
-			CursorMan.replaceCursor(listEntry.viewenh, heightWidth, heightWidth, hotspot.x, hotspot.y, SCI_CURSOR_SCI0_TRANSPARENCYCOLOR, false, format);
+			CursorMan.replaceCursor(listEntry.viewenh, listEntry.viewpng->w, listEntry.viewpng->h, hotspot.x, hotspot.y, SCI_CURSOR_SCI0_TRANSPARENCYCOLOR, false, format);
 		}
 		if (g_system->getScreenFormat().bytesPerPixel != 1) {
 			byte buf[3 * 256];
@@ -618,10 +617,10 @@ void GfxCursor::kernelSetView(GuiResourceId viewNum, int loopNum, int celNum, Co
 		const Graphics::PixelFormat *format = &pf;
 		if (_upscaledHires != GFX_SCREEN_UPSCALED_DISABLED && _upscaledHires != GFX_SCREEN_UPSCALED_480x300 && !_useOriginalKQ6WinCursors) {
 			// Scale cursor by 2x - note: sierra didn't do this, but it looks much better
+			cursorHotspot->x *= (listEntry.viewpng->w / width);
+			cursorHotspot->y *= (listEntry.viewpng->h / height);
 			width = listEntry.viewpng->w;
-			height = listEntry.viewpng->h;
-			cursorHotspot->x *= 2;
-			cursorHotspot->y *= 2;
+			height = listEntry.viewpng->h;		
 			CursorMan.replaceCursor(listEntry.viewenh, width, height, cursorHotspot->x, cursorHotspot->y, clearKey, false, format);
 		} else {
 			CursorMan.replaceCursor(listEntry.viewenh, width, height, cursorHotspot->x, cursorHotspot->y, clearKey, false, format);
