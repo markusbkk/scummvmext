@@ -42,7 +42,7 @@
 #include "audio/decoders/wave.h"
 
 namespace Sci {
-
+Common::String prevMP3Text = "Scummvmext";
 AudioPlayer::AudioPlayer(ResourceManager *resMan) : _resMan(resMan), _audioRate(11025),
 		_audioCdStart(0), _initCD(false) {
 
@@ -188,73 +188,79 @@ void AudioPlayer::handleFanmadeSciAudio(reg_t sciAudioObject, SegManager *segMan
 			warning("Unhandled sciAudio command: %s", commandString.c_str());
 		}
 	}
+	
 }
 void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
-	Common::FSNode folder;
-	bool foundAudio = false;
-	Common::String fnStr = "text.";
-	fnStr += fileName;
-	if (ConfMan.hasKey("extrapath")) {
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
-			if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
-			Common::File *sciAudioFile = new Common::File();
-			// Replace backwards slashes
+	if (!prevMP3Text.contains(text)) {
+		Common::FSNode folder;
+		bool foundAudio = false;
+		Common::String fnStr = "text.";
+		fnStr += fileName;
+		if (ConfMan.hasKey("extrapath")) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
+				if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
+					Common::File *sciAudioFile = new Common::File();
+					// Replace backwards slashes
 
-			Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
-			for (uint i = 0; i < fileName.size(); i++) {
-				if (fileName[i] == '\\')
-					fileName.setChar('/', i);
-			}
-			sciAudioFile->open(fileName);
+					Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
+					for (uint i = 0; i < fileName.size(); i++) {
+						if (fileName[i] == '\\')
+							fileName.setChar('/', i);
+					}
+					sciAudioFile->open(fileName);
 
-			Audio::RewindableAudioStream *audioStream = nullptr;
-			audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
+					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 
-			if (audioStream) {
-				foundAudio = true;
-				//debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
-				Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
-				// We only support one audio handle
-				if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
-					
-						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-						g_system->getMixer()->stopID(2147483646 - 1983);
-					
-					g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
-				}
-			}
-			} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
-				Common::File *sciAudioFile = new Common::File();
-				// Replace backwards slashes
+					if (audioStream) {
+						foundAudio = true;
+						//debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
+						Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
+						// We only support one audio handle
+						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
 
-				Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
-				for (uint i = 0; i < fileName.size(); i++) {
-					if (fileName[i] == '\\')
-						fileName.setChar('/', i);
-				}
-				sciAudioFile->open(fileName);
+							if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
+								g_system->getMixer()->stopID(2147483646 - 1983);
 
-				Audio::RewindableAudioStream *audioStream = nullptr;
-				audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
+						}
+					}
+				} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
+					Common::File *sciAudioFile = new Common::File();
+					// Replace backwards slashes
 
-				if (audioStream) {
-					foundAudio = true;
-					//debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
-					Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
-					// We only support one audio handle
-					if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
+					Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
+					for (uint i = 0; i < fileName.size(); i++) {
+						if (fileName[i] == '\\')
+							fileName.setChar('/', i);
+					}
+					sciAudioFile->open(fileName);
 
-						if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
-							g_system->getMixer()->stopID(2147483646 - 1983);
+					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
 
-						g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
+					if (audioStream) {
+						foundAudio = true;
+						//debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
+						Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
+						// We only support one audio handle
+						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
+
+							if (g_system->getMixer()->isSoundHandleActive(AudioPlayer::_audioHandle))
+								g_system->getMixer()->stopID(2147483646 - 1983);
+
+							g_system->getMixer()->playStream(soundType, &_audioHandle, audioStream, 2147483646 - 1983, 127, 0, DisposeAfterUse::YES);
+						}
 					}
 				}
 			}
 		}
-	}
-	if (foundAudio == false) {
-		debug(("Didn't Find : " + fnStr + ".mp3" + " = " + text).c_str());
+		prevMP3Text = text;
+		if (foundAudio == false) {
+			debug(("\n\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\nDidn't Find : " + fnStr + ".mp3" + " = \n\n" + text + "\n\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n").c_str());
+		} else {
+			debug(("\n\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\nFOUND & PLAYED : " + fnStr + ".mp3" + " = \n\n" + text + "\n\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n").c_str());
+		}
 	}
 }
 
