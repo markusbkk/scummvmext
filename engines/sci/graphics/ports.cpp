@@ -218,8 +218,9 @@ reg_t GfxPorts::kernelNewWindow(Common::Rect dims, Common::Rect restoreRect, uin
 		wnd = addWindow(dims, NULL, title, style, priority, false);
 	wnd->penClr = colorPen;
 	wnd->backClr = colorBack;
+	_textWindow = wnd->id;
 	drawWindow(wnd);
-
+	
 	return make_reg(0, wnd->id);
 }
 
@@ -229,10 +230,10 @@ void GfxPorts::kernelDisposeWindow(uint16 windowId, bool reanimate) {
 		if (!wnd->counterTillFree) {
 			removeWindow(wnd, reanimate);
 		} else {
-			error("kDisposeWindow: used already disposed window id %d", windowId);
+			//error("kDisposeWindow: used already disposed window id %d", windowId);
 		}
 	} else {
-		error("kDisposeWindow: used unknown window id %d", windowId);
+		//error("kDisposeWindow: used unknown window id %d", windowId);
 	}
 }
 

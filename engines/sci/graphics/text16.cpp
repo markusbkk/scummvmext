@@ -556,6 +556,11 @@ void GfxText16::Show(const char *text, int16 from, int16 len, GuiResourceId orgF
 
 // Draws a text in rect.
 void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const Common::Rect &rect, TextAlignment alignment, GuiResourceId fontId) {
+	Common::String test = Common::String(text);
+	if (test.size() == 0) {
+		if ((Window *)g_sci->_gfxPorts->getPortById(g_sci->_gfxPorts->_textWindow) != nullptr)
+			g_sci->_gfxPorts->removeWindow((Window *)g_sci->_gfxPorts->getPortById(g_sci->_gfxPorts->_textWindow), true);
+	}
 	const char *data;
 	char trimmedTextStr[250] = {'\0'};
 	sprintf(trimmedTextStr, "%d", txthash(text));
@@ -566,8 +571,8 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 	//debug(txtFileName.c_str());
 	bool replaceText = false;
 	if (folder.exists()) {
-		if (folder.getChild(txtFileName).exists()) {
-			Common::String fileName = Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName.c_str()).getName();
+		if (Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName).exists()) {
+			Common::String fileName = Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName).getName();
 			debug((fileName).c_str());
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 			if (file) {
@@ -578,6 +583,7 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 				data = texttmp.c_str();
 
 				g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
+
 				int16 textWidth, maxTextWidth, textHeight, charCount;
 				int16 offset = 0;
 				int16 hline = 0;
@@ -690,6 +696,12 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 					kanjiRect.bottom *= 2;
 					_screen->copyDisplayRectToScreen(kanjiRect);
 				}
+				
+			}
+			test = Common::String(data);
+			if (test.size() == 0) {
+				if ((Window *)g_sci->_gfxPorts->getPortById(g_sci->_gfxPorts->_textWindow) != nullptr)
+					g_sci->_gfxPorts->removeWindow((Window *)g_sci->_gfxPorts->getPortById(g_sci->_gfxPorts->_textWindow), true);
 			}
 		} else {
 			g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
@@ -805,6 +817,7 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 				kanjiRect.bottom *= 2;
 				_screen->copyDisplayRectToScreen(kanjiRect);
 			}
+
 		}
 	}
 }

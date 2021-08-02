@@ -112,7 +112,7 @@ public:
 	Common::Rect _statusRect;
 	Common::Rect _menuLine;
 	Port *_curPort;
-
+	uint16 _textWindow;
 	void saveLoadWithSerializer(Common::Serializer &ser) override;
 	Common::Rect _currentViewPort;
 

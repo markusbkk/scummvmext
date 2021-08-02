@@ -1237,7 +1237,7 @@ reg_t kNewWindow(EngineState *s, int argc, reg_t *argv) {
 		title = s->_segMan->getString(argv[4 + argextra]);
 		title = g_sci->strSplit(title.c_str(), NULL);
 	}
-
+	
 	return g_sci->_gfxPorts->kernelNewWindow(rect1, rect2, style, priority, colorPen, colorBack, title.c_str());
 }
 
