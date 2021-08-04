@@ -328,11 +328,13 @@ void GfxTransitions::fadeOut() {
 		_screen->setPalette(workPalette + 3, 1, tillColorNr);*/
 		
 		blackFade = (float)((float)stepNr * 0.01);
-		
-		_screen->convertToRGB(_picRect);
-		copyRectToScreen(_picRect, false);
-		
-		g_sci->getEngineState()->sleep(2);
+		if (_picRect.width() != 0 && _picRect.height() != 0) {
+
+			_screen->convertToRGB(_picRect);
+			copyRectToScreen(_picRect, false);
+			g_system->updateScreen();
+			g_sci->getEngineState()->sleep(2);
+		}
 	}
 }
 
@@ -347,10 +349,13 @@ void GfxTransitions::fadeIn() {
 	for (stepNr = 0; stepNr <= 100; stepNr += 10) {
 		
 		blackFade = (float)((float)stepNr * 0.01);
-		_screen->convertToRGB(_picRect);
-		copyRectToScreen(_picRect, false);
-		g_system->updateScreen();
-		g_sci->getEngineState()->sleep(2);
+		if (_picRect.width() != 0 && _picRect.height() != 0) {
+
+			_screen->convertToRGB(_picRect);
+			copyRectToScreen(_picRect, false);
+			g_system->updateScreen();
+			g_sci->getEngineState()->sleep(2);
+		}
 	}
 	_screen->_picNotValid = 0;
 }
