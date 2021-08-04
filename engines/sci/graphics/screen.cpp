@@ -376,7 +376,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 		if (g_sci->_theoraDecoder->isPlaying()) {
 
 			if (!g_sci->_theoraDecoder->endOfVideo()) {
-				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+				
 
 				debug(10, "Background IS Video! :)");
 				for (int y = rect.top; y < rect.bottom; ++y) {
@@ -518,6 +518,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 						}
 					}
 				}
+				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 			}
 			if (!g_sci->_theoraDecoder->isPlaying() || g_sci->_theoraDecoder->endOfVideo()) {
 				g_sci->_theoraDecoder->stop();

@@ -157,55 +157,10 @@ void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo,
 		AnimateEntry listEntry;
 		Common::FSNode folder;
 		if (ConfMan.hasKey("extrapath")) {
-			Common::String fn = "view.";
-			bool stop = false;
-			char viewNoStr[5];
-			sprintf(viewNoStr, "%u", viewId);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-						fn += viewNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			stop = false;
-			fn += ".";
-			char loopNoStr[5];
-			sprintf(loopNoStr, "%u", loopNo);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-						fn += loopNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			stop = false;
-			fn += ".";
-			char celNoStr[5];
-			sprintf(celNoStr, "%u", celNo);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-						fn += celNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			stop = false;
-			char tweenNoStr[5];
-			Common::String twn = "";
-			sprintf(tweenNoStr, "%u", tweenNo);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (tweenNoStr[n] >= '0' && tweenNoStr[n] <= '9') {
-						twn += tweenNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			//debug(fn.c_str());
+			char viewstrbuffer[32];
+			int retVal, buf_size = 32;
+			retVal = snprintf(viewstrbuffer, buf_size, "view.%u.%u.%u", viewId, loopNo, celNo);
+			Common::String fn = viewstrbuffer;
 			bool preloaded = false;
 			//if (listEntry.viewpng == NULL)
 			{
@@ -411,43 +366,10 @@ void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 c
 		AnimateEntry listEntry;
 		Common::FSNode folder;
 		if (ConfMan.hasKey("extrapath")) {
-			Common::String fn = "view.";
-			bool stop = false;
-			char viewNoStr[5];
-			sprintf(viewNoStr, "%u", viewId);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (viewNoStr[n] >= '0' && viewNoStr[n] <= '9') {
-						fn += viewNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			stop = false;
-			fn += ".";
-			char loopNoStr[5];
-			sprintf(loopNoStr, "%u", loopNo);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (loopNoStr[n] >= '0' && loopNoStr[n] <= '9') {
-						fn += loopNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			stop = false;
-			fn += ".";
-			char celNoStr[5];
-			sprintf(celNoStr, "%u", celNo);
-			for (int n = 0; n < 5; n++) {
-				if (stop == false)
-					if (celNoStr[n] >= '0' && celNoStr[n] <= '9') {
-						fn += celNoStr[n];
-					} else {
-						stop = true;
-					}
-			}
-			//debug(fn.c_str());
+			char viewstrbuffer[32];
+			int retVal, buf_size = 32;
+			retVal = snprintf(viewstrbuffer, buf_size, "view.%u.%u.%u", viewId, loopNo, celNo);
+			Common::String fn = viewstrbuffer;
 			bool preloaded = false;
 			if (listEntry.viewpng == NULL) {
 				if (viewsMap.size() > 0)
