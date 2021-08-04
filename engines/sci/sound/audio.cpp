@@ -215,7 +215,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 					if (audioStream) {
 						foundAudio = true;
 						//debug(("Found : " + fnStr + ".mp3" + " = " + text).c_str());
-						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
+						Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
 						// We only support one audio handle
 						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
 
@@ -243,7 +243,7 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 					if (audioStream) {
 						foundAudio = true;
 						//debug(("Found : " + fnStr + ".wav" + " = " + text).c_str());
-						Audio::Mixer::SoundType soundType = Audio::Mixer::kSFXSoundType;
+						Audio::Mixer::SoundType soundType = Audio::Mixer::kSpeechSoundType;
 						// We only support one audio handle
 						if (g_system->getMixer() && &AudioPlayer::_audioHandle != nullptr) {
 

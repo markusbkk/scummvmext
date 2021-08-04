@@ -714,7 +714,7 @@ void GfxScreen::displayRectRGB(const Common::Rect &rect, int x, int y) {
 	convertToRGB(targetRect);
 
 	// 3. Copy to screen
-	g_system->copyRectToScreen(_rgbScreen + (targetRect.top * _displayWidth + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
+	g_system->copyRectToScreen(_rgbScreen + ((targetRect.top * _displayWidth) + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
 }
 
 void GfxScreen::displayRect(const Common::Rect &rect, int x, int y) {
