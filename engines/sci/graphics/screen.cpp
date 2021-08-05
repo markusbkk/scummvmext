@@ -377,148 +377,174 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 
 			if (!g_sci->_theoraDecoder->endOfVideo()) {
 				
-
+				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 				debug(10, "Background IS Video! :)");
 				for (int y = rect.top; y < rect.bottom; ++y) {
-					const byte *inV = (const byte *)g_sci->_theoraSurface->getPixels() + ((y * _displayWidth + rect.left) * _format.bytesPerPixel);
-					const byte *inE = _enhancedMatte + y * _displayWidth + rect.left;
-					const byte *inP = _displayScreen + y * _displayWidth + rect.left;
-					const byte *inR = _displayedScreenR + y * _displayWidth + rect.left;
-					const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
-					const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
-					const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
-					byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 
-					// TODO: Reduce code duplication here
+					if (g_sci->_theoraSurface == nullptr) {
 
-					if (_format.bytesPerPixel == 2) {
-						if (_paletteMapScreen) {
-							const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
-							for (int x = 0; x < rect.width(); ++x) {
-								byte r = *inR;
-								byte g = *inG;
-								byte b = *inB;
-								if (*inE != 128) {
-									byte i = *inP;
-									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-								} else {
-									b = *(inV + 2);
-									g = *(inV + 1);
-									r = *(inV);
-								}
-								if (*mod) {
-									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
-									g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
-									b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
-								}
-
-								uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
-								WRITE_UINT32(out, c);
-								inV += 4;
-								inE += 1;
-								inP += 1;
-								inR += 1;
-								inG += 1;
-								inB += 1;
-								inA += 1;
-								out += 4;
+						g_sci->_theoraDecoder->stop();
+						Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+						if (folder.exists() && folder.getChild(g_sci->oggBackground).exists()) {
+							Common::String fileName = (folder.getPath() + folder.getChild(g_sci->oggBackground).getName()).c_str();
+							debug((fileName).c_str());
+							g_sci->_theoraDecoder = new Video::TheoraDecoder();
+							g_sci->_theoraDecoder->loadFile(g_sci->oggBackground);
+							g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
+							g_sci->_theoraDecoder->start();
+							int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
+							while (!g_sci->_theoraDecoder->isPlaying()) {
+								debug(("WAITING TO PLAY : " + fileName).c_str());
+								g_system->delayMillis(20);
 							}
+							debug(10, "Enhanced Video %s EXISTS and has been loaded!\n", fileName.c_str());
+							g_sci->backgroundIsVideo = true;
+							g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 						} else {
-							for (int x = 0; x < rect.width(); ++x) {
-								byte r = *inR;
-								byte g = *inG;
-								byte b = *inB;
-								if (*inE != 128) {
-									byte i = *inP;
-									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-								} else {
-									b = *(inV + 2);
-									g = *(inV + 1);
-									r = *(inV);
-								}
-								uint16 c = (uint16)_format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
-								WRITE_UINT16(out, c);
-								inV += 4;
-								inE += 1;
-								inP += 1;
-								inR += 1;
-								inG += 1;
-								inB += 1;
-								inA += 1;
-								out += 2;
-							}
+							debug(10, ("No File " + g_sci->oggBackground).c_str());
 						}
 
 					} else {
-						assert(_format.bytesPerPixel == 4);
 
-						if (_paletteMapScreen) {
-							const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
-							for (int x = 0; x < rect.width(); ++x) {
-								byte r = *inR;
-								byte g = *inG;
-								byte b = *inB;
-								if (*inE != 128) {
-									byte i = *inP;
-									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-								} else {
-									b = *(inV + 2);
-									g = *(inV + 1);
-									r = *(inV);
-								}
-								if (*mod) {
-									r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
-									g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
-									b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
-								}
+						const byte *inV = (const byte *)g_sci->_theoraSurface->getPixels() + ((y * _displayWidth + rect.left) * _format.bytesPerPixel);
+						const byte *inE = _enhancedMatte + y * _displayWidth + rect.left;
+						const byte *inP = _displayScreen + y * _displayWidth + rect.left;
+						const byte *inR = _displayedScreenR + y * _displayWidth + rect.left;
+						const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
+						const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
+						const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
+						byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 
-								uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
-								WRITE_UINT32(out, c);
-								inV += 4;
-								inE += 1;
-								inP += 1;
-								inR += 1;
-								inG += 1;
-								inB += 1;
-								inA += 1;
-								out += 4;
+						// TODO: Reduce code duplication here
+
+						if (_format.bytesPerPixel == 2) {
+							if (_paletteMapScreen) {
+								const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
+								for (int x = 0; x < rect.width(); ++x) {
+									byte r = *inR;
+									byte g = *inG;
+									byte b = *inB;
+									if (*inE != 128) {
+										byte i = *inP;
+										r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									} else {
+										b = *(inV + 2);
+										g = *(inV + 1);
+										r = *(inV);
+									}
+									if (*mod) {
+										r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
+										g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
+										b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
+									}
+
+									uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
+									WRITE_UINT32(out, c);
+									inV += 4;
+									inE += 1;
+									inP += 1;
+									inR += 1;
+									inG += 1;
+									inB += 1;
+									inA += 1;
+									out += 4;
+								}
+							} else {
+								for (int x = 0; x < rect.width(); ++x) {
+									byte r = *inR;
+									byte g = *inG;
+									byte b = *inB;
+									if (*inE != 128) {
+										byte i = *inP;
+										r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									} else {
+										b = *(inV + 2);
+										g = *(inV + 1);
+										r = *(inV);
+									}
+									uint16 c = (uint16)_format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
+									WRITE_UINT16(out, c);
+									inV += 4;
+									inE += 1;
+									inP += 1;
+									inR += 1;
+									inG += 1;
+									inB += 1;
+									inA += 1;
+									out += 2;
+								}
 							}
+
 						} else {
-							for (int x = 0; x < rect.width(); ++x) {
-								byte r = *inR;
-								byte g = *inG;
-								byte b = *inB;
-								if (*inE != 128) {
-									byte i = *inP;
-									r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-									b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
-								} else {
-									b = *(inV + 2);
-									g = *(inV + 1);
-									r = *(inV);
+							assert(_format.bytesPerPixel == 4);
+
+							if (_paletteMapScreen) {
+								const byte *mod = _paletteMapScreen + y * _displayWidth + rect.left;
+								for (int x = 0; x < rect.width(); ++x) {
+									byte r = *inR;
+									byte g = *inG;
+									byte b = *inB;
+									if (*inE != 128) {
+										byte i = *inP;
+										r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									} else {
+										b = *(inV + 2);
+										g = *(inV + 1);
+										r = *(inV);
+									}
+									if (*mod) {
+										r = MIN(r * (128 + _paletteMods[*mod].r) / 128, 255);
+										g = MIN(g * (128 + _paletteMods[*mod].g) / 128, 255);
+										b = MIN(b * (128 + _paletteMods[*mod].b) / 128, 255);
+									}
+
+									uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
+									WRITE_UINT32(out, c);
+									inV += 4;
+									inE += 1;
+									inP += 1;
+									inR += 1;
+									inG += 1;
+									inB += 1;
+									inA += 1;
+									out += 4;
 								}
-								uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
-								WRITE_UINT32(out, c);
-								inV += 4;
-								inE += 1;
-								inP += 1;
-								inR += 1;
-								inG += 1;
-								inB += 1;
-								inA += 1;
-								out += 4;
+							} else {
+								for (int x = 0; x < rect.width(); ++x) {
+									byte r = *inR;
+									byte g = *inG;
+									byte b = *inB;
+									if (*inE != 128) {
+										byte i = *inP;
+										r = _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inR * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										g = _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inG * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+										b = _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - ((*inE / 255.0000) * *inA))) + (*inB * ((0.003921568627451) * ((*inE / 255.0000) * *inA)));
+									} else {
+										b = *(inV + 2);
+										g = *(inV + 1);
+										r = *(inV);
+									}
+									uint32 c = _format.RGBToColor(r * blackFade, g * blackFade, b * blackFade);
+									WRITE_UINT32(out, c);
+									inV += 4;
+									inE += 1;
+									inP += 1;
+									inR += 1;
+									inG += 1;
+									inB += 1;
+									inA += 1;
+									out += 4;
+								}
 							}
 						}
 					}
 				}
-				g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 			}
 			if (!g_sci->_theoraDecoder->isPlaying() || g_sci->_theoraDecoder->endOfVideo()) {
 				g_sci->_theoraDecoder->stop();
@@ -542,6 +568,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 					debug(10, ("No File " + g_sci->oggBackground).c_str());
 				}
 			}
+			
 		} else {
 			Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 			g_sci->_theoraDecoder->stop();
