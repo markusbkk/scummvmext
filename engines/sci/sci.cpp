@@ -24,7 +24,8 @@
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
 #include "common/translation.h"
-
+#include "graphics/font.h"
+#include "graphics/fonts/ttf.h"
 #include "engines/advancedDetector.h"
 #include "engines/util.h"
 
@@ -92,6 +93,8 @@ SciEngine *g_sci = 0;
 
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+std::map<std::string, Graphics::Font *> ttfFontsMap;
+std::map<std::string, Graphics::Font *> ::iterator ttfFontsMapit;
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 bool preLoadedPNGs = false;

@@ -173,6 +173,7 @@ public:
 	byte *_displayScreenB;
 	byte *_displayedScreenB;
 
+	Graphics::PixelFormat _format;
 private:
 	
 	uint _pixels;
@@ -182,7 +183,7 @@ private:
 	uint16 _displayHeight;
 	uint _displayPixels;
 
-	Graphics::PixelFormat _format;
+	
 
 	byte _colorWhite;
 	byte _colorDefaultVectorData;
