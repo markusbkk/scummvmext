@@ -91,10 +91,7 @@ namespace Sci {
 
 SciEngine *g_sci = 0;
 
-std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
-std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
-std::map<std::string, Graphics::Font *> ttfFontsMap;
-std::map<std::string, Graphics::Font *> ::iterator ttfFontsMapit;
+
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 bool preLoadedPNGs = false;

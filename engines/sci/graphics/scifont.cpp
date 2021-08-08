@@ -190,10 +190,10 @@ static const byte sci32SystemFont[] = {
 #endif
 
 
-extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
-extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
-extern std::map<std::string, Graphics::Font *> ttfFontsMap;
-extern std::map<std::string, Graphics::Font *>::iterator ttfFontsMapit;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+std::map<std::string, Graphics::Font *> ttfFontsMap;
+std::map<std::string, Graphics::Font *>::iterator ttfFontsMapit;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 extern bool preLoadedPNGs;
@@ -255,8 +255,8 @@ GfxFontFromResource::GfxFontFromResource(ResourceManager *resMan, GfxScreen *scr
 			} else {
 				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
 
-				ttffonttmp = Graphics::loadTTFFont(*ffile, (_resourceData.getUint16SE32At(4)) * g_sci->_enhancementMultiplier);
-				if (ttffonttmp) {
+				ttffonttmp = Graphics::loadTTFFont(*ffile, (_resourceData.getUint16SE32At(4)) * g_sci->_enhancementMultiplier * 0.75);
+				if (ttffonttmp != NULL) {
 					enhancedFont = true;
 					enhancedFontTTF = true;
 					ttfFontsMap.insert(std::pair<std::string, Graphics::Font *>((_resource->name() + ".ttf").c_str(), ttffonttmp));
@@ -388,56 +388,6 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	search += ".png";
 	pngfont = NULL;
 	Graphics::Font *ttffonttmp = nullptr;
-	for (ttfFontsMapit = ttfFontsMap.begin();
-	     ttfFontsMapit != ttfFontsMap.end(); ++ttfFontsMapit) {
-
-		if (strcmp(ttfFontsMapit->first.c_str(), (_resource->name() + ".ttf").c_str()) == 0) {
-
-			ttffonttmp = ttfFontsMapit->second;
-			enhancedFont = true;
-			enhancedFontTTF = true;
-			Graphics::Surface *chrSurf = new Graphics::Surface();
-			chrSurf->create(_chars[chr].width * g_sci->_enhancementMultiplier, _chars[chr].height * g_sci->_enhancementMultiplier, Graphics::PixelFormat::createFormatCLUT8());
-			Common::String s = "";
-			s += chr;
-			ttffonttmp->drawString(chrSurf, s, 0, 0, _chars[chr].width * g_sci->_enhancementMultiplier, 255, Graphics::kTextAlignCenter);
-			enhfont = (const byte *)chrSurf->getPixels();
-		}
-	}
-	if (!enhancedFontTTF)
-	{
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".ttf").exists()) {
-			Common::String fileName = folder.getChild(_resource->name() + ".ttf").getName();
-			Common::SeekableReadStream *fnfile = SearchMan.createReadStreamForMember(fileName);
-			if (!fnfile) {
-				//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
-			} else {
-				//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
-				if (!ttffonttmp)
-				ttffonttmp = Graphics::loadTTFFont(*fnfile, getCharHeight(chr) * g_sci->_enhancementMultiplier);
-				if (ttffonttmp) {
-					enhancedFont = true;
-					enhancedFontTTF = true;
-					ttfFontsMap.insert(std::pair<std::string, Graphics::Font *>((_resource->name() + ".ttf").c_str(), ttffonttmp));
-					//charWidth = ttffonttmp->getCharWidth(chr) / g_sci->_enhancementMultiplier;
-					//charHeight = ttffonttmp->getFontHeight() / g_sci->_enhancementMultiplier;
-					Graphics::Surface *chrSurf = new Graphics::Surface();
-					chrSurf->create(_chars[chr].width * g_sci->_enhancementMultiplier, _chars[chr].height * g_sci->_enhancementMultiplier, Graphics::PixelFormat::createFormatCLUT8());
-					Common::String s = "";
-					s += chr;
-					ttffonttmp->drawString(chrSurf, s, 0, 0, _chars[chr].width * g_sci->_enhancementMultiplier, 255, Graphics::kTextAlignCenter);
-					enhfont = (const byte *)chrSurf->getPixels();
-					std::pair<Graphics::Surface *, const byte *> tmp;
-					tmp.first = NULL;
-					tmp.second = enhfont;
-					fontsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((_resource->name() + '.' + charNoStr + ".png").c_str(), tmp));
-				}
-			}
-		} else {
-			debug(("DIDN'T FIND " + _resource->name() + ".ttf").c_str());
-			
-		}
-	}
 	for (fontsMapit = fontsMap.begin();
 	     fontsMapit != fontsMap.end(); ++fontsMapit) {
 
@@ -462,9 +412,60 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 			}
 		}
 	}
+	if (!enhancedFont) {
+
+		for (ttfFontsMapit = ttfFontsMap.begin();
+		     ttfFontsMapit != ttfFontsMap.end(); ++ttfFontsMapit) {
+
+			if (strcmp(ttfFontsMapit->first.c_str(), (_resource->name() + ".ttf").c_str()) == 0) {
+
+				ttffonttmp = ttfFontsMapit->second;
+				enhancedFont = true;
+				enhancedFontTTF = true;
+				Graphics::Surface *chrSurf = new Graphics::Surface();
+				chrSurf->create(_chars[chr].width * g_sci->_enhancementMultiplier, _chars[chr].height * g_sci->_enhancementMultiplier, Graphics::PixelFormat::createFormatCLUT8());
+				Common::String s = "";
+				s += chr;
+				ttffonttmp->drawString(chrSurf, s, 0, 0, _chars[chr].width * g_sci->_enhancementMultiplier, 255, Graphics::kTextAlignCenter);
+				enhfont = (const byte *)chrSurf->getPixels();
+			}
+		}
+		if (!enhancedFontTTF) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".ttf").exists()) {
+				Common::String fileName = folder.getChild(_resource->name() + ".ttf").getName();
+				Common::SeekableReadStream *fnfile = SearchMan.createReadStreamForMember(fileName);
+				if (!fnfile) {
+					//debug(10, "Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
+				} else {
+					//debug(10, "Enhanced Bitmap %s EXISTS, and has been loaded..", fileName.c_str());
+					if (ttffonttmp == NULL)
+						ttffonttmp = Graphics::loadTTFFont(*fnfile, getCharHeight(chr) * g_sci->_enhancementMultiplier * 0.75);
+					if (ttffonttmp != NULL) {
+						enhancedFont = true;
+						enhancedFontTTF = true;
+						ttfFontsMap.insert(std::pair<std::string, Graphics::Font *>((_resource->name() + ".ttf").c_str(), ttffonttmp));
+						//charWidth = ttffonttmp->getCharWidth(chr) / g_sci->_enhancementMultiplier;
+						//charHeight = ttffonttmp->getFontHeight() / g_sci->_enhancementMultiplier;
+						Graphics::Surface *chrSurf = new Graphics::Surface();
+						chrSurf->create(_chars[chr].width * g_sci->_enhancementMultiplier, _chars[chr].height * g_sci->_enhancementMultiplier, Graphics::PixelFormat::createFormatCLUT8());
+						Common::String s = "";
+						s += chr;
+						ttffonttmp->drawString(chrSurf, s, 0, 0, _chars[chr].width * g_sci->_enhancementMultiplier, 255, Graphics::kTextAlignCenter);
+						enhfont = (const byte *)chrSurf->getPixels();
+						std::pair<Graphics::Surface *, const byte *> tmp;
+						tmp.first = NULL;
+						tmp.second = enhfont;
+						fontsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((_resource->name() + '.' + charNoStr + ".png").c_str(), tmp));
+					}
+				}
+			} else {
+				debug(("DIDN'T FIND " + _resource->name() + ".ttf").c_str());
+			}
+		}
+	}
 		//debug("RELOADED FROM RAM");
 
-		if ((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z')) {
+		
 			if (enhancedFontTTF) {
 				//charWidth = ttffonttmp->getCharWidth(chr) / g_sci->_enhancementMultiplier;
 				//charHeight = ttffonttmp->getFontHeight() / g_sci->_enhancementMultiplier;
@@ -480,20 +481,18 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 				fontsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((_resource->name() + '.' + charNoStr + ".png").c_str(), tmp));
 				enhancedFont = true;
 			}
-		}
+		
 
 		if (enhancedFont && !enhancedFontTTF) {
-			if ((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z')) {
-			} else {
+			
 				//_fontHeight = pngfont->h / g_sci->_enhancementMultiplier;
 				_chars[chr].width = (pngfont->w / g_sci->_enhancementMultiplier);
 				_chars[chr].height = pngfont->h / g_sci->_enhancementMultiplier;
-			}
+			
 		}
 
 		if (!pngfont) {
-			if (((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z')) && enhancedFontTTF) {
-			} else {
+			if (!enhancedFontTTF) {
 
 				if (ConfMan.hasKey("extrapath")) {
 					if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + '.' + charNoStr + ".png").exists()) {
