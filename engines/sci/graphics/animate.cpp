@@ -347,7 +347,7 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 										    std::pair<Graphics::Surface *, const byte *> tmp;
 										    tmp.first = viewpngtmp;
 										    tmp.second = viewenhtmp;
-										    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+										    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + ".png").c_str(), tmp));
 										    //debug(fn.c_str());
 										    //debug("LOADED FROM DISC");
 									    }
@@ -927,7 +927,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 												std::pair<Graphics::Surface *, const byte *> tmp;
 												tmp.first = viewpngtmp;
 												tmp.second = viewenhtmp;
-												viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+												viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + ".png").c_str(), tmp));
 												//debug(fn.c_str());
 												//debug("LOADED FROM DISC");
 											}
