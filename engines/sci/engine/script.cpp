@@ -162,6 +162,12 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 						}
 						*/
 							playingVideoCutscenes = true;
+							g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+							g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+							g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+
+
 						}
 					} else {
 						debug(10, "NO script.%d.cfg", script_nr);

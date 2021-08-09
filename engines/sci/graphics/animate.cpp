@@ -834,10 +834,27 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		_screen->convertToRGB(_ports->_curPort->rect);
 	}*/
 	if (playingVideoCutscenes && g_sci->_theoraDecoderCutscenes != nullptr) {
-		g_system->copyRectToScreen(g_sci->_theoraDecoderCutscenes->decodeNextFrame()->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
-		g_system->updateScreen();
+		if (g_sci->_theoraDecoderCutscenes->getCurFrame() == -1) {
+			g_sci->_theoraDecoderCutscenes->decodeNextFrame();
+		} else {
+			const Graphics::Surface *srf = g_sci->_theoraDecoderCutscenes->decodeNextFrame();
+			if (srf != nullptr) {
+				g_system->copyRectToScreen(srf->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
+				g_system->updateScreen();
+			} else {
+				reAnimate(_ports->_curPort->rect);
+				playingVideoCutscenes = false;
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+			}
+		}
 	} else {
 		reAnimate(_ports->_curPort->rect);
+		playingVideoCutscenes = false;
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
 	}
 }
 
