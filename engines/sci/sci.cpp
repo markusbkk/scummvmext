@@ -97,6 +97,7 @@ std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator v
 std::map<std::int16_t, std::pair<int16_t, std::string> > videoCutscenesMap;
 std::map<std::int16_t, std::pair<int16_t, std::string> >::iterator videoCutscenesMapit;
 bool playingVideoCutscenes = false;
+int videoCutsceneStartScript = 19839;
 int videoCutsceneEndScript = 19830;
 bool preLoadedPNGs = false;
 float blackFade = 1.0;

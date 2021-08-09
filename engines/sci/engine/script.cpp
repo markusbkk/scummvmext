@@ -35,6 +35,7 @@
 namespace Sci {
 extern bool playingVideoCutscenes;
 extern int videoCutsceneEndScript;
+extern int videoCutsceneStartScript;
 extern std::map<std::int16_t, std::pair<int16_t, std::string> > videoCutscenesMap;
 extern std::map<std::int16_t, std::pair<int16_t, std::string> >::iterator videoCutscenesMapit;
 
@@ -93,6 +94,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 		g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
 		playingVideoCutscenes = false;
 		videoCutsceneEndScript = 19830;
+		videoCutsceneStartScript = 19830;
 	}
 
 	if (videoCutscenesMap.size() > 0)
@@ -113,6 +115,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 		videoCutscenesMap.insert(std::pair<int16_t, std::pair<int16_t, std::string> >(script_nr, tmp));
 
 	}
+	if (videoCutsceneStartScript != script_nr)
 	if (videoCutscenesMap.size() > 0)
 		for (videoCutscenesMapit = videoCutscenesMap.begin();
 		     videoCutscenesMapit != videoCutscenesMap.end(); ++videoCutscenesMapit) {
@@ -136,6 +139,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 								texttmp = cfg->readLine();
 								videoCutsceneEndScript = atoi(texttmp.c_str());
 							}
+							videoCutsceneStartScript = script_nr;
 							Common::String fileName = (folder.getPath() + folder.getChild(fn + ".ogg").getName()).c_str();
 							g_sci->oggBackground = fn + ".ogg";
 

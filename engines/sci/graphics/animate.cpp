@@ -46,10 +46,10 @@
 #include <map>
 #include <string>
 #include <cctype>
-
+#include <common/system.h>
 
 namespace Sci {
-
+extern bool playingVideoCutscenes;
 GfxAnimate::GfxAnimate(EngineState *state, ScriptPatcher *scriptPatcher, GfxCache *cache, GfxPorts *ports, GfxPaint16 *paint16, GfxScreen *screen, GfxPalette *palette, GfxCursor *cursor, GfxTransitions *transitions)
 	: _s(state), _scriptPatcher(scriptPatcher), _cache(cache), _ports(ports), _paint16(paint16), _screen(screen), _palette(palette), _cursor(cursor), _transitions(transitions) {
 	init();
@@ -833,7 +833,12 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		
 		_screen->convertToRGB(_ports->_curPort->rect);
 	}*/
-	reAnimate(_ports->_curPort->rect);
+	if (playingVideoCutscenes && g_sci->_theoraDecoderCutscenes != nullptr) {
+		g_system->copyRectToScreen(g_sci->_theoraDecoderCutscenes->decodeNextFrame()->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
+		g_system->updateScreen();
+	} else {
+		reAnimate(_ports->_curPort->rect);
+	}
 }
 
 void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
@@ -1007,6 +1012,7 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 	} else {
 		_paint16->bitsShow(rect);
 	}
+	
 }
 
 void GfxAnimate::addToPicDrawCels() {
@@ -1199,6 +1205,8 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 		celRect.top = CLIP<int16>(_ports->kernelPriorityToCoordinate(priority) - 1, celRect.top, celRect.bottom - 1);
 		_paint16->fillRect(celRect, GFX_SCREEN_MASK_CONTROL, 0, 0, control);
 	}
+
+	
 }
 
 
@@ -1273,6 +1281,8 @@ void GfxAnimate::kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t 
 
 	// We update the screen here as well, some scenes like EQ1 credits run w/o calling kGetEvent thus we wouldn't update
 	//  screen at all
+
+
 	g_sci->getEventManager()->updateScreen();
 
 	_ports->setPort(oldPort);
