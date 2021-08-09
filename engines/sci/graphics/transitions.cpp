@@ -36,6 +36,7 @@ namespace Sci {
 //#define DISABLE_TRANSITIONS	// uncomment to disable room transitions (for development only! helps in testing games quickly)
 extern float blackFade;
 extern Common::Rect _currentViewPort;
+extern bool playingVideoCutscenes;
 
 GfxTransitions::GfxTransitions(GfxScreen *screen, GfxPalette *palette)
 	: _screen(screen), _palette(palette) {
@@ -166,39 +167,41 @@ const GfxTransitionTranslateEntry *GfxTransitions::translateNumber (int16 number
 }
 
 void GfxTransitions::doit(Common::Rect picRect) {
-	const GfxTransitionTranslateEntry *translationEntry = _translationTable;
+	if (!playingVideoCutscenes) {
 
-	_picRect = picRect;
+		const GfxTransitionTranslateEntry *translationEntry = _translationTable;
 
-	if (_translationTable) {
-		// We need to translate the ID
-		translationEntry = translateNumber(_number, _translationTable);
-		if (translationEntry) {
-			_number = translationEntry->newId;
-			_blackoutFlag = translationEntry->blackoutFlag;
-		} else {
-			warning("Transitions: old ID %d not supported", _number);
-			_number = SCI_TRANSITIONS_NONE;
-			_blackoutFlag = false;
+		_picRect = picRect;
+
+		if (_translationTable) {
+			// We need to translate the ID
+			translationEntry = translateNumber(_number, _translationTable);
+			if (translationEntry) {
+				_number = translationEntry->newId;
+				_blackoutFlag = translationEntry->blackoutFlag;
+			} else {
+				warning("Transitions: old ID %d not supported", _number);
+				_number = SCI_TRANSITIONS_NONE;
+				_blackoutFlag = false;
+			}
 		}
-	}
 
-	if (_blackoutFlag) {
-		// We need to find out what transition we are supposed to use for
-		// blackout
-		translationEntry = translateNumber(_number, blackoutTransitionIDs);
-		if (translationEntry) {
-			doTransition(translationEntry->newId, true);
-		} else {
-			warning("Transitions: ID %d not listed in blackoutTransitionIDs", _number);
+		if (_blackoutFlag) {
+			// We need to find out what transition we are supposed to use for
+			// blackout
+			translationEntry = translateNumber(_number, blackoutTransitionIDs);
+			if (translationEntry) {
+				doTransition(translationEntry->newId, true);
+			} else {
+				warning("Transitions: ID %d not listed in blackoutTransitionIDs", _number);
+			}
 		}
+
+		_palette->palVaryPrepareForTransition();
+
+		// Now we do the actual transition to the new screen
+		doTransition(_number, false);
 	}
-
-	_palette->palVaryPrepareForTransition();
-
-	// Now we do the actual transition to the new screen
-	doTransition(_number, false);
-
 	_screen->_picNotValid = 0;
 }
 
@@ -304,17 +307,19 @@ void GfxTransitions::copyRectToScreen(const Common::Rect rect, bool blackoutFlag
 // Note: don't do too many steps in here, otherwise cpu will crap out because of
 // the load
 void GfxTransitions::fadeOut() {
-	byte oldPalette[3 * 256], workPalette[3 * 256];
-	int16 stepNr, colorNr;
-	// Sierra did not fade in/out color 255 for sci1.1, but they used it in
-	//  several pictures (e.g. qfg3 demo/intro), so the fading looked weird
-	
-	int16 tillColorNr = getSciVersion() >= SCI_VERSION_1_1 ? 255 : 254;
-	
-	_screen->grabPalette(oldPalette, 0, 256);
-	_palette->kernelSetIntensity(1, tillColorNr + 1, 100, true);
-	for (stepNr = 100; stepNr >= 0; stepNr -= 10) {
-		/*for (colorNr = 1; colorNr <= tillColorNr; colorNr++) {
+
+	if (!playingVideoCutscenes) {
+		byte oldPalette[3 * 256], workPalette[3 * 256];
+		int16 stepNr, colorNr;
+		// Sierra did not fade in/out color 255 for sci1.1, but they used it in
+		//  several pictures (e.g. qfg3 demo/intro), so the fading looked weird
+
+		int16 tillColorNr = getSciVersion() >= SCI_VERSION_1_1 ? 255 : 254;
+
+		_screen->grabPalette(oldPalette, 0, 256);
+		_palette->kernelSetIntensity(1, tillColorNr + 1, 100, true);
+		for (stepNr = 100; stepNr >= 0; stepNr -= 10) {
+			/*for (colorNr = 1; colorNr <= tillColorNr; colorNr++) {
 			if (_palette->colorIsFromMacClut(colorNr)) {
 				workPalette[colorNr * 3 + 0] = oldPalette[colorNr * 3];
 				workPalette[colorNr * 3 + 1] = oldPalette[colorNr * 3 + 1];
@@ -326,14 +331,15 @@ void GfxTransitions::fadeOut() {
 			}
 		}
 		_screen->setPalette(workPalette + 3, 1, tillColorNr);*/
-		
-		blackFade = (float)((float)stepNr * 0.01);
-		if (_picRect.width() != 0 && _picRect.height() != 0) {
 
-			_screen->convertToRGB(_picRect);
-			copyRectToScreen(_picRect, false);
-			g_system->updateScreen();
-			g_sci->getEngineState()->sleep(2);
+			blackFade = (float)((float)stepNr * 0.01);
+			if (_picRect.width() != 0 && _picRect.height() != 0) {
+
+				_screen->convertToRGB(_picRect);
+				copyRectToScreen(_picRect, false);
+				g_system->updateScreen();
+				g_sci->getEngineState()->sleep(2);
+			}
 		}
 	}
 }
@@ -341,23 +347,26 @@ void GfxTransitions::fadeOut() {
 // Note: don't do too many steps in here, otherwise cpu will crap out because of
 // the load
 void GfxTransitions::fadeIn() {
-	int16 stepNr;
-	// Sierra did not fade in/out color 255 for sci1.1, but they used it in
-	//  several pictures (e.g. qfg3 demo/intro), so the fading looked weird
-	int16 tillColorNr = getSciVersion() >= SCI_VERSION_1_1 ? 255 : 254;
-	_palette->kernelSetIntensity(1, tillColorNr + 1, 100, true);
-	for (stepNr = 0; stepNr <= 100; stepNr += 10) {
-		
-		blackFade = (float)((float)stepNr * 0.01);
-		if (_picRect.width() != 0 && _picRect.height() != 0) {
+	if (!playingVideoCutscenes) {
 
-			_screen->convertToRGB(_picRect);
-			copyRectToScreen(_picRect, false);
-			g_system->updateScreen();
-			g_sci->getEngineState()->sleep(2);
+		int16 stepNr;
+		// Sierra did not fade in/out color 255 for sci1.1, but they used it in
+		//  several pictures (e.g. qfg3 demo/intro), so the fading looked weird
+		int16 tillColorNr = getSciVersion() >= SCI_VERSION_1_1 ? 255 : 254;
+		_palette->kernelSetIntensity(1, tillColorNr + 1, 100, true);
+		for (stepNr = 0; stepNr <= 100; stepNr += 10) {
+
+			blackFade = (float)((float)stepNr * 0.01);
+			if (_picRect.width() != 0 && _picRect.height() != 0) {
+
+				_screen->convertToRGB(_picRect);
+				copyRectToScreen(_picRect, false);
+				g_system->updateScreen();
+				g_sci->getEngineState()->sleep(2);
+			}
 		}
+		_screen->_picNotValid = 0;
 	}
-	_screen->_picNotValid = 0;
 }
 
 // Pixelates the new picture over the old one - works against the whole screen.

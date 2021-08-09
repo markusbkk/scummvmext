@@ -63,6 +63,8 @@
 #include <string>
 namespace Sci {
 
+extern bool playingVideoCutscenes;
+
 static int16 adjustGraphColor(int16 color) {
 	// WORKAROUND: EGA and Amiga games can set invalid colors (above 0 - 15).
 	// It seems only the lower nibble was used in these games.
@@ -1244,7 +1246,7 @@ reg_t kNewWindow(EngineState *s, int argc, reg_t *argv) {
 reg_t kAnimate(EngineState *s, int argc, reg_t *argv) {
 	reg_t castListReference = (argc > 0) ? argv[0] : NULL_REG;
 	bool cycle = (argc > 1) ? ((argv[1].toUint16()) ? true : false) : false;
-
+	
 	g_sci->_gfxAnimate->kernelAnimate(castListReference, cycle, argc, argv);
 
 	// WORKAROUND: At the end of Ecoquest 1, during the credits, the game

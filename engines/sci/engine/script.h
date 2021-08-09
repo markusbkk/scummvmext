@@ -28,6 +28,7 @@
 #include "sci/engine/segment.h"
 #include "sci/engine/script_patches.h"
 
+
 namespace Sci {
 
 struct EngineState;

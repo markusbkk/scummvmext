@@ -283,6 +283,7 @@ public:
 	GfxTransitions *_gfxTransitions; // transitions between screens for 16-bit gfx
 	GfxMacIconBar *_gfxMacIconBar; // Mac Icon Bar manager
 	Video::TheoraDecoder *_theoraDecoder;
+	Video::TheoraDecoder *_theoraDecoderCutscenes;
 	
 #ifdef ENABLE_SCI32
 	Audio32 *_audio32;

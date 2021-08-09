@@ -392,8 +392,8 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 	     fontsMapit != fontsMap.end(); ++fontsMapit) {
 
 		if (strcmp(fontsMapit->first.c_str(), search.c_str()) == 0) {
-			if (((chr >= '0' && chr <= '9') || (chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z')) && enhancedFontTTF) {
-			} else {
+
+
 				//debug(fontsMapit->first.c_str());
 				std::pair<Graphics::Surface *, const byte *> tmp = fontsMapit->second;
 				pngfont = tmp.first;
@@ -409,7 +409,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 						enhancedFontTTF = false;
 					}
 				}
-			}
+			
 		}
 	}
 	if (!enhancedFont) {
@@ -459,7 +459,7 @@ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bo
 					}
 				}
 			} else {
-				debug(("DIDN'T FIND " + _resource->name() + ".ttf").c_str());
+				//debug(("DIDN'T FIND " + _resource->name() + ".ttf").c_str());
 			}
 		}
 	}
