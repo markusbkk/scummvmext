@@ -96,6 +96,10 @@ std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 std::map<std::int16_t, std::pair<int16_t, std::string> > videoCutscenesMap;
 std::map<std::int16_t, std::pair<int16_t, std::string> >::iterator videoCutscenesMapit;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> > fontsMap;
+std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
+std::map<std::string, Graphics::Font *> ttfFontsMap;
+std::map<std::string, Graphics::Font *>::iterator ttfFontsMapit;
 bool playingVideoCutscenes = false;
 int videoCutsceneStartScript = 19839;
 int videoCutsceneEndScript = 19830;
@@ -546,6 +550,15 @@ Common::Error SciEngine::run() {
 	runTheoraIntro();
 	runGame();
 	runTheoraOutro();
+	viewsMap.clear();
+	fontsMap.clear();
+	ttfFontsMap.clear();
+	videoCutscenesMap.clear();
+	playingVideoCutscenes = false;
+	videoCutsceneStartScript = 19839;
+	videoCutsceneEndScript = 19830;
+	preLoadedPNGs = false;
+	blackFade = 1.0;
 	ConfMan.flushToDisk();
 
 	return Common::kNoError;

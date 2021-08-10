@@ -726,104 +726,108 @@ void GfxAnimate::drawCels() {
 }
 
 void GfxAnimate::updateScreen(byte oldPicNotValid) {
-	AnimateList::iterator it;
-	const AnimateList::iterator end = _list.end();
-	Common::Rect lsRect;
-	Common::Rect workerRect;
-	if (workerRect.left > workerRect.right) {
-		int l = workerRect.left;
-		workerRect.left = workerRect.right;
-		workerRect.right = l;
-	}
-	if (workerRect.top > workerRect.bottom) {
-		int t = workerRect.top;
-		workerRect.top = workerRect.bottom;
-		workerRect.bottom = t;
-	}
-	for (it = _list.begin(); it != end; ++it) {
-		if (it->showBitsFlag || !(it->signal & (kSignalRemoveView | kSignalNoUpdate) ||
-										(!(it->signal & kSignalRemoveView) && (it->signal & kSignalNoUpdate) && oldPicNotValid))) {
-			lsRect.left = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft))/2;
-			lsRect.top = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop))/2;
-			lsRect.right = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight))/2;
-			lsRect.bottom = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom))/2;
-			if (it->celRect.left > it->celRect.right) {
-				int l = it->celRect.left;
-				it->celRect.left = it->celRect.right;
-				it->celRect.right = l;
-			}
-			if (it->celRect.top > it->celRect.bottom) {
-				int t = it->celRect.top;
-				it->celRect.top = it->celRect.bottom;
-				it->celRect.bottom = t;
-			}
-			if (it->bitsRect.left > it->bitsRect.right) {
-				int l = it->bitsRect.left;
-				it->bitsRect.left = it->bitsRect.right;
-				it->bitsRect.right = l;
-			}
-			if (it->bitsRect.top > it->bitsRect.bottom) {
-				int t = it->bitsRect.top;
-				it->bitsRect.top = it->bitsRect.bottom;
-				it->bitsRect.bottom = t;
-			}
+	
+	if (playingVideoCutscenes && g_sci->_theoraDecoderCutscenes != nullptr) {
 
-			if (lsRect.left > lsRect.right) {
-				int l = lsRect.left;
-				lsRect.left = lsRect.right;
-				lsRect.right = l;
-			}
-			if (lsRect.top > lsRect.bottom) {
-				int t = lsRect.top;
-				lsRect.top = lsRect.bottom;
-				lsRect.bottom = t;
-			}
-			workerRect = lsRect;
-			
-			workerRect.clip(it->bitsRect);
-			
-			if (!workerRect.isEmpty()) {
-				workerRect = lsRect;
-				if (workerRect.left > workerRect.right) {
-					int l = workerRect.left;
-					workerRect.left = workerRect.right;
-					workerRect.right = l;
+	} else {
+		AnimateList::iterator it;
+		const AnimateList::iterator end = _list.end();
+		Common::Rect lsRect;
+		Common::Rect workerRect;
+		if (workerRect.left > workerRect.right) {
+			int l = workerRect.left;
+			workerRect.left = workerRect.right;
+			workerRect.right = l;
+		}
+		if (workerRect.top > workerRect.bottom) {
+			int t = workerRect.top;
+			workerRect.top = workerRect.bottom;
+			workerRect.bottom = t;
+		}
+		for (it = _list.begin(); it != end; ++it) {
+			if (it->showBitsFlag || !(it->signal & (kSignalRemoveView | kSignalNoUpdate) ||
+			                          (!(it->signal & kSignalRemoveView) && (it->signal & kSignalNoUpdate) && oldPicNotValid))) {
+				lsRect.left = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft)) / 2;
+				lsRect.top = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop)) / 2;
+				lsRect.right = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight)) / 2;
+				lsRect.bottom = readSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom)) / 2;
+				if (it->celRect.left > it->celRect.right) {
+					int l = it->celRect.left;
+					it->celRect.left = it->celRect.right;
+					it->celRect.right = l;
 				}
-				if (workerRect.top > workerRect.bottom) {
-					int t = workerRect.top;
-					workerRect.top = workerRect.bottom;
-					workerRect.bottom = t;
+				if (it->celRect.top > it->celRect.bottom) {
+					int t = it->celRect.top;
+					it->celRect.top = it->celRect.bottom;
+					it->celRect.bottom = t;
+				}
+				if (it->bitsRect.left > it->bitsRect.right) {
+					int l = it->bitsRect.left;
+					it->bitsRect.left = it->bitsRect.right;
+					it->bitsRect.right = l;
+				}
+				if (it->bitsRect.top > it->bitsRect.bottom) {
+					int t = it->bitsRect.top;
+					it->bitsRect.top = it->bitsRect.bottom;
+					it->bitsRect.bottom = t;
+				}
+
+				if (lsRect.left > lsRect.right) {
+					int l = lsRect.left;
+					lsRect.left = lsRect.right;
+					lsRect.right = l;
+				}
+				if (lsRect.top > lsRect.bottom) {
+					int t = lsRect.top;
+					lsRect.top = lsRect.bottom;
+					lsRect.bottom = t;
+				}
+				workerRect = lsRect;
+
+				workerRect.clip(it->bitsRect);
+
+				if (!workerRect.isEmpty()) {
+					workerRect = lsRect;
+					if (workerRect.left > workerRect.right) {
+						int l = workerRect.left;
+						workerRect.left = workerRect.right;
+						workerRect.right = l;
+					}
+					if (workerRect.top > workerRect.bottom) {
+						int t = workerRect.top;
+						workerRect.top = workerRect.bottom;
+						workerRect.bottom = t;
+					}
+					if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
+						workerRect.extend(it->celRect);
+					} else {
+						workerRect.extend(it->bitsRect);
+					}
+				} else {
+					_paint16->bitsShow(lsRect);
+					workerRect = it->bitsRect;
 				}
 				if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
-					workerRect.extend(it->celRect);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->celRect.left);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->celRect.top);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->celRect.right);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->celRect.bottom); /// UNDO TO HERE
 				} else {
-					workerRect.extend(it->bitsRect);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->bitsRect.left);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->bitsRect.top);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->bitsRect.right);
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->bitsRect.bottom);
 				}
-			} else {
-				_paint16->bitsShow(lsRect);
-				workerRect = it->bitsRect;
-			}
-			if (_screen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->celRect.left);
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->celRect.top);
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->celRect.right);
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->celRect.bottom); /// UNDO TO HERE
-			} else {
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsLeft), it->bitsRect.left);
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsTop), it->bitsRect.top);
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsRight), it->bitsRect.right);
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->bitsRect.bottom);
-			}
-			// may get used for debugging
-			//_paint16->frameRect(workerRect);
-			_paint16->bitsShow(workerRect);
+				// may get used for debugging
+				//_paint16->frameRect(workerRect);
+				_paint16->bitsShow(workerRect);
 
-			if (it->signal & kSignalHidden)
-				it->signal |= kSignalRemoveView;
+				if (it->signal & kSignalHidden)
+					it->signal |= kSignalRemoveView;
+			}
 		}
-	}
-	// use this for debug purposes
-	/*
+		// use this for debug purposes
+		/*
 	if (g_sci->backgroundIsVideo)
 	{	
 		reAnimate(_ports->_curPort->rect);
@@ -833,23 +837,6 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		
 		_screen->convertToRGB(_ports->_curPort->rect);
 	}*/
-	if (playingVideoCutscenes && g_sci->_theoraDecoderCutscenes != nullptr) {
-		if (g_sci->_theoraDecoderCutscenes->getCurFrame() == -1) {
-			g_sci->_theoraDecoderCutscenes->decodeNextFrame();
-		} else {
-			const Graphics::Surface *srf = g_sci->_theoraDecoderCutscenes->decodeNextFrame();
-			if (srf != nullptr) {
-				g_system->copyRectToScreen(srf->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
-				g_system->updateScreen();
-			} else {
-				reAnimate(_ports->_curPort->rect);
-				playingVideoCutscenes = false;
-				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
-				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
-				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
-			}
-		}
-	} else {
 		reAnimate(_ports->_curPort->rect);
 		playingVideoCutscenes = false;
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
@@ -1305,7 +1292,9 @@ void GfxAnimate::kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t 
 	_ports->setPort(oldPort);
 
 	// Now trigger speed throttler
-	throttleSpeed();
+	if (!playingVideoCutscenes) {
+		throttleSpeed();
+	}
 }
 
 void GfxAnimate::throttleSpeed() {

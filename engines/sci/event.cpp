@@ -36,7 +36,7 @@
 #include "sci/graphics/screen.h"
 
 namespace Sci {
-
+	extern bool playingVideoCutscenes;
 struct ScancodeRow {
 	int offset;
 	const char *keys;
@@ -424,16 +424,54 @@ void EventManager::updateScreen() {
 	// Update the screen here, since it's called very often.
 	// Throttle the screen update rate to 60fps.
 	EngineState *s = g_sci->getEngineState();
-	if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
-		g_system->updateScreen();
-		s->_screenUpdateTime = g_system->getMillis();
-		// Throttle the checking of shouldQuit() to 60fps as well, since
-		// Engine::shouldQuit() invokes 2 virtual functions
-		// (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
-		// which is very expensive to invoke constantly without any
-		// throttling at all.
-		if (g_engine->shouldQuit())
-			s->abortScriptProcessing = kAbortQuitGame;
+	if (!playingVideoCutscenes) {
+		if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
+			g_system->updateScreen();
+			s->_screenUpdateTime = g_system->getMillis();
+			// Throttle the checking of shouldQuit() to 60fps as well, since
+			// Engine::shouldQuit() invokes 2 virtual functions
+			// (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
+			// which is very expensive to invoke constantly without any
+			// throttling at all.
+			if (g_engine->shouldQuit())
+				s->abortScriptProcessing = kAbortQuitGame;
+		}
+	} else {
+		if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoderCutscenes->getTimeToNextFrame() * 2) {
+			if (g_sci->_theoraDecoderCutscenes->getTimeToNextFrame() != 0) {
+				int16 frameDrop = (int)((g_system->getMillis() - s->_screenUpdateTime) / g_sci->_theoraDecoderCutscenes->getTimeToNextFrame());
+				if (frameDrop > 0) {
+					g_sci->_theoraDecoderCutscenes->seekToFrame(g_sci->_theoraDecoderCutscenes->getCurFrame() + frameDrop);
+				}
+			}
+		}
+		if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoderCutscenes->getTimeToNextFrame()) {
+			s->_screenUpdateTime = g_system->getMillis();
+			if (g_sci->_theoraDecoderCutscenes->getCurFrame() == -1) {
+				g_sci->_theoraDecoderCutscenes->decodeNextFrame();
+			} else {
+				const Graphics::Surface *srf = g_sci->_theoraDecoderCutscenes->decodeNextFrame();
+				if (srf != nullptr) {
+					g_system->copyRectToScreen(srf->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
+					g_system->updateScreen();
+
+				} else {
+					playingVideoCutscenes = false;
+					g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+					g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+					g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+				}
+			}
+			g_system->updateScreen();
+			
+			// Throttle the checking of shouldQuit() to 60fps as well, since
+			// Engine::shouldQuit() invokes 2 virtual functions
+			// (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
+			// which is very expensive to invoke constantly without any
+			// throttling at all.
+			if (g_engine->shouldQuit())
+				s->abortScriptProcessing = kAbortQuitGame;
+		}
 	}
 }
 
