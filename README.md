@@ -7,46 +7,46 @@ PLEASE NOTE THIS README MAY BE OUTDATED ;)
 This mod loads .png files from the Launcher defined "Extra" folder.
 It does not come with any replacement graphics or games.
 
-pic.#_256.png (8-bit buffer, 1st/bottom layer)
-pic.#.ogg (mpeg video, 2nd layer)
-pic.#.png (true colour buffer, 3rd layer)
-pic.#_o.png (alpha overlay, 4th layer)
-pic.#_p.png (priority)
-pic.#_s.png (surface) - for alternate surface sounds (footsteps) up to 16
+pic.#_256.png (8-bit buffer, 1st/bottom layer).
+pic.#.ogg (mpeg video, 2nd layer).
+pic.#.png (true colour buffer, 3rd layer).
+pic.#_o.png (alpha overlay, 4th layer).
+pic.#_p.png (priority).
+pic.#_s.png (surface) - for alternate surface sounds (footsteps) up to 16.
 
-view.#.#.#.png (resource #, loop #, cel #) - can be any size. Recommended padding: up to 5px per side (before upscale)
+view.#.#.#.png (resource #, loop #, cel #) - can be any size. Recommended padding: up to 5px per side (before upscale).
 view.#.#.#_256.png
 
-font.#.#.png (resource #, character #)
+font.#.#.png (resource #, character #).
 font.#.ttf (True-Type Font)
 
 music.#.wav
 music.#.mp3
 
-music.#.cfg (resource # - x=inMs/outMs=x) - add looping points to replacement music assets
+music.#.cfg (resource # - x=inMs/outMs=x) - add looping points to replacement music assets.
 
-view.#.#.#.s.#.wav (resource #, loop #, cel #, surface #) - trigger audio on specific cel draw (footsteps), see surface map
+view.#.#.#.s.#.wav (resource #, loop #, cel #, surface #) - trigger audio on specific cel draw (footsteps), see surface map.
 view.#.#.#.mp3
 
-cursor.#.png (resource #) for SCI0/SCI1.0 games
+cursor.#.png (resource #) for SCI0/SCI1.0 games.
 cursor.#.#.#.png (view #, loop #, cel #) - for SCI1.1 games and KQ5CD
 
-text.######.wav (# generated with TalkieJockey)
+text.######.wav (# generated with SCICompanionX).
 text.######.mp3
 
-text.######.txt (# generated with TalkieJockey) text replacement
+text.######.txt (# generated with TalkieJockey) text replacement.
 
-#x.cfg (1x, 2x, 3x, 4x, 8x, 16x) - set upscale size of replacement assets
+#x.cfg (1x, 2x, 3x, 4x, 8x, 16x) - set upscale size of replacement assets.
 
-scene.#.ogg - Custom Video Cutcenes
+scene.#.ogg - Custom Video Cutcenes.
 scene.#.cfg - Contains a #, the script # you want to return to the game at.
 
 ****************
-Removed Features (for performance)
+Removed Features (for performance)..
 ****************
 
-view.#.#.#.t.#.png (resource #, loop #, cel #, tween #) - for tweening extra animation frames. 0 - 3
-view.#.#.#.t.#_256.png
+view.#.#.#.t.#.png (resource #, loop #, cel #, tween #) - for tweening extra animation frames. 0 - 3.
+view.#.#.#.t.#_256.png.
 
 ---------------------------------------------------------------------------------------------------------------
 
