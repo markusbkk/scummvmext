@@ -1,3 +1,92 @@
+This is a Demonstration Beta, v1.000-beta+.
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+SCUMMVMExt SCI Engine HiRes Support Mod!
+
+PLEASE NOTE THIS README MAY BE OUTDATED ;)
+
+This mod loads .png files from the Launcher defined "Extra" folder.
+It does not come with any replacement graphics or games.
+
+pic.#_256.png (8-bit buffer, 1st/bottom layer)
+pic.#.ogg (mpeg video, 2nd layer)
+pic.#.png (true colour buffer, 3rd layer)
+pic.#_o.png (alpha overlay, 4th layer)
+pic.#_p.png (priority)
+pic.#_s.png (surface) - for alternate surface sounds (footsteps) up to 16
+
+view.#.#.#.png (resource #, loop #, cel #) - can be any size. Recommended padding: up to 5px per side (before upscale)
+view.#.#.#_256.png
+
+font.#.#.png (resource #, character #)
+font.#.ttf (True-Type Font)
+
+music.#.wav
+music.#.mp3
+
+music.#.cfg (resource # - x=inMs/outMs=x) - add looping points to replacement music assets
+
+view.#.#.#.s.#.wav (resource #, loop #, cel #, surface #) - trigger audio on specific cel draw (footsteps), see surface map
+view.#.#.#.mp3
+
+cursor.#.png (resource #) for SCI0/SCI1.0 games
+cursor.#.#.#.png (view #, loop #, cel #) - for SCI1.1 games and KQ5CD
+
+text.######.wav (# generated with TalkieJockey)
+text.######.mp3
+
+text.######.txt (# generated with TalkieJockey) text replacement
+
+#x.cfg (1x, 2x, 3x, 4x, 8x, 16x) - set upscale size of replacement assets
+
+scene.#.ogg - Custom Video Cutcenes
+scene.#.cfg - Contains a #, the script # you want to return to the game at.
+
+****************
+Removed Features (for performance)
+****************
+
+view.#.#.#.t.#.png (resource #, loop #, cel #, tween #) - for tweening extra animation frames. 0 - 3
+view.#.#.#.t.#_256.png
+
+---------------------------------------------------------------------------------------------------------------
+
+The original graphics can be dumped with my custom ALSO modified version of SCICompanion,
+"SCICompanionX", this "X" version batch dumps views as individual cels instead of sprite sheets.
+Individual Cel format is required by the HiRes Mod, and trust me exporting individual cels with
+the original SCICompanion could take WEEKS of careful clicking.
+
+Simply open your game in SCICompanionX, and in the top menu go to Tools->Extract all resources..
+You will likely want to only "Generate bitmaps for pics" and "Generate bitmaps for views",
+Un-checking the other options.
+
+I enjoy "CupScale", but only because I don't have the time to program / and redo the Art by hand in Photoshop.
+I have also heard great things about GigaPixel AI.
+
+KNOWN BUGS :
+Some untested games may not work, for instance "QFG - Shadows of Darkness" (Sorry ;|)
+
+Please feel free to track me down (Myles Johnston aka MiLO83) on YouTube / Discord / Facebook with
+Questions, Positive Comments, Help, Bug Reports, Etc.
+
+Again this is not yet finished or polished, people seem to want to try it themselves before 100% compatibility.
+
+TUTORIALS : 
+https://youtu.be/FIGgY-STMYw (PART 1)
+https://youtu.be/9ce4iZALjHo (PART 2)
+https://youtu.be/JxHww6Kb9o0 (PART 3)
+
+YOU WILL NEED :
+https://github.com/MiLO83/SCUMMVMExt
+https://github.com/MiLO83/SCICompanionX
+https://github.com/MiLO83/ArcadaAccordion
+
+  - Myles Johnston
+
+
+
+
+
+
 # [ScummVM README](https://www.scummvm.org/) · [![Build Status](https://travis-ci.org/scummvm/scummvm.svg?branch=master)](https://travis-ci.org/scummvm/scummvm) ![CI](https://github.com/scummvm/scummvm/workflows/CI/badge.svg) [![Translation status](https://translations.scummvm.org/widgets/scummvm/-/scummvm/svg-badge.svg)](https://translations.scummvm.org/engage/scummvm/?utm_source=widget) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md#pull-requests) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e06e5b18f8464fef859b5a7f78d10357)](https://www.codacy.com/gh/scummvm/scummvm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=scummvm/scummvm&amp;utm_campaign=Badge_Grade)
 
 For more information, compatibility lists, details on donating, the
