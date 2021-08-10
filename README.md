@@ -1,5 +1,5 @@
 This is a Demonstration Beta, v1.000-beta+.
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+---------------------------------------------------------------------------------------------------------------
 SCUMMVMExt SCI Engine HiRes Support Mod!
 
 PLEASE NOTE THIS README MAY BE OUTDATED ;)
