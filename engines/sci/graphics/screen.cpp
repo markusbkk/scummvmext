@@ -41,6 +41,7 @@ namespace Sci {
 
 extern bool playingVideoCutscenes;
 bool fps60to30Flip = false;
+
 GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	
 	// Scale the screen, if needed

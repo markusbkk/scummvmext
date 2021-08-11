@@ -42,9 +42,18 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
+#include <list>
+#include <engines/sci/sound/midiparser_sci.h>
 namespace Sci {
-
+extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
+extern std::string videoCutsceneEnd;
+extern std::string videoCutsceneStart;
+extern MidiParser_SCI *midiMusic;
+extern bool cutscene_mute_midi;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
+extern std::string extraPath;
 GfxText16::GfxText16(GfxCache *cache, GfxPorts *ports, GfxPaint16 *paint16, GfxScreen *screen)
 	: _cache(cache), _ports(ports), _paint16(paint16), _screen(screen) {
 	init();
@@ -553,32 +562,101 @@ void GfxText16::Show(const char *text, int16 from, int16 len, GuiResourceId orgF
 	rect.right = _ports->_curPort->curLeft;
 	_paint16->bitsShow(rect);
 }
-
+bool fileIsInExtraDIRText(std::string fileName) {
+	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName);
+	// Check if iterator points to end or not
+	if (extraDIRListit != extraDIRList.end()) {
+		return true;
+	} else {
+		return false;
+	}
+}
 // Draws a text in rect.
 void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const Common::Rect &rect, TextAlignment alignment, GuiResourceId fontId) {
 
 	const char *data = text;
-	char trimmedTextStr[250] = {'\0'};
-	sprintf(trimmedTextStr, "%d", txthash(text));
-	Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-	Common::String txtFileName = "text.";
-	txtFileName += trimmedTextStr;
-	txtFileName += ".txt";
-	//debug(txtFileName.c_str());
-	bool replaceText = false;
-	if (folder.exists()) {
-		if (Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName).exists()) {
-			Common::String fileName = Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName).getName();
-			debug((fileName).c_str());
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-			if (file) {
-				Common::String line, texttmp;
-				while (!file->eos()) {
-					texttmp += file->readLine() + "\n";
-				}
-				data = texttmp.c_str();
+	if (text != "" && text != " ") {
 
-				g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
+		char trimmedTextStr[250];
+		int retVal, buf_size = 250;
+		retVal = snprintf(trimmedTextStr, buf_size, "text.%u", txthash(data));
+		Common::String fn = trimmedTextStr;
+		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		Common::String txtFileName = trimmedTextStr;
+		txtFileName += ".txt";
+		debug(" ");
+		debug(data);
+		Common::String dbg = " = ";
+		dbg += txtFileName;
+		debug(dbg.c_str());
+		debug(" ");
+		if (videoCutsceneEnd == fn.c_str()) {
+			playingVideoCutscenes = false;
+			wasPlayingVideoCutscenes = true;
+			videoCutsceneEnd = "-undefined-";
+			videoCutsceneStart = "-undefined-";
+			g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+			g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+			g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+		}
+		if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
+			if (fileIsInExtraDIRText((fn + ".cts").c_str())) {
+				Common::String cfgfileName = fn + ".cts";
+				debug(cfgfileName.c_str());
+				Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
+				if (cfg) {
+					Common::String line, texttmp;
+					cutscene_mute_midi = false;
+					while (!cfg->eos()) {
+						texttmp = cfg->readLine();
+						if (texttmp.firstChar() != '#') {
+							if (texttmp.contains("mute_midi")) {
+								cutscene_mute_midi = true;
+							} else {
+								videoCutsceneEnd = texttmp.c_str();
+							}
+						}
+					}
+					videoCutsceneStart = trimmedTextStr;
+
+					g_sci->oggBackground = fn + ".ogg";
+
+					g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
+
+					g_sci->_theoraDecoderCutscenes->loadFile(fn + ".ogg");
+					g_sci->_theoraDecoderCutscenes->start();
+					int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
+
+					playingVideoCutscenes = true;
+					wasPlayingVideoCutscenes = true;
+					g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+					g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+					g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+					if (cutscene_mute_midi) {
+						if (midiMusic != NULL)
+							midiMusic->setMasterVolume(0);
+					}
+				}
+			} else {
+				debug(10, ("NO " + fn + ".cts").c_str());
+			}
+		}
+		bool replaceText = false;
+		if (!extraDIRList.empty()) {
+			if (fileIsInExtraDIRText((txtFileName).c_str())) {
+				Common::String fileName = Common::FSNode(ConfMan.get("extrapath")).getChild(txtFileName).getName();
+				debug((fileName).c_str());
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				if (file) {
+					Common::String line, texttmp;
+					while (!file->eos()) {
+						texttmp += file->readLine() + "\n";
+					}
+					data = texttmp.c_str();
+
+					g_sci->_audio->PlayEnhancedTextAudio(trimmedTextStr, text);
+				}
 			}
 		}
 	}

@@ -35,11 +35,22 @@
 #include "video/theora_decoder.h"
 #include <image/png.h>
 #include <map>
+#include <list>
+#include <engines/sci/sound/midiparser_sci.h>
 namespace Sci {
 
 //#define DEBUG_PICTURE_DRAW
 extern GfxPaint16 _paint16;
 extern reg_t _barSaveHandle;
+extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
+extern std::string videoCutsceneEnd;
+extern std::string videoCutsceneStart;
+extern MidiParser_SCI *midiMusic;
+extern bool cutscene_mute_midi;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
+extern std::string extraPath;
 GfxPicture::GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuster, GfxPorts *ports, GfxScreen *screen, GfxPalette *palette, GuiResourceId resourceId, bool EGAdrawingVisualize)
 	: _resMan(resMan), _coordAdjuster(coordAdjuster), _ports(ports), _screen(screen), _palette(palette), _resourceId(resourceId), _EGAdrawingVisualize(EGAdrawingVisualize) {
 	assert(resourceId != -1);
@@ -195,6 +206,15 @@ Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen 
 	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
+bool fileIsInExtraDIRPicture(std::string fileName) {
+	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName);
+	// Check if iterator points to end or not
+	if (extraDIRListit != extraDIRList.end()) {
+		return true;
+	} else {
+		return false;
+	}
+}
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	viewsMap.clear();
 	g_sci->_gfxPalette16->overridePalette = false;
@@ -247,7 +267,58 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
 	}
+	if (videoCutsceneEnd == _resource->name().c_str()) {
+		playingVideoCutscenes = false;
+		wasPlayingVideoCutscenes = true;
+		videoCutsceneEnd = "-undefined-";
+		videoCutsceneStart = "-undefined-";
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+	}
+	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
+		if (fileIsInExtraDIRPicture((_resource->name() + ".cts").c_str())) {
+			Common::String cfgfileName = _resource->name() + ".cts";
+			debug(cfgfileName.c_str());
+			Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
+			if (cfg) {
+				Common::String line, texttmp;
+				cutscene_mute_midi = false;
+				while (!cfg->eos()) {
+					texttmp = cfg->readLine();
+					if (texttmp.firstChar() != '#') {
+						if (texttmp.contains("mute_midi")) {
+							cutscene_mute_midi = true;
+						} else {
+							videoCutsceneEnd = texttmp.c_str();
+						}
+					}
+				}
+				videoCutsceneStart = _resource->name().c_str();
 
+				g_sci->oggBackground = _resource->name() + ".ogg";
+
+				g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
+
+				g_sci->_theoraDecoderCutscenes->loadFile(_resource->name() + ".ogg");
+				g_sci->_theoraDecoderCutscenes->start();
+				int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
+
+				playingVideoCutscenes = true;
+				wasPlayingVideoCutscenes = true;
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+				if (cutscene_mute_midi) {
+					if (midiMusic != NULL)
+						midiMusic->setMasterVolume(0);
+				}
+			}
+		} else {
+			debug(10, ("NO " + _resource->name() + ".cts").c_str());
+		}
+	}
 	Common::FSNode folder;
 	if (ConfMan.hasKey("extrapath")) {
 		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {

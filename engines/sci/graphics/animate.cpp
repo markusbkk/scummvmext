@@ -48,9 +48,15 @@
 #include <cctype>
 #include <common/system.h>
 #include <list>
+#include <engines/sci/sound/midiparser_sci.h>
 
 namespace Sci {
 extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
+extern std::string videoCutsceneEnd;
+extern std::string videoCutsceneStart;
+extern MidiParser_SCI *midiMusic;
+extern bool cutscene_mute_midi;
 extern std::list<std::string> extraDIRList;
 extern std::list<std::string>::iterator extraDIRListit;
 extern std::string extraPath;
@@ -313,6 +319,58 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 			    int retVal, buf_size = 32;
 			    retVal = snprintf(viewstrbuffer, buf_size, "view.%u.%u.%u", listEntry.viewId, listEntry.loopNo, listEntry.celNo);
 			    Common::String fn = viewstrbuffer;
+			    if (videoCutsceneEnd == fn.c_str()) {
+				    playingVideoCutscenes = false;
+				    wasPlayingVideoCutscenes = true;
+				    videoCutsceneEnd = "-undefined-";
+				    videoCutsceneStart = "-undefined-";
+				    g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+				    g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+				    g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+			    }
+			    if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
+				    if (fileIsInExtraDIR((fn + ".cts").c_str())) {
+					    Common::String cfgfileName = fn + ".cts";
+					    debug(cfgfileName.c_str());
+					    Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
+					    if (cfg) {
+						    Common::String line, texttmp;
+						    cutscene_mute_midi = false;
+						    while (!cfg->eos()) {
+							    texttmp = cfg->readLine();
+							    if (texttmp.firstChar() != '#') {
+								    if (texttmp.contains("mute_midi")) {
+									    cutscene_mute_midi = true;
+								    } else {
+									    videoCutsceneEnd = texttmp.c_str();
+								    }
+							    }
+						    }
+						    videoCutsceneStart = viewstrbuffer;
+
+						    g_sci->oggBackground = fn + ".ogg";
+
+						    g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
+
+						    g_sci->_theoraDecoderCutscenes->loadFile(fn + ".ogg");
+						    g_sci->_theoraDecoderCutscenes->start();
+						    int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
+
+						    playingVideoCutscenes = true;
+						    wasPlayingVideoCutscenes = true;
+						    g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+						    g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+						    g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+						    if (cutscene_mute_midi) {
+							    if (midiMusic != NULL)
+								    midiMusic->setMasterVolume(0);
+						    }
+					    }
+				    } else {
+					    debug(10, ("NO " + fn + ".cts").c_str());
+				    }
+			    }
 			    
 			    bool preloaded = false;
 			    listEntry.viewpng = NULL;

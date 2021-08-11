@@ -38,12 +38,12 @@
 namespace Sci {
 extern bool playingVideoCutscenes;
 extern bool wasPlayingVideoCutscenes;
-extern int videoCutsceneEndScript;
-extern int videoCutsceneStartScript;
+extern std::string videoCutsceneEnd;
+extern std::string videoCutsceneStart;
 extern MidiParser_SCI *midiMusic;
-bool cutscene_mute_midi = false;
-extern std::map<std::int16_t, std::pair<int16_t, std::string> > videoCutscenesMap;
-extern std::map<std::int16_t, std::pair<int16_t, std::string> >::iterator videoCutscenesMapit;
+extern bool cutscene_mute_midi;
+extern std::map<int16, std::pair<int16, std::string> > videoCutscenesMap;
+extern std::map<int16, std::pair<int16, std::string> >::iterator videoCutscenesMapit;
 
 const char *sciObjectTypeNames[] = {
 	"terminator", "object", "code", "synonyms", "said", "strings", "class",
@@ -95,12 +95,20 @@ enum {
 void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptPatcher, bool applyScriptPatches) {
 	freeScript();
 	bool scriptFirstRun = true;
-
-	if (videoCutsceneEndScript == script_nr) {
+	char scriptstrbuffer[32];
+	int retVal, buf_size = 32;
+	retVal = snprintf(scriptstrbuffer, buf_size, "script.%u", script_nr);
+	Common::String fn = scriptstrbuffer;
+	std::string st = fn.c_str();
+	if (videoCutsceneEnd == st) {
 		g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
 		playingVideoCutscenes = false;
-		videoCutsceneEndScript = 19830;
-		videoCutsceneStartScript = 19830;
+		videoCutsceneEnd = "-undefined-";
+		videoCutsceneStart = "-undefined-";
+		wasPlayingVideoCutscenes = true;
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
 	}
 
 	if (videoCutscenesMap.size() > 0)
@@ -111,6 +119,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 				scriptFirstRun = false;
 			}
 		}
+	
 	if (scriptFirstRun) {
 		debug("~~~~~~~~~~~~~~~~~~~~~~~~");
 		debug("LOADED UNIQUE SCRIPT : %u", script_nr);
@@ -118,14 +127,8 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 		std::pair<int16_t, std::string> tmp;
 		tmp.first = 0;
 		tmp.second = "NULL";
-		videoCutscenesMap.insert(std::pair<int16_t, std::pair<int16_t, std::string> >(script_nr, tmp));
+		videoCutscenesMap.insert(std::pair<int16, std::pair<int16, std::string> >(script_nr, tmp));
 
-		if (videoCutsceneStartScript != script_nr)
-			if (videoCutscenesMap.size() > 0)
-				for (videoCutscenesMapit = videoCutscenesMap.begin();
-				     videoCutscenesMapit != videoCutscenesMap.end(); ++videoCutscenesMapit) {
-
-					if (videoCutscenesMapit->first == script_nr) {
 						if (ConfMan.hasKey("extrapath")) {
 							Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 							char scriptstrbuffer[32];
@@ -133,8 +136,8 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 							retVal = snprintf(scriptstrbuffer, buf_size, "script.%u", script_nr);
 							Common::String fn = scriptstrbuffer;
 
-							if (folder.exists() && folder.getChild(fn + ".cfg").exists()) {
-								Common::String cfgfileName = Common::FSNode(ConfMan.get("extrapath")).getChild(fn + ".cfg").getName();
+							if (folder.exists() && folder.getChild(fn + ".cts").exists()) {
+								Common::String cfgfileName = Common::FSNode(ConfMan.get("extrapath")).getChild(fn + ".cts").getName();
 								debug(cfgfileName.c_str());
 								Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
 								if (cfg) {
@@ -146,11 +149,11 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 											if (texttmp.contains("mute_midi")) {
 												cutscene_mute_midi = true;
 											} else {
-												videoCutsceneEndScript = atoi(texttmp.c_str());
+												videoCutsceneEnd = texttmp.c_str();
 											}
 										}
 									}
-									videoCutsceneStartScript = script_nr;
+					                videoCutsceneStart = scriptstrbuffer;
 									Common::String fileName = (folder.getPath() + folder.getChild(fn + ".ogg").getName()).c_str();
 									g_sci->oggBackground = fn + ".ogg";
 
@@ -159,19 +162,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 									g_sci->_theoraDecoderCutscenes->loadFile(fn + ".ogg");
 									g_sci->_theoraDecoderCutscenes->start();
 									int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
-									/*
-						while (!g_sci->_theoraDecoderCutscenes->isPlaying()) {
-							debug(("WAITING TO PLAY : " + fileName).c_str());
-							g_system->delayMillis(20);
-						}
-						
-						
-						while (g_sci->_theoraDecoderCutscenes->isPlaying() && !g_sci->_theoraDecoderCutscenes->endOfVideo()) {
 
-							g_system->copyRectToScreen(g_sci->_theoraDecoderCutscenes->decodeNextFrame()->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
-							g_system->updateScreen();
-						}
-						*/
 									playingVideoCutscenes = true;
 									wasPlayingVideoCutscenes = true;
 									g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
@@ -184,11 +175,11 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 									}
 								}
 							} else {
-								debug(10, "NO script.%d.cfg", script_nr);
+								debug(10, "NO script.%d.cts", script_nr);
 							}
 						}
-					}
-				}
+					
+				
 	}
 	Resource *script = resMan->findResource(ResourceId(kResourceTypeScript, script_nr), false);
 	if (!script)
