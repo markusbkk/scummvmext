@@ -595,7 +595,18 @@ Common::Error SciEngine::run() {
 		suggestDownloadGK2SubTitlesPatch();
 	}
 	extraPath = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+	preLoadedPNGs = false;
+	extraDIRList.clear();
 	CreateDIRListing();
+	viewsMap.clear();
+	_gfxAnimate->LoadAllExtraPNG();
+	fontsMap.clear();
+	ttfFontsMap.clear();
+	videoCutscenesMap.clear();
+	playingVideoCutscenes = false;
+	videoCutsceneStart = "-undefined-";
+	videoCutsceneEnd = "-undefined-";
+	blackFade = 1.0;
 	runTheoraIntro();
 	runGame();
 	runTheoraOutro();
@@ -605,8 +616,8 @@ Common::Error SciEngine::run() {
 	ttfFontsMap.clear();
 	videoCutscenesMap.clear();
 	playingVideoCutscenes = false;
-	videoCutsceneStart = 19839;
-	videoCutsceneEnd = 19830;
+	videoCutsceneStart = "-undefined-";
+	videoCutsceneEnd = "-undefined-";
 	preLoadedPNGs = false;
 	blackFade = 1.0;
 	ConfMan.flushToDisk();

@@ -216,7 +216,7 @@ bool fileIsInExtraDIRPicture(std::string fileName) {
 	}
 }
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
-	viewsMap.clear();
+	
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
@@ -1110,7 +1110,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	//g_sci->_gfxMenu->SaveMenuBits();
-	viewsMap.clear();
+	
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
 	byte priority = _priority;
