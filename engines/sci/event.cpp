@@ -430,7 +430,7 @@ void EventManager::updateScreen() {
 	EngineState *s = g_sci->getEngineState();
 	if (!playingVideoCutscenes && wasPlayingVideoCutscenes) {
 		wasPlayingVideoCutscenes = false;
-		if (midiMusic != NULL && _masterVolumeMIDI != NULL)
+		if (midiMusic != NULL)
 			midiMusic->setMasterVolume(_masterVolumeMIDI);
 	}
 	if (!playingVideoCutscenes) {

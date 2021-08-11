@@ -46,7 +46,7 @@
 namespace Sci {
 extern bool playingVideoCutscenes;
 MidiParser_SCI *midiMusic;
-byte _masterVolumeMIDI = NULL;
+byte _masterVolumeMIDI = 11;
 SciMusic::SciMusic(SciVersion soundVersion, bool useDigitalSFX)
 	: _soundVersion(soundVersion), _soundOn(true), _masterVolume(15), _globalReverb(0), _useDigitalSFX(useDigitalSFX) {
 
