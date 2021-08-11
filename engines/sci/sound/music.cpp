@@ -44,7 +44,9 @@
 //#define DEBUG_REMAP
 
 namespace Sci {
-
+extern bool playingVideoCutscenes;
+MidiParser_SCI *midiMusic;
+byte _masterVolumeMIDI = NULL;
 SciMusic::SciMusic(SciVersion soundVersion, bool useDigitalSFX)
 	: _soundVersion(soundVersion), _soundOn(true), _masterVolume(15), _globalReverb(0), _useDigitalSFX(useDigitalSFX) {
 
@@ -435,7 +437,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			char resIdStr[5];
 			sprintf(resIdStr, "%d", pSnd->resourceId);
 			fnStr += resIdStr;
-			if (ConfMan.hasKey("extrapath")) {		
+			if (ConfMan.hasKey("extrapath")) {
 				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
 					if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
 						Common::File *sciAudioFile = new Common::File();
@@ -447,7 +449,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 								fileName.setChar('/', i);
 						}
 						sciAudioFile->open(fileName);
-						
+
 						musicStream = nullptr;
 						musicStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 						musicLoopIn = 0;
@@ -458,7 +460,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 							debug("Looking for : %s", (folder.getPath() + folder.getChild((fnStr + ".cfg").c_str()).getName().c_str()).c_str());
 							openfile.open((folder.getPath() + folder.getChild((fnStr + ".cfg").c_str()).getName()).c_str(), std::ios::in);
 							if (openfile.is_open()) {
-								
+
 								std::string tp;
 								std::string text = "";
 								std::string delimiter = "=inMs/outMs=";
@@ -497,12 +499,13 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 
 								if (pSnd->pMidiParser == NULL) {
 									pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
+
 									pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
 									pSnd->pMidiParser->setTimerRate(_dwTempo);
 									pSnd->pMidiParser->setMasterVolume(_masterVolume);
 								}
 								pSnd->pauseCounter = 0;
-
+								midiMusic = pSnd->pMidiParser;
 								// Find out what channels to filter for SCI0
 								channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
 
@@ -617,7 +620,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 									pSnd->pMidiParser->setMasterVolume(_masterVolume);
 								}
 								pSnd->pauseCounter = 0;
-
+								midiMusic = pSnd->pMidiParser;
 								// Find out what channels to filter for SCI0
 								channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
 
@@ -676,8 +679,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			} else {
 				muteMidi = false;
 			}
-			if (!muteMidi || !isPlayingWav)
-			{
+			if (!muteMidi || !isPlayingWav) {
 				debug(("Didn't Find : " + fnStr + ".mp3").c_str());
 				if (g_system->getMixer()) {
 					if (isPlayingWav) {
@@ -686,61 +688,63 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 					}
 				}
 				isPlayingWav = false;
+
 				pSnd->soundType = Audio::Mixer::kMusicSoundType;
-					
-					if (pSnd->pMidiParser == NULL) {
-						pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-						pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-						pSnd->pMidiParser->setTimerRate(_dwTempo);
-						pSnd->pMidiParser->setMasterVolume(_masterVolume);
-					}
-					pSnd->pauseCounter = 0;
 
-					// Find out what channels to filter for SCI0
-					channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
-
-					for (int i = 0; i < 16; ++i)
-						pSnd->_usedChannels[i] = 0xFF;
-					for (int i = 0; i < track->channelCount; ++i) {
-						SoundResource::Channel &chan = track->channels[i];
-
-						pSnd->_usedChannels[i] = chan.number;
-						pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-						pSnd->_chan[chan.number]._prio = chan.prio;
-						pSnd->_chan[chan.number]._voices = chan.poly;
-
-						// CHECKME: Some SCI versions use chan.flags & 1 for this:
-						pSnd->_chan[chan.number]._dontMap = false;
-
-						// FIXME: Most MIDI tracks use the first 10 bytes for
-						// fixed MIDI commands. SSCI skips those the first iteration,
-						// but _does_ update channel state (including volume) with
-						// them. Specifically, prio/voices, patch, volume, pan.
-						// This should probably be implemented in
-						// MidiParser_SCI::loadMusic.
-					}
-			
-					pSnd->pMidiParser->mainThreadBegin();
-					// loadMusic() below calls jumpToTick.
-					// Disable sound looping and hold before jumpToTick is called,
-					// otherwise the song may keep looping forever when it ends in
-					// jumpToTick (e.g. LSL3, when going left from room 210).
-					uint16 prevLoop = pSnd->loop;
-					int16 prevHold = pSnd->hold;
-					pSnd->loop = 0;
-					pSnd->hold = -1;
-					pSnd->playBed = false;
-					pSnd->overridePriority = false;
-
-					pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-					pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-					// Restore looping and hold
-					pSnd->loop = prevLoop;
-					pSnd->hold = prevHold;
-					pSnd->pMidiParser->mainThreadEnd();
+				if (pSnd->pMidiParser == NULL) {
+					pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
+					pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
+					pSnd->pMidiParser->setTimerRate(_dwTempo);
+					pSnd->pMidiParser->setMasterVolume(_masterVolume);
 				}
+
+				pSnd->pauseCounter = 0;
+				midiMusic = pSnd->pMidiParser;
+				// Find out what channels to filter for SCI0
+				channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
+
+				for (int i = 0; i < 16; ++i)
+					pSnd->_usedChannels[i] = 0xFF;
+				for (int i = 0; i < track->channelCount; ++i) {
+					SoundResource::Channel &chan = track->channels[i];
+
+					pSnd->_usedChannels[i] = chan.number;
+					pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
+					pSnd->_chan[chan.number]._prio = chan.prio;
+					pSnd->_chan[chan.number]._voices = chan.poly;
+
+					// CHECKME: Some SCI versions use chan.flags & 1 for this:
+					pSnd->_chan[chan.number]._dontMap = false;
+
+					// FIXME: Most MIDI tracks use the first 10 bytes for
+					// fixed MIDI commands. SSCI skips those the first iteration,
+					// but _does_ update channel state (including volume) with
+					// them. Specifically, prio/voices, patch, volume, pan.
+					// This should probably be implemented in
+					// MidiParser_SCI::loadMusic.
+				}
+
+				pSnd->pMidiParser->mainThreadBegin();
+				// loadMusic() below calls jumpToTick.
+				// Disable sound looping and hold before jumpToTick is called,
+				// otherwise the song may keep looping forever when it ends in
+				// jumpToTick (e.g. LSL3, when going left from room 210).
+				uint16 prevLoop = pSnd->loop;
+				int16 prevHold = pSnd->hold;
+				pSnd->loop = 0;
+				pSnd->hold = -1;
+				pSnd->playBed = false;
+				pSnd->overridePriority = false;
+
+				pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
+				pSnd->reverb = pSnd->pMidiParser->getSongReverb();
+
+				// Restore looping and hold
+				pSnd->loop = prevLoop;
+				pSnd->hold = prevHold;
+				pSnd->pMidiParser->mainThreadEnd();
 			}
+		}
 	}
 }
 
@@ -1078,7 +1082,7 @@ uint16 SciMusic::soundGetMasterVolume() {
 
 void SciMusic::soundSetMasterVolume(uint16 vol) {
 	_masterVolume = vol;
-
+	_masterVolumeMIDI = _masterVolume;
 	Common::StackLock lock(_mutex);
 
 	const MusicList::iterator end = _playList.end();
@@ -1091,6 +1095,8 @@ void SciMusic::soundSetMasterVolume(uint16 vol) {
 void SciMusic::sendMidiCommand(uint32 cmd) {
 	Common::StackLock lock(_mutex);
 	_pMidiDrv->send(cmd);
+
+	
 }
 
 void SciMusic::sendMidiCommand(MusicEntry *pSnd, uint32 cmd) {

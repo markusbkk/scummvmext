@@ -140,19 +140,26 @@ bool GfxTransitions::doCreateFrame(uint32 shouldBeAtMsec) {
 }
 
 void GfxTransitions::updateScreen() {
-	Common::Event ev;
+	
+		Common::Event ev;
 
-	while (g_system->getEventManager()->pollEvent(ev)) {}	// discard all events
+		while (g_system->getEventManager()->pollEvent(ev)) {
+		} // discard all events
 
-	g_system->updateScreen();
+		if (!playingVideoCutscenes) {
+			g_system->updateScreen();
+		}
 }
 
 void GfxTransitions::updateScreenAndWait(uint32 shouldBeAtMsec) {
-	updateScreen();
-	// if we have still some time left, delay accordingly
-	uint32 msecPos = g_system->getMillis() - _transitionStartTime;
-	if (shouldBeAtMsec > msecPos)
-		g_system->delayMillis(shouldBeAtMsec - msecPos);
+	if (!playingVideoCutscenes) {
+		updateScreen();
+	
+		// if we have still some time left, delay accordingly
+		uint32 msecPos = g_system->getMillis() - _transitionStartTime;
+		if (shouldBeAtMsec > msecPos)
+			g_system->delayMillis(shouldBeAtMsec - msecPos);
+	}
 }
 
 // will translate a number and return corresponding translationEntry
@@ -167,7 +174,7 @@ const GfxTransitionTranslateEntry *GfxTransitions::translateNumber (int16 number
 }
 
 void GfxTransitions::doit(Common::Rect picRect) {
-	if (!playingVideoCutscenes) {
+	
 
 		const GfxTransitionTranslateEntry *translationEntry = _translationTable;
 
@@ -201,7 +208,7 @@ void GfxTransitions::doit(Common::Rect picRect) {
 
 		// Now we do the actual transition to the new screen
 		doTransition(_number, false);
-	}
+	
 	_screen->_picNotValid = 0;
 }
 

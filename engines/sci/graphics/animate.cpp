@@ -47,9 +47,13 @@
 #include <string>
 #include <cctype>
 #include <common/system.h>
+#include <list>
 
 namespace Sci {
 extern bool playingVideoCutscenes;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
+extern std::string extraPath;
 GfxAnimate::GfxAnimate(EngineState *state, ScriptPatcher *scriptPatcher, GfxCache *cache, GfxPorts *ports, GfxPaint16 *paint16, GfxScreen *screen, GfxPalette *palette, GfxCursor *cursor, GfxTransitions *transitions)
 	: _s(state), _scriptPatcher(scriptPatcher), _cache(cache), _ports(ports), _paint16(paint16), _screen(screen), _palette(palette), _cursor(cursor), _transitions(transitions) {
 	init();
@@ -140,6 +144,15 @@ bool GfxAnimate::detectFastCast() {
 
 void GfxAnimate::disposeLastCast() {
 	_lastCastData.clear();
+}
+bool fileIsInExtraDIR(std::string fileName) {
+	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName);
+	// Check if iterator points to end or not
+	if (extraDIRListit != extraDIRList.end()) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
 bool GfxAnimate::invoke(List *list, int argc, reg_t *argv) {
@@ -325,11 +338,11 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 					    }
 				    }
 			    if (!preloaded) {
-				    Common::FSNode folder;
-				    if (ConfMan.hasKey("extrapath")) {
-					    if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+
+				    if (!extraDIRList.empty()) {
+					    if (fileIsInExtraDIR((fn + ".png").c_str())) {
 						    if (!listEntry.viewEnhanced) {
-							    Common::String fileName = folder.getChild(fn + ".png").getName();
+							    Common::String fileName = fn + ".png";
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    //debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -354,9 +367,9 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 								    }
 							    }
 						    }
-					    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+					    } else if (fileIsInExtraDIR((fn + "_256.png").c_str())) {
 						    if (!listEntry.viewEnhanced) {
-							    Common::String fileName = folder.getChild(fn + "_256.png").getName();
+							    Common::String fileName = fn + "_256.png";
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    //debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -381,9 +394,9 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 								    }
 							    }
 						    }
-					    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+					    } else if (fileIsInExtraDIR((fn + "_256RP.png").c_str())) {
 						    if (!listEntry.viewEnhanced) {
-							    Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+							    Common::String fileName = fn + "_256RP.png";
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    //debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -838,10 +851,7 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		_screen->convertToRGB(_ports->_curPort->rect);
 	}*/
 		reAnimate(_ports->_curPort->rect);
-		playingVideoCutscenes = false;
-		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
-		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
-		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+
 	}
 }
 
@@ -915,10 +925,10 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 					}
 					if (!preloaded) {
 						Common::FSNode folder;
-						if (ConfMan.hasKey("extrapath")) {
-							if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+						if (!extraDIRList.empty()) {
+							if (fileIsInExtraDIR((fn + ".png").c_str())) {
 								if (!it->viewEnhanced) {
-									Common::String fileName = folder.getChild(fn + ".png").getName();
+									Common::String fileName = fn + ".png";
 									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 									if (!file) {
 										//debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -943,9 +953,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 										}
 									}
 								}
-							} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+							} else if (fileIsInExtraDIR((fn + "_256.png").c_str())) {
 								if (!it->viewEnhanced) {
-									Common::String fileName = folder.getChild(fn + "_256.png").getName();
+									Common::String fileName = fn + "_256.png";
 									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 									if (!file) {
 										//debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -970,9 +980,9 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 										}
 									}
 								}
-							} else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+							} else if (fileIsInExtraDIR((fn + "_256RP.png").c_str())) {
 								if (!it->viewEnhanced) {
-									Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+									Common::String fileName = fn + "_256RP.png";
 									Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 									if (!file) {
 										//debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -1114,10 +1124,10 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 			    }
 			    if (!preloaded) {
 				    Common::FSNode folder;
-				    if (ConfMan.hasKey("extrapath")) {
-					    if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + ".png").exists()) {
+				    if (!extraDIRList.empty()) {
+					    if (fileIsInExtraDIR((fn + "png").c_str())) {
 						    if (!listEntry.viewEnhanced) {
-							    Common::String fileName = folder.getChild(fn + ".png").getName();
+							    Common::String fileName = fn + ".png";
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    //debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -1142,9 +1152,9 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 								    }
 							    }
 						    }
-					    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256.png").exists()) {
+					    } else if (fileIsInExtraDIR((fn + "_256.png").c_str())) {
 						    if (!listEntry.viewEnhanced) {
-							    Common::String fileName = folder.getChild(fn + "_256.png").getName();
+							    Common::String fileName = fn + "_256.png";
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    //debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());
@@ -1169,9 +1179,9 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 								    }
 							    }
 						    }
-					    } else if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(fn + "_256RP.png").exists()) {
+					    } else if (fileIsInExtraDIR((fn + "_256RP.png").c_str())) {
 						    if (!listEntry.viewEnhanced) {
-							    Common::String fileName = folder.getChild(fn + "_256RP.png").getName();
+							    Common::String fileName = fn + "_256RP.png";
 							    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 							    if (!file) {
 								    //debug("Enhanced Bitmap %s DOES NOT EXIST, yet would have been loaded.. 2", fileName.c_str());

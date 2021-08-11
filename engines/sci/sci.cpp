@@ -29,6 +29,10 @@
 #include "engines/advancedDetector.h"
 #include "engines/util.h"
 
+#ifdef WIN32
+#include <boost/filesystem.hpp>
+#endif
+
 #include "sci/sci.h"
 #include "sci/debug.h"
 #include "sci/console.h"
@@ -85,7 +89,7 @@
 #include <image/png.h>
 #include <map>
 #include <string>
-
+#include <list>
 
 namespace Sci {
 
@@ -101,10 +105,14 @@ std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator f
 std::map<std::string, Graphics::Font *> ttfFontsMap;
 std::map<std::string, Graphics::Font *>::iterator ttfFontsMapit;
 bool playingVideoCutscenes = false;
+bool wasPlayingVideoCutscenes = false;
 int videoCutsceneStartScript = 19839;
 int videoCutsceneEndScript = 19830;
 bool preLoadedPNGs = false;
 float blackFade = 1.0;
+std::list<std::string> extraDIRList;
+std::list<std::string>::iterator extraDIRListit;
+std::string extraPath = "";
 
 Graphics::Surface *loadCelPNGSci(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
@@ -155,7 +163,48 @@ bool hasEnding(std::string const &fullString, std::string const &ending) {
 		return false;
 	}
 }
+void SciEngine::CreateDIRListing() {
 
+#ifdef WIN32
+	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
+		std::string f = it->path().filename().string();
+		extraDIRList.push_back(f);
+		debug(f.c_str());
+	}
+
+#else
+
+	std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+
+	DIR *dir;
+	class dirent *ent;
+	//class stat st;
+
+	dir = opendir(directory.c_str());
+	while ((ent = readdir(dir)) != NULL) {
+		const std::string file_name = ent->d_name;
+		const std::string full_file_name = directory + "/" + file_name;
+
+		//if (file_name[0] == '.')
+		//continue;
+
+		//if (stat(full_file_name.c_str(), &st) == -1)
+		//continue;
+
+		//const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+		//if (is_directory)
+		//continue;
+
+		std::string path = file_name;
+		extraDIRList.push_back(path);
+
+		}
+	}
+	closedir(dir);
+#endif
+}
 
 SciEngine::SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId)
 		: Engine(syst), _gameDescription(desc), _gameId(gameId), _rng("sci") {
@@ -546,10 +595,12 @@ Common::Error SciEngine::run() {
 	if (getGameId() == GID_GK2 && ConfMan.getBool("subtitles") && !_resMan->testResource(ResourceId(kResourceTypeSync, 10))) {
 		suggestDownloadGK2SubTitlesPatch();
 	}
-
+	extraPath = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+	CreateDIRListing();
 	runTheoraIntro();
 	runGame();
 	runTheoraOutro();
+	extraDIRList.clear();
 	viewsMap.clear();
 	fontsMap.clear();
 	ttfFontsMap.clear();

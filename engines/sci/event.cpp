@@ -34,14 +34,18 @@
 #include "sci/graphics/frameout.h"
 #endif
 #include "sci/graphics/screen.h"
-
+#include <engines/sci/sound/midiparser_sci.h>
+#include "sci/sound/music.h"
 namespace Sci {
-	extern bool playingVideoCutscenes;
+
 struct ScancodeRow {
 	int offset;
 	const char *keys;
 };
-
+extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
+extern MidiParser_SCI *midiMusic;
+extern byte _masterVolumeMIDI;
 static const ScancodeRow scancodeAltifyRows[] = {
 	{ 0x10, "QWERTYUIOP[]"  },
 	{ 0x1e, "ASDFGHJKL;'\\" },
@@ -424,6 +428,11 @@ void EventManager::updateScreen() {
 	// Update the screen here, since it's called very often.
 	// Throttle the screen update rate to 60fps.
 	EngineState *s = g_sci->getEngineState();
+	if (!playingVideoCutscenes && wasPlayingVideoCutscenes) {
+		wasPlayingVideoCutscenes = false;
+		if (midiMusic != NULL && _masterVolumeMIDI != NULL)
+			midiMusic->setMasterVolume(_masterVolumeMIDI);
+	}
 	if (!playingVideoCutscenes) {
 		if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
 			g_system->updateScreen();
@@ -433,6 +442,7 @@ void EventManager::updateScreen() {
 			// (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
 			// which is very expensive to invoke constantly without any
 			// throttling at all.
+			
 			if (g_engine->shouldQuit())
 				s->abortScriptProcessing = kAbortQuitGame;
 		}
@@ -446,6 +456,7 @@ void EventManager::updateScreen() {
 			}
 		}
 		if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoderCutscenes->getTimeToNextFrame()) {
+			
 			s->_screenUpdateTime = g_system->getMillis();
 			if (g_sci->_theoraDecoderCutscenes->getCurFrame() == -1) {
 				g_sci->_theoraDecoderCutscenes->decodeNextFrame();

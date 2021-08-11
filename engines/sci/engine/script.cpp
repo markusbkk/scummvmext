@@ -28,14 +28,20 @@
 #include "sci/engine/state.h"
 #include "sci/engine/kernel.h"
 #include "sci/engine/script.h"
+#include "sci/sound/audio.h"
+#include "sci/sound/music.h"
 #include "video/theora_decoder.h"
 #include "common/util.h"
 #include <common/config-manager.h>
 #include <common/system.h>
+#include <engines/sci/sound/midiparser_sci.h>
 namespace Sci {
 extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
 extern int videoCutsceneEndScript;
 extern int videoCutsceneStartScript;
+extern MidiParser_SCI *midiMusic;
+bool cutscene_mute_midi = false;
 extern std::map<std::int16_t, std::pair<int16_t, std::string> > videoCutscenesMap;
 extern std::map<std::int16_t, std::pair<int16_t, std::string> >::iterator videoCutscenesMapit;
 
@@ -133,9 +139,16 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 								Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
 								if (cfg) {
 									Common::String line, texttmp;
+									cutscene_mute_midi = false;
 									while (!cfg->eos()) {
 										texttmp = cfg->readLine();
-										videoCutsceneEndScript = atoi(texttmp.c_str());
+										if (texttmp.firstChar() != '#') {
+											if (texttmp.contains("mute_midi")) {
+												cutscene_mute_midi = true;
+											} else {
+												videoCutsceneEndScript = atoi(texttmp.c_str());
+											}
+										}
 									}
 									videoCutsceneStartScript = script_nr;
 									Common::String fileName = (folder.getPath() + folder.getChild(fn + ".ogg").getName()).c_str();
@@ -160,9 +173,15 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 						}
 						*/
 									playingVideoCutscenes = true;
+									wasPlayingVideoCutscenes = true;
 									g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
 									g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
 									g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+									if (cutscene_mute_midi) {
+										if (midiMusic != NULL)
+											midiMusic->setMasterVolume(0);
+									}
 								}
 							} else {
 								debug(10, "NO script.%d.cfg", script_nr);
