@@ -275,6 +275,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+		Common::String dbg = "Cutscene ENDED on : " + _resource->name();
+		debug(dbg.c_str());
 	}
 	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
 		if (fileIsInExtraDIRPicture((_resource->name() + ".cts").c_str())) {
@@ -314,6 +316,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					if (midiMusic != NULL)
 						midiMusic->setMasterVolume(0);
 				}
+				Common::String dbg = "Cutscene STARTED on : " + _resource->name();
+				debug(dbg.c_str());
+				dbg = "Cutscene set to end on : ";
+				dbg += videoCutsceneEnd.c_str();
+				debug(dbg.c_str());
 			}
 		} else {
 			debug(10, ("NO " + _resource->name() + ".cts").c_str());

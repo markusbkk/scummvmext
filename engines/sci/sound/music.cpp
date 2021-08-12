@@ -40,13 +40,21 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-
+#include <list>
 //#define DEBUG_REMAP
 
 namespace Sci {
 extern bool playingVideoCutscenes;
 MidiParser_SCI *midiMusic;
 byte _masterVolumeMIDI = 11;
+extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
+extern std::string videoCutsceneEnd;
+extern std::string videoCutsceneStart;
+extern bool cutscene_mute_midi;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
+extern std::string extraPath;
 SciMusic::SciMusic(SciVersion soundVersion, bool useDigitalSFX)
 	: _soundVersion(soundVersion), _soundOn(true), _masterVolume(15), _globalReverb(0), _useDigitalSFX(useDigitalSFX) {
 
@@ -362,7 +370,15 @@ void SciMusic::sortPlayList() {
 	// Sort the play list in descending priority order
 	Common::sort(_playList.begin(), _playList.end(), musicEntryCompare);
 }
-
+bool fileIsInExtraDIRMusic(std::string fileName) {
+	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName);
+	// Check if iterator points to end or not
+	if (extraDIRListit != extraDIRList.end()) {
+		return true;
+	} else {
+		return false;
+	}
+}
 void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 	// Remove all currently mapped channels of this MusicEntry first,
 	// since they will no longer be valid.
@@ -433,10 +449,69 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			// play MIDI track
 			Common::StackLock lock(_mutex);
 			Common::FSNode folder;
-			Common::String fnStr = "music.";
-			char resIdStr[5];
-			sprintf(resIdStr, "%d", pSnd->resourceId);
-			fnStr += resIdStr;
+			char musicstrbuffer[32];
+			int retVal, buf_size = 32;
+			retVal = snprintf(musicstrbuffer, buf_size, "music.%u", pSnd->resourceId);
+			Common::String fnStr = musicstrbuffer;
+			if (videoCutsceneEnd == fnStr.c_str()) {
+				playingVideoCutscenes = false;
+				wasPlayingVideoCutscenes = true;
+				videoCutsceneEnd = "-undefined-";
+				videoCutsceneStart = "-undefined-";
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+				Common::String dbg = "Cutscene ENDED on : " + fnStr;
+				debug(dbg.c_str());
+			}
+			if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
+				if (fileIsInExtraDIRMusic((fnStr + ".cts").c_str())) {
+					Common::String cfgfileName = fnStr + ".cts";
+					debug(cfgfileName.c_str());
+					Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
+					if (cfg) {
+						Common::String line, texttmp;
+						cutscene_mute_midi = false;
+						while (!cfg->eos()) {
+							texttmp = cfg->readLine();
+							if (texttmp.firstChar() != '#') {
+								if (texttmp.contains("mute_midi")) {
+									cutscene_mute_midi = true;
+								} else {
+									videoCutsceneEnd = texttmp.c_str();
+								}
+							}
+						}
+						videoCutsceneStart = musicstrbuffer;
+
+						g_sci->oggBackground = fnStr + ".ogg";
+
+						g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
+
+						g_sci->_theoraDecoderCutscenes->loadFile(fnStr + ".ogg");
+						g_sci->_theoraDecoderCutscenes->start();
+						int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
+
+						playingVideoCutscenes = true;
+						wasPlayingVideoCutscenes = true;
+						g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+						g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+						g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+						if (cutscene_mute_midi) {
+							if (midiMusic != NULL)
+								midiMusic->setMasterVolume(0);
+						}
+						Common::String dbg = "Cutscene STARTED on : " + fnStr;
+						debug(dbg.c_str());
+						dbg = "Cutscene set to end on : ";
+						dbg += videoCutsceneEnd.c_str();
+						debug(dbg.c_str());
+					}
+				} else {
+					debug(10, ("NO " + fnStr + ".cts").c_str());
+				}
+			}
 			if (ConfMan.hasKey("extrapath")) {
 				if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
 					if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {

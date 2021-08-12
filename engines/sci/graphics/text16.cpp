@@ -598,6 +598,8 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 			g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
 			g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
 			g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+			Common::String dbg = "Cutscene ENDED on : " + fn;
+			debug(dbg.c_str());
 		}
 		if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
 			if (fileIsInExtraDIRText((fn + ".cts").c_str())) {
@@ -638,6 +640,11 @@ void GfxText16::Box(const char *text, uint16 languageSplitter, bool show, const 
 							midiMusic->setMasterVolume(0);
 					}
 				}
+				Common::String dbg = "Cutscene STARTED on : " + fn;
+				debug(dbg.c_str());
+				dbg = "Cutscene set to end on : ";
+				dbg += videoCutsceneEnd.c_str();
+				debug(dbg.c_str());
 			} else {
 				debug(10, ("NO " + fn + ".cts").c_str());
 			}
