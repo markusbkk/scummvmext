@@ -55,6 +55,7 @@ extern bool cutscene_mute_midi;
 extern std::list<std::string> extraDIRList;
 extern std::list<std::string>::iterator extraDIRListit;
 extern std::string extraPath;
+int16 prevResourceId;
 SciMusic::SciMusic(SciVersion soundVersion, bool useDigitalSFX)
 	: _soundVersion(soundVersion), _soundOn(true), _masterVolume(15), _globalReverb(0), _useDigitalSFX(useDigitalSFX) {
 
@@ -435,7 +436,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			int endPart = track->digitalSampleEnd > 0 ? (track->digitalSampleSize - track->digitalSampleEnd) : 0;
 			const uint size = track->digitalSampleSize - track->digitalSampleStart - endPart;
 			pSnd->pStreamAud = Audio::makeRawStream(channelData.getUnsafeDataAt(track->digitalSampleStart),
-								size, track->digitalSampleRate, flags, DisposeAfterUse::NO);
+			                                        size, track->digitalSampleRate, flags, DisposeAfterUse::NO);
 			assert(pSnd->pStreamAud);
 			delete pSnd->pLoopStream;
 			pSnd->pLoopStream = 0;
@@ -446,8 +447,170 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			pSnd->isSample = true;
 		} else {
 
+			pSnd->soundType = Audio::Mixer::kMusicSoundType;
+
+			if (pSnd->pMidiParser == NULL) {
+				pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
+				pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
+				pSnd->pMidiParser->setTimerRate(_dwTempo);
+				pSnd->pMidiParser->setMasterVolume(_masterVolume);
+			}
+
+			pSnd->pauseCounter = 0;
+			midiMusic = pSnd->pMidiParser;
+			// Find out what channels to filter for SCI0
+			channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
+
+			for (int i = 0; i < 16; ++i)
+				pSnd->_usedChannels[i] = 0xFF;
+			for (int i = 0; i < track->channelCount; ++i) {
+				SoundResource::Channel &chan = track->channels[i];
+
+				pSnd->_usedChannels[i] = chan.number;
+				pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
+				pSnd->_chan[chan.number]._prio = chan.prio;
+				pSnd->_chan[chan.number]._voices = chan.poly;
+
+				// CHECKME: Some SCI versions use chan.flags & 1 for this:
+				pSnd->_chan[chan.number]._dontMap = false;
+
+				// FIXME: Most MIDI tracks use the first 10 bytes for
+				// fixed MIDI commands. SSCI skips those the first iteration,
+				// but _does_ update channel state (including volume) with
+				// them. Specifically, prio/voices, patch, volume, pan.
+				// This should probably be implemented in
+				// MidiParser_SCI::loadMusic.
+			}
+
+			pSnd->pMidiParser->mainThreadBegin();
+			// loadMusic() below calls jumpToTick.
+			// Disable sound looping and hold before jumpToTick is called,
+			// otherwise the song may keep looping forever when it ends in
+			// jumpToTick (e.g. LSL3, when going left from room 210).
+			uint16 prevLoop = pSnd->loop;
+			int16 prevHold = pSnd->hold;
+			pSnd->loop = 0;
+			pSnd->hold = -1;
+			pSnd->playBed = false;
+			pSnd->overridePriority = false;
+
+			pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
+			pSnd->reverb = pSnd->pMidiParser->getSongReverb();
+
+			// Restore looping and hold
+			pSnd->loop = prevLoop;
+			pSnd->hold = prevHold;
+			pSnd->pMidiParser->mainThreadEnd();
+		}
+	}
+}
+
+void SciMusic::soundPlay(MusicEntry *pSnd) {
+	_mutex.lock();
+
+	if (_soundVersion <= SCI_VERSION_1_EARLY && pSnd->playBed) {
+		// If pSnd->playBed, and version <= SCI1_EARLY, then kill
+		// existing sounds with playBed enabled.
+
+		uint playListCount = _playList.size();
+		for (uint i = 0; i < playListCount; i++) {
+			if (_playList[i] != pSnd && _playList[i]->playBed) {
+				debugC(2, kDebugLevelSound, "Automatically stopping old playBed song from soundPlay");
+				MusicEntry *old = _playList[i];
+				_mutex.unlock();
+				soundStop(old);
+				_mutex.lock();
+				break;
+			}
+		}
+	}
+
+	uint playListCount = _playList.size();
+	uint playListNo = playListCount;
+	MusicEntry *alreadyPlaying = NULL;
+
+	// searching if sound is already in _playList
+	for (uint i = 0; i < playListCount; i++) {
+		if (_playList[i] == pSnd)
+			playListNo = i;
+		if ((_playList[i]->status == kSoundPlaying) && (_playList[i]->pMidiParser))
+			alreadyPlaying = _playList[i];
+	}
+	if (playListNo == playListCount) { // not found
+		_playList.push_back(pSnd);
+	}
+
+	pSnd->time = ++_timeCounter;
+	sortPlayList();
+
+	_mutex.unlock();	// unlock to perform mixer-related calls
+
+	if (pSnd->pMidiParser) {
+		if ((_soundVersion <= SCI_VERSION_0_LATE) && (alreadyPlaying)) {
+			// Music already playing in SCI0?
+			if (pSnd->priority > alreadyPlaying->priority) {
+				// And new priority higher? pause previous music and play new one immediately.
+				// Example of such case: lsl3, when getting points (jingle is played then)
+				soundPause(alreadyPlaying);
+				alreadyPlaying->isQueued = true;
+			} else {
+				// And new priority equal or lower? queue up music and play it afterwards done by
+				//  SoundCommandParser::updateSci0Cues()
+				// Example of such case: iceman room 14
+				pSnd->isQueued = true;
+				pSnd->status = kSoundPaused;
+				return;
+			}
+		}
+	}
+
+	if (pSnd->isSample) {
+#ifdef ENABLE_SCI32
+		if (_soundVersion >= SCI_VERSION_2) {
+			// TODO: Sound number, loop state, and volume come from soundObj
+			// in SSCI. Getting them from MusicEntry could cause a bug if the
+			// soundObj was updated by a game script and not copied back to
+			// MusicEntry.
+			g_sci->_audio32->restart(ResourceId(kResourceTypeAudio, pSnd->resourceId), true, pSnd->loop != 0 && pSnd->loop != 1, pSnd->volume, pSnd->soundObj, false);
+			return;
+		} else
+#endif
+		if (!_pMixer->isSoundHandleActive(pSnd->hCurrentAud)) {
+			if ((_currentlyPlayingSample) && (_pMixer->isSoundHandleActive(_currentlyPlayingSample->hCurrentAud))) {
+				// Another sample is already playing, we have to stop that one
+				// SSCI is only able to play 1 sample at a time
+				// In Space Quest 5 room 250 the player is able to open the air-hatch and kill himself.
+				//  In that situation the scripts are playing 2 samples at the same time and the first sample
+				//  is not supposed to play.
+				// TODO: SSCI actually calls kDoAudio(play) internally, which stops other samples from being played
+				//        but such a change isn't trivial, because we also handle Sound resources in here, that contain samples
+				_pMixer->stopHandle(_currentlyPlayingSample->hCurrentAud);
+				warning("kDoSound: sample already playing, old resource %d, new resource %d", _currentlyPlayingSample->resourceId, pSnd->resourceId);
+			}
+			// Sierra SCI ignores volume set when playing samples via kDoSound
+			//  At least freddy pharkas/CD has a script bug that sets volume to 0
+			//  when playing the "score" sample
+			if (pSnd->loop > 1) {
+				pSnd->pLoopStream = new Audio::LoopingAudioStream(pSnd->pStreamAud,
+																pSnd->loop, DisposeAfterUse::NO);
+				_pMixer->playStream(pSnd->soundType, &pSnd->hCurrentAud,
+										pSnd->pLoopStream, -1, _pMixer->kMaxChannelVolume, 0,
+										DisposeAfterUse::NO);
+			} else {
+				// Rewind in case we play the same sample multiple times
+				// (non-looped) like in pharkas right at the start
+				pSnd->pStreamAud->rewind();
+				_pMixer->playStream(pSnd->soundType, &pSnd->hCurrentAud,
+										pSnd->pStreamAud, -1, _pMixer->kMaxChannelVolume, 0,
+										DisposeAfterUse::NO);
+			}
+			// Remember the sample, that is now playing
+			_currentlyPlayingSample = pSnd;
+		}
+	} else {
+		if (pSnd->pMidiParser) {
 			// play MIDI track
-			Common::StackLock lock(_mutex);
+
 			Common::FSNode folder;
 			char musicstrbuffer[32];
 			int retVal, buf_size = 32;
@@ -567,63 +730,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 								wavID = pSnd->resourceId;
 								muteMidi = true;
 								isPlayingWav = true;
-								//debug(10, "VOLUME = %d", g_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kMusicSoundType));
-								//g_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, 1);
 
-								pSnd->soundType = Audio::Mixer::kMusicSoundType;
-
-								if (pSnd->pMidiParser == NULL) {
-									pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-
-									pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-									pSnd->pMidiParser->setTimerRate(_dwTempo);
-									pSnd->pMidiParser->setMasterVolume(_masterVolume);
-								}
-								pSnd->pauseCounter = 0;
-								midiMusic = pSnd->pMidiParser;
-								// Find out what channels to filter for SCI0
-								channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
-
-								for (int i = 0; i < 16; ++i)
-									pSnd->_usedChannels[i] = 0xFF;
-								for (int i = 0; i < track->channelCount; ++i) {
-									SoundResource::Channel &chan = track->channels[i];
-
-									pSnd->_usedChannels[i] = 0xFF;
-									pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-									pSnd->_chan[chan.number]._prio = chan.prio;
-									pSnd->_chan[chan.number]._voices = chan.poly;
-
-									// CHECKME: Some SCI versions use chan.flags & 1 for this:
-									pSnd->_chan[chan.number]._dontMap = false;
-
-									// FIXME: Most MIDI tracks use the first 10 bytes for
-									// fixed MIDI commands. SSCI skips those the first iteration,
-									// but _does_ update channel state (including volume) with
-									// them. Specifically, prio/voices, patch, volume, pan.
-									// This should probably be implemented in
-									// MidiParser_SCI::loadMusic.
-								}
-
-								pSnd->pMidiParser->mainThreadBegin();
-								// loadMusic() below calls jumpToTick.
-								// Disable sound looping and hold before jumpToTick is called,
-								// otherwise the song may keep looping forever when it ends in
-								// jumpToTick (e.g. LSL3, when going left from room 210).
-								uint16 prevLoop = pSnd->loop;
-								int16 prevHold = pSnd->hold;
-								pSnd->loop = 0;
-								pSnd->hold = -1;
-								pSnd->playBed = false;
-								pSnd->overridePriority = false;
-
-								pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-								pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-								// Restore looping and hold
-								pSnd->loop = prevLoop;
-								pSnd->hold = prevHold;
-								pSnd->pMidiParser->mainThreadEnd();
 							} else {
 								muteMidi = false;
 							}
@@ -687,62 +794,6 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 								//debug(10, "VOLUME = %d", g_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kMusicSoundType));
 								//g_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, 1);
 
-								pSnd->soundType = Audio::Mixer::kMusicSoundType;
-
-								if (pSnd->pMidiParser == NULL) {
-									pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-									pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-									pSnd->pMidiParser->setTimerRate(_dwTempo);
-									pSnd->pMidiParser->setMasterVolume(_masterVolume);
-								}
-								pSnd->pauseCounter = 0;
-								midiMusic = pSnd->pMidiParser;
-								// Find out what channels to filter for SCI0
-								channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
-
-								for (int i = 0; i < 16; ++i)
-									pSnd->_usedChannels[i] = 0xFF;
-								for (int i = 0; i < track->channelCount; ++i) {
-									SoundResource::Channel &chan = track->channels[i];
-
-									pSnd->_usedChannels[i] = 0xFF;
-									pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-									pSnd->_chan[chan.number]._prio = chan.prio;
-									pSnd->_chan[chan.number]._voices = chan.poly;
-
-									// CHECKME: Some SCI versions use chan.flags & 1 for this:
-									pSnd->_chan[chan.number]._dontMap = false;
-
-									// FIXME: Most MIDI tracks use the first 10 bytes for
-									// fixed MIDI commands. SSCI skips those the first iteration,
-									// but _does_ update channel state (including volume) with
-									// them. Specifically, prio/voices, patch, volume, pan.
-									// This should probably be implemented in
-									// MidiParser_SCI::loadMusic.
-								}
-
-								pSnd->pMidiParser->mainThreadBegin();
-								// loadMusic() below calls jumpToTick.
-								// Disable sound looping and hold before jumpToTick is called,
-								// otherwise the song may keep looping forever when it ends in
-								// jumpToTick (e.g. LSL3, when going left from room 210).
-								uint16 prevLoop = pSnd->loop;
-								int16 prevHold = pSnd->hold;
-								pSnd->loop = 0;
-								pSnd->hold = -1;
-								pSnd->playBed = false;
-								pSnd->overridePriority = false;
-
-								pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-								pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-								// Restore looping and hold
-								pSnd->loop = prevLoop;
-								pSnd->hold = prevHold;
-								pSnd->pMidiParser->mainThreadEnd();
-
-								pSnd->pMidiParser->setMasterVolume(0);
-
 							} else {
 								muteMidi = false;
 							}
@@ -758,6 +809,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 			} else {
 				muteMidi = false;
 			}
+
 			if (!muteMidi || !isPlayingWav) {
 				debug(("Didn't Find : " + fnStr + ".mp3").c_str());
 				if (g_system->getMixer()) {
@@ -767,170 +819,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 					}
 				}
 				isPlayingWav = false;
-
-				pSnd->soundType = Audio::Mixer::kMusicSoundType;
-
-				if (pSnd->pMidiParser == NULL) {
-					pSnd->pMidiParser = new MidiParser_SCI(_soundVersion, this);
-					pSnd->pMidiParser->setMidiDriver(_pMidiDrv);
-					pSnd->pMidiParser->setTimerRate(_dwTempo);
-					pSnd->pMidiParser->setMasterVolume(_masterVolume);
-				}
-
-				pSnd->pauseCounter = 0;
-				midiMusic = pSnd->pMidiParser;
-				// Find out what channels to filter for SCI0
-				channelFilterMask = pSnd->soundRes->getChannelFilterMask(_pMidiDrv->getPlayId(), _pMidiDrv->hasRhythmChannel());
-
-				for (int i = 0; i < 16; ++i)
-					pSnd->_usedChannels[i] = 0xFF;
-				for (int i = 0; i < track->channelCount; ++i) {
-					SoundResource::Channel &chan = track->channels[i];
-
-					pSnd->_usedChannels[i] = chan.number;
-					pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
-					pSnd->_chan[chan.number]._prio = chan.prio;
-					pSnd->_chan[chan.number]._voices = chan.poly;
-
-					// CHECKME: Some SCI versions use chan.flags & 1 for this:
-					pSnd->_chan[chan.number]._dontMap = false;
-
-					// FIXME: Most MIDI tracks use the first 10 bytes for
-					// fixed MIDI commands. SSCI skips those the first iteration,
-					// but _does_ update channel state (including volume) with
-					// them. Specifically, prio/voices, patch, volume, pan.
-					// This should probably be implemented in
-					// MidiParser_SCI::loadMusic.
-				}
-
-				pSnd->pMidiParser->mainThreadBegin();
-				// loadMusic() below calls jumpToTick.
-				// Disable sound looping and hold before jumpToTick is called,
-				// otherwise the song may keep looping forever when it ends in
-				// jumpToTick (e.g. LSL3, when going left from room 210).
-				uint16 prevLoop = pSnd->loop;
-				int16 prevHold = pSnd->hold;
-				pSnd->loop = 0;
-				pSnd->hold = -1;
-				pSnd->playBed = false;
-				pSnd->overridePriority = false;
-
-				pSnd->pMidiParser->loadMusic(track, pSnd, channelFilterMask, _soundVersion);
-				pSnd->reverb = pSnd->pMidiParser->getSongReverb();
-
-				// Restore looping and hold
-				pSnd->loop = prevLoop;
-				pSnd->hold = prevHold;
-				pSnd->pMidiParser->mainThreadEnd();
 			}
-		}
-	}
-}
-
-void SciMusic::soundPlay(MusicEntry *pSnd) {
-	_mutex.lock();
-
-	if (_soundVersion <= SCI_VERSION_1_EARLY && pSnd->playBed) {
-		// If pSnd->playBed, and version <= SCI1_EARLY, then kill
-		// existing sounds with playBed enabled.
-
-		uint playListCount = _playList.size();
-		for (uint i = 0; i < playListCount; i++) {
-			if (_playList[i] != pSnd && _playList[i]->playBed) {
-				debugC(2, kDebugLevelSound, "Automatically stopping old playBed song from soundPlay");
-				MusicEntry *old = _playList[i];
-				_mutex.unlock();
-				soundStop(old);
-				_mutex.lock();
-				break;
-			}
-		}
-	}
-
-	uint playListCount = _playList.size();
-	uint playListNo = playListCount;
-	MusicEntry *alreadyPlaying = NULL;
-
-	// searching if sound is already in _playList
-	for (uint i = 0; i < playListCount; i++) {
-		if (_playList[i] == pSnd)
-			playListNo = i;
-		if ((_playList[i]->status == kSoundPlaying) && (_playList[i]->pMidiParser))
-			alreadyPlaying = _playList[i];
-	}
-	if (playListNo == playListCount) { // not found
-		_playList.push_back(pSnd);
-	}
-
-	pSnd->time = ++_timeCounter;
-	sortPlayList();
-
-	_mutex.unlock();	// unlock to perform mixer-related calls
-
-	if (pSnd->pMidiParser) {
-		if ((_soundVersion <= SCI_VERSION_0_LATE) && (alreadyPlaying)) {
-			// Music already playing in SCI0?
-			if (pSnd->priority > alreadyPlaying->priority) {
-				// And new priority higher? pause previous music and play new one immediately.
-				// Example of such case: lsl3, when getting points (jingle is played then)
-				soundPause(alreadyPlaying);
-				alreadyPlaying->isQueued = true;
-			} else {
-				// And new priority equal or lower? queue up music and play it afterwards done by
-				//  SoundCommandParser::updateSci0Cues()
-				// Example of such case: iceman room 14
-				pSnd->isQueued = true;
-				pSnd->status = kSoundPaused;
-				return;
-			}
-		}
-	}
-
-	if (pSnd->isSample) {
-#ifdef ENABLE_SCI32
-		if (_soundVersion >= SCI_VERSION_2) {
-			// TODO: Sound number, loop state, and volume come from soundObj
-			// in SSCI. Getting them from MusicEntry could cause a bug if the
-			// soundObj was updated by a game script and not copied back to
-			// MusicEntry.
-			g_sci->_audio32->restart(ResourceId(kResourceTypeAudio, pSnd->resourceId), true, pSnd->loop != 0 && pSnd->loop != 1, pSnd->volume, pSnd->soundObj, false);
-			return;
-		} else
-#endif
-		if (!_pMixer->isSoundHandleActive(pSnd->hCurrentAud)) {
-			if ((_currentlyPlayingSample) && (_pMixer->isSoundHandleActive(_currentlyPlayingSample->hCurrentAud))) {
-				// Another sample is already playing, we have to stop that one
-				// SSCI is only able to play 1 sample at a time
-				// In Space Quest 5 room 250 the player is able to open the air-hatch and kill himself.
-				//  In that situation the scripts are playing 2 samples at the same time and the first sample
-				//  is not supposed to play.
-				// TODO: SSCI actually calls kDoAudio(play) internally, which stops other samples from being played
-				//        but such a change isn't trivial, because we also handle Sound resources in here, that contain samples
-				_pMixer->stopHandle(_currentlyPlayingSample->hCurrentAud);
-				warning("kDoSound: sample already playing, old resource %d, new resource %d", _currentlyPlayingSample->resourceId, pSnd->resourceId);
-			}
-			// Sierra SCI ignores volume set when playing samples via kDoSound
-			//  At least freddy pharkas/CD has a script bug that sets volume to 0
-			//  when playing the "score" sample
-			if (pSnd->loop > 1) {
-				pSnd->pLoopStream = new Audio::LoopingAudioStream(pSnd->pStreamAud,
-																pSnd->loop, DisposeAfterUse::NO);
-				_pMixer->playStream(pSnd->soundType, &pSnd->hCurrentAud,
-										pSnd->pLoopStream, -1, _pMixer->kMaxChannelVolume, 0,
-										DisposeAfterUse::NO);
-			} else {
-				// Rewind in case we play the same sample multiple times
-				// (non-looped) like in pharkas right at the start
-				pSnd->pStreamAud->rewind();
-				_pMixer->playStream(pSnd->soundType, &pSnd->hCurrentAud,
-										pSnd->pStreamAud, -1, _pMixer->kMaxChannelVolume, 0,
-										DisposeAfterUse::NO);
-			}
-			// Remember the sample, that is now playing
-			_currentlyPlayingSample = pSnd;
-		}
-	} else {
-		if (pSnd->pMidiParser) {
 			Common::StackLock lock(_mutex);
 			pSnd->pMidiParser->mainThreadBegin();
 
@@ -969,6 +858,8 @@ void SciMusic::soundPlay(MusicEntry *pSnd) {
 	}
 
 	pSnd->status = kSoundPlaying;
+
+		
 
 	_mutex.lock();
 	remapChannels();
