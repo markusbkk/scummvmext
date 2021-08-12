@@ -555,6 +555,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 						} else {
 							muteMidi = false;
 						}
+						pSnd->pMidiParser->setMasterVolume(0);
 					} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
 						Common::File *sciAudioFile = new Common::File();
 						// Replace backwards slashes
@@ -664,6 +665,9 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 								pSnd->loop = prevLoop;
 								pSnd->hold = prevHold;
 								pSnd->pMidiParser->mainThreadEnd();
+
+								pSnd->pMidiParser->setMasterVolume(0);
+
 							} else {
 								muteMidi = false;
 							}
@@ -968,7 +972,7 @@ void SciMusic::soundKill(MusicEntry *pSnd) {
 		delete pSnd->pMidiParser;
 		pSnd->pMidiParser = NULL;
 	}
-
+	g_system->getMixer()->stopAll();
 	_mutex.unlock();
 
 	if (pSnd->isSample) {
