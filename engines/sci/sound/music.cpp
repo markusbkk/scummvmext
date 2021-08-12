@@ -899,6 +899,7 @@ void SciMusic::soundPlay(MusicEntry *pSnd) {
 void SciMusic::soundStop(MusicEntry *pSnd) {
 	SoundStatus previousStatus = pSnd->status;
 	pSnd->status = kSoundStopped;
+	g_system->getMixer()->stopHandle(_audioHandle);
 	if (_soundVersion <= SCI_VERSION_0_LATE)
 		pSnd->isQueued = false;
 	if (pSnd->isSample) {
@@ -1003,6 +1004,7 @@ void SciMusic::soundKill(MusicEntry *pSnd) {
 		}
 	}
 	_mutex.unlock();
+	g_system->getMixer()->stopHandle(_audioHandle);
 }
 
 void SciMusic::soundPause(MusicEntry *pSnd) {
@@ -1032,6 +1034,7 @@ void SciMusic::soundPause(MusicEntry *pSnd) {
 			remapChannels();
 		}
 	}
+	g_system->getMixer()->pauseHandle(_audioHandle, true);
 }
 
 void SciMusic::soundResume(MusicEntry *pSnd) {
@@ -1047,6 +1050,7 @@ void SciMusic::soundResume(MusicEntry *pSnd) {
 	} else {
 		soundPlay(pSnd);
 	}
+	g_system->getMixer()->pauseHandle(_audioHandle, false);
 }
 
 void SciMusic::soundToggle(MusicEntry *pSnd, bool pause) {
@@ -1054,18 +1058,23 @@ void SciMusic::soundToggle(MusicEntry *pSnd, bool pause) {
 	if (_soundVersion >= SCI_VERSION_2_1_EARLY && pSnd->isSample) {
 		if (pause) {
 			g_sci->_audio32->pause(ResourceId(kResourceTypeAudio, pSnd->resourceId), pSnd->soundObj);
+			g_system->getMixer()->pauseHandle(_audioHandle, true);
 		} else {
 			g_sci->_audio32->resume(ResourceId(kResourceTypeAudio, pSnd->resourceId), pSnd->soundObj);
+			g_system->getMixer()->pauseHandle(_audioHandle, false);
 		}
 
 		return;
 	}
 #endif
 
-	if (pause)
+	if (pause) {
 		soundPause(pSnd);
-	else
+		g_system->getMixer()->pauseHandle(_audioHandle, true);
+	} else {
 		soundResume(pSnd);
+		g_system->getMixer()->pauseHandle(_audioHandle, false);
+	}
 }
 
 uint16 SciMusic::soundGetMasterVolume() {
