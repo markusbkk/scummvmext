@@ -727,8 +727,14 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 	} else {
 		Common::FSNode folder;
 		bool foundAudio = false;
-		Common::String fnStr = "audio.";
-		fnStr += "%u", number;
+		char audiostrbuffer[32];
+		int retVal, buf_size = 32;
+		if (volume == 65535) {
+			retVal = snprintf(audiostrbuffer, buf_size, "audio.%u", number);
+		} else {
+			retVal = snprintf(audiostrbuffer, buf_size, "audio.%i.%i.%i.%i", (number >> 24) & 0xff, (number >> 16) & 0xff, (number >> 8) & 0xff, number & 0xff);
+		}
+		Common::String fnStr = audiostrbuffer;
 		if (ConfMan.hasKey("extrapath")) {
 			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
 				if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
@@ -742,7 +748,7 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 					}
 					sciAudioFile->open(fileName);
 
-					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = nullptr;
 					audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
 
 					if (audioStream) {
@@ -762,7 +768,7 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 					}
 					sciAudioFile->open(fileName);
 
-					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = nullptr;
 					audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
 
 					if (audioStream) {
@@ -773,7 +779,8 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 			}
 		}
 		if (!foundAudio) {
-			Common::String dbg = "Didn't find : audio.%u.mp3/.wav", number;
+			Common::String dbg = "Didn't find : " + fnStr;
+			dbg += ".mp3/.wav";
 			debug(dbg.c_str());
 			// Original source file
 			if ((audioRes->getUint8At(0) & 0x7f) == kResourceTypeAudio && audioRes->getUint32BEAt(2) == MKTAG('S', 'O', 'L', 0)) {
