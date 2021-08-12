@@ -40,9 +40,20 @@
 #include "audio/decoders/raw.h"
 #include "audio/decoders/vorbis.h"
 #include "audio/decoders/wave.h"
+#include <engines/sci/sound/midiparser_sci.h>
+#include <list>
 
 namespace Sci {
 Common::String prevMP3Text = "Scummvmext";
+extern bool playingVideoCutscenes;
+extern bool wasPlayingVideoCutscenes;
+extern std::string videoCutsceneEnd;
+extern std::string videoCutsceneStart;
+extern MidiParser_SCI *midiMusic;
+extern bool cutscene_mute_midi;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
+extern std::string extraPath;
 AudioPlayer::AudioPlayer(ResourceManager *resMan) : _resMan(resMan), _audioRate(11025),
 		_audioCdStart(0), _initCD(false) {
 
@@ -264,7 +275,15 @@ void AudioPlayer::PlayEnhancedTextAudio(char *fileName, Common::String text) {
 		}
 	}
 }
-
+bool fileIsInExtraDIRAudio(std::string fileName) {
+	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName);
+	// Check if iterator points to end or not
+	if (extraDIRListit != extraDIRList.end()) {
+		return true;
+	} else {
+		return false;
+	}
+}
 void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceNumber, unsigned long hashId) {
 	if (!g_system->getMixer()->isSoundIDActive(hashId) && g_sci->_audio->lastPlayedCustomSound != (hashId) || g_sci->_audio->lastPlayedCustomSound == 0) {
 		bool hasSurface = false;
@@ -416,7 +435,62 @@ void AudioPlayer::PlayEnhancedViewCelAudio(Common::String fileName, int surfaceN
 	int AudioPlayer::startAudio(uint16 module, uint32 number) {
 	int sampleLen;
 	Audio::AudioStream *audioStream = getAudioStream(number, module, &sampleLen);
-	
+	char audiostrbuffer[32];
+	int retVal, buf_size = 32;
+	retVal = snprintf(audiostrbuffer, buf_size, "audio.%u", number);
+	Common::String fn = audiostrbuffer;
+	if (videoCutsceneEnd == fn.c_str()) {
+		playingVideoCutscenes = false;
+		wasPlayingVideoCutscenes = true;
+		videoCutsceneEnd = "-undefined-";
+		videoCutsceneStart = "-undefined-";
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+	}
+	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
+		if (fileIsInExtraDIRAudio((fn + ".cts").c_str())) {
+			Common::String cfgfileName = fn + ".cts";
+			debug(cfgfileName.c_str());
+			Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
+			if (cfg) {
+				Common::String line, texttmp;
+				cutscene_mute_midi = false;
+				while (!cfg->eos()) {
+					texttmp = cfg->readLine();
+					if (texttmp.firstChar() != '#') {
+						if (texttmp.contains("mute_midi")) {
+							cutscene_mute_midi = true;
+						} else {
+							videoCutsceneEnd = texttmp.c_str();
+						}
+					}
+				}
+				videoCutsceneStart = audiostrbuffer;
+
+				g_sci->oggBackground = fn + ".ogg";
+
+				g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
+
+				g_sci->_theoraDecoderCutscenes->loadFile(fn + ".ogg");
+				g_sci->_theoraDecoderCutscenes->start();
+				int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
+
+				playingVideoCutscenes = true;
+				wasPlayingVideoCutscenes = true;
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+				if (cutscene_mute_midi) {
+					if (midiMusic != NULL)
+						midiMusic->setMasterVolume(0);
+				}
+			}
+		} else {
+			debug(10, ("NO " + fn + ".cts").c_str());
+		}
+	}
 	if (audioStream) {
 		_wPlayFlag = false;
 		Audio::Mixer::SoundType soundType = (module == 65535) ? Audio::Mixer::kSFXSoundType : Audio::Mixer::kSpeechSoundType;
@@ -651,71 +725,122 @@ Audio::RewindableAudioStream *AudioPlayer::getAudioStream(uint32 number, uint32 
 		error("Compressed audio file encountered, but no appropriate decoder is compiled in");
 #endif
 	} else {
-		// Original source file
-		if ((audioRes->getUint8At(0) & 0x7f) == kResourceTypeAudio && audioRes->getUint32BEAt(2) == MKTAG('S','O','L',0)) {
-			// SCI1.1
-			const uint8 headerSize = audioRes->getUint8At(1);
-			Common::MemoryReadStream headerStream = audioRes->subspan(kResourceHeaderSize, headerSize).toStream();
+		Common::FSNode folder;
+		bool foundAudio = false;
+		Common::String fnStr = "audio.";
+		fnStr += "%u", number;
+		if (ConfMan.hasKey("extrapath")) {
+			if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists()) {
+				if (folder.getChild((fnStr + ".mp3").c_str()).exists()) {
+					Common::File *sciAudioFile = new Common::File();
+					// Replace backwards slashes
 
-			if (readSOLHeader(&headerStream, headerSize, size, _audioRate, audioFlags, audioRes->size())) {
-				Common::MemoryReadStream dataStream(audioRes->subspan(kResourceHeaderSize + headerSize).toStream());
-				data = readSOLAudio(&dataStream, size, audioFlags, flags);
+					Common::String fileName = folder.getChild((fnStr + ".mp3").c_str()).getName();
+					for (uint i = 0; i < fileName.size(); i++) {
+						if (fileName[i] == '\\')
+							fileName.setChar('/', i);
+					}
+					sciAudioFile->open(fileName);
+
+					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = Audio::makeMP3Stream(sciAudioFile, DisposeAfterUse::YES);
+
+					if (audioStream) {
+						foundAudio = true;
+						debug(("Found : " + fnStr + ".mp3").c_str());
+					}
+
+				} else if (folder.getChild((fnStr + ".wav").c_str()).exists()) {
+
+					Common::File *sciAudioFile = new Common::File();
+					// Replace backwards slashes
+
+					Common::String fileName = folder.getChild((fnStr + ".wav").c_str()).getName();
+					for (uint i = 0; i < fileName.size(); i++) {
+						if (fileName[i] == '\\')
+							fileName.setChar('/', i);
+					}
+					sciAudioFile->open(fileName);
+
+					Audio::RewindableAudioStream *audioStream = nullptr;
+					audioStream = Audio::makeWAVStream(sciAudioFile, DisposeAfterUse::YES);
+
+					if (audioStream) {
+						foundAudio = true;
+						debug(("Found : " + fnStr + ".wav").c_str());
+					}
+				}
 			}
-		} else if (audioRes->size() > 4 && audioRes->getUint32BEAt(0) == MKTAG('R','I','F','F')) {
-			// WAVE detected
-			Common::SeekableReadStream *waveStream = new Common::MemoryReadStream(audioRes->getUnsafeDataAt(0), audioRes->size(), DisposeAfterUse::NO);
+		}
+		if (!foundAudio) {
+			Common::String dbg = "Didn't find : audio.%u.mp3/.wav", number;
+			debug(dbg.c_str());
+			// Original source file
+			if ((audioRes->getUint8At(0) & 0x7f) == kResourceTypeAudio && audioRes->getUint32BEAt(2) == MKTAG('S', 'O', 'L', 0)) {
+				// SCI1.1
+				const uint8 headerSize = audioRes->getUint8At(1);
+				Common::MemoryReadStream headerStream = audioRes->subspan(kResourceHeaderSize, headerSize).toStream();
 
-			// Calculate samplelen from WAVE header
-			int waveSize = 0, waveRate = 0;
-			byte waveFlags = 0;
-			bool ret = Audio::loadWAVFromStream(*waveStream, waveSize, waveRate, waveFlags);
-			if (!ret)
-				error("Failed to load WAV from stream");
+				if (readSOLHeader(&headerStream, headerSize, size, _audioRate, audioFlags, audioRes->size())) {
+					Common::MemoryReadStream dataStream(audioRes->subspan(kResourceHeaderSize + headerSize).toStream());
+					data = readSOLAudio(&dataStream, size, audioFlags, flags);
+				}
+			} else if (audioRes->size() > 4 && audioRes->getUint32BEAt(0) == MKTAG('R', 'I', 'F', 'F')) {
+				// WAVE detected
+				Common::SeekableReadStream *waveStream = new Common::MemoryReadStream(audioRes->getUnsafeDataAt(0), audioRes->size(), DisposeAfterUse::NO);
 
-			*sampleLen = (waveFlags & Audio::FLAG_16BITS ? waveSize >> 1 : waveSize) * 60 / waveRate;
+				// Calculate samplelen from WAVE header
+				int waveSize = 0, waveRate = 0;
+				byte waveFlags = 0;
+				bool ret = Audio::loadWAVFromStream(*waveStream, waveSize, waveRate, waveFlags);
+				if (!ret)
+					error("Failed to load WAV from stream");
 
-			waveStream->seek(0, SEEK_SET);
-			audioStream = Audio::makeWAVStream(waveStream, DisposeAfterUse::YES);
-		} else if (audioRes->size() > 4 && audioRes->getUint32BEAt(0) == MKTAG('F','O','R','M')) {
-			// AIFF detected
-			Common::SeekableReadStream *waveStream = new Common::MemoryReadStream(audioRes->getUnsafeDataAt(0), audioRes->size(), DisposeAfterUse::NO);
-			Audio::RewindableAudioStream *rewindStream = Audio::makeAIFFStream(waveStream, DisposeAfterUse::YES);
-			audioSeekStream = dynamic_cast<Audio::SeekableAudioStream *>(rewindStream);
+				*sampleLen = (waveFlags & Audio::FLAG_16BITS ? waveSize >> 1 : waveSize) * 60 / waveRate;
 
-			if (!audioSeekStream) {
-				warning("AIFF file is not seekable");
-				delete rewindStream;
+				waveStream->seek(0, SEEK_SET);
+				audioStream = Audio::makeWAVStream(waveStream, DisposeAfterUse::YES);
+			} else if (audioRes->size() > 4 && audioRes->getUint32BEAt(0) == MKTAG('F', 'O', 'R', 'M')) {
+				// AIFF detected
+				Common::SeekableReadStream *waveStream = new Common::MemoryReadStream(audioRes->getUnsafeDataAt(0), audioRes->size(), DisposeAfterUse::NO);
+				Audio::RewindableAudioStream *rewindStream = Audio::makeAIFFStream(waveStream, DisposeAfterUse::YES);
+				audioSeekStream = dynamic_cast<Audio::SeekableAudioStream *>(rewindStream);
+
+				if (!audioSeekStream) {
+					warning("AIFF file is not seekable");
+					delete rewindStream;
+				}
+			} else if (audioRes->size() > 14 &&
+			           audioRes->getUint16BEAt(0) == 1 &&
+			           audioRes->getUint16BEAt(2) == 1 &&
+			           audioRes->getUint16BEAt(4) == 5 &&
+			           audioRes->getUint32BEAt(10) == 0x00018051) {
+
+				// Mac snd detected
+				Common::SeekableReadStream *sndStream = new Common::MemoryReadStream(audioRes->getUnsafeDataAt(0), audioRes->size(), DisposeAfterUse::NO);
+
+				audioSeekStream = Audio::makeMacSndStream(sndStream, DisposeAfterUse::YES);
+				if (!audioSeekStream)
+					error("Failed to load Mac sound stream");
+
+			} else {
+				// SCI1 raw audio
+				size = audioRes->size();
+				data = (byte *)malloc(size);
+				assert(data);
+				audioRes->unsafeCopyDataTo(data);
+				flags = Audio::FLAG_UNSIGNED;
+				_audioRate = 11025;
 			}
-		} else if (audioRes->size() > 14 &&
-				   audioRes->getUint16BEAt(0) == 1 &&
-				   audioRes->getUint16BEAt(2) == 1 &&
-				   audioRes->getUint16BEAt(4) == 5 &&
-				   audioRes->getUint32BEAt(10) == 0x00018051) {
 
-			// Mac snd detected
-			Common::SeekableReadStream *sndStream = new Common::MemoryReadStream(audioRes->getUnsafeDataAt(0), audioRes->size(), DisposeAfterUse::NO);
-
-			audioSeekStream = Audio::makeMacSndStream(sndStream, DisposeAfterUse::YES);
-			if (!audioSeekStream)
-				error("Failed to load Mac sound stream");
-
-		} else {
-			// SCI1 raw audio
-			size = audioRes->size();
-			data = (byte *)malloc(size);
-			assert(data);
-			audioRes->unsafeCopyDataTo(data);
-			flags = Audio::FLAG_UNSIGNED;
-			_audioRate = 11025;
+			if (data)
+				audioSeekStream = Audio::makeRawStream(data, size, _audioRate, flags);
 		}
 
-		if (data)
-			audioSeekStream = Audio::makeRawStream(data, size, _audioRate, flags);
-	}
-
-	if (audioSeekStream) {
-		*sampleLen = (audioSeekStream->getLength().msecs() * 60) / 1000; // we translate msecs to ticks
-		audioStream = audioSeekStream;
+		if (audioSeekStream) {
+			*sampleLen = (audioSeekStream->getLength().msecs() * 60) / 1000; // we translate msecs to ticks
+			audioStream = audioSeekStream;
+		}
 	}
 	// We have to make sure that we don't depend on resource manager pointers
 	// after this point, because the actual audio resource may get unloaded by
