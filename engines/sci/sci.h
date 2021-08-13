@@ -227,7 +227,7 @@ public:
 	bool enhanced;
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
-	
+	bool enhanced_BG = false;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

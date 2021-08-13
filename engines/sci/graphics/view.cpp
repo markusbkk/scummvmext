@@ -1067,12 +1067,12 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 							if ((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x <= _screen->getDisplayWidth() && ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y) <= _screen->getDisplayHeight()) {
 
 								if (!enhancedIs256) {
-									if (offset + (x * 4) + 3 < (viewpng->w * g_sci->_enhancementMultiplier) * (viewpng->h * g_sci->_enhancementMultiplier) * 4 && viewenh[offset + (x * 4) + 3] == 255) {
+									if (offset + (x * 4) + 3 < (viewpng->w * g_sci->_enhancementMultiplier) * (viewpng->h * g_sci->_enhancementMultiplier) * 4) {
 										if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 											_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4)], viewenh[offset + (x * 4) + 3], priority, 0, false); //viewenh[offset + (x * 4)]
 											_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0);    //viewenh[offset + (x * 4) + 1]
 											_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0);
-
+											if (viewenh[offset + (x * 4) + 3] >= 127)
 											_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 										}
 									}
@@ -1082,6 +1082,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 										if (viewenh[offset256 + (x)] != clearKey) {
 											if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 												_screen->putPixelPaletted((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset256 + (x)], priority, 0, false);
+												if (viewenh[offset + (x * 4) + 3] >= 127)
 												_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 											}
 										}
@@ -1195,13 +1196,15 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 							{
 
 								if (!enhancedIs256) {
-									if (viewenh[offset + (x * 4) + 3] == 255) {
+									//if (viewenh[offset + (x * 4) + 3] != 0)
+									{
 										if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y))
 										{
 											_screen->putPixelR640((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4)], viewenh[offset + (x * 4) + 3], priority, 0, false); //viewenh[offset + (x * 4)]
 											_screen->putPixelG640((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0);    //viewenh[offset + (x * 4) + 1]
 											_screen->putPixelB640((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0);
 
+											if (viewenh[offset + (x * 4) + 3] >= 127)
 											_screen->putPixelXEtc((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, priority, 0);
 										}
 									}
@@ -1211,6 +1214,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 										if (viewenh[offset256 + (x)] != clearKey) {
 											if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 												_screen->putPixelPaletted((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset256 + (x)], priority, 0, false);
+
 												_screen->putPixelXEtc(((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((g_sci->_gfxPorts->_menuBarRect.height() * g_sci->_enhancementMultiplier) + (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 											}
 										}
@@ -1412,13 +1416,14 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 								if (priority >= _screen->getPriorityX(x2, y2)) {
 									if (!enhancedIs256) {
-										if (colorA == 255) {
+										//if (colorA != 0)
+										{
 
 											_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
 										}
-										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 										}
 									} else {
@@ -1452,12 +1457,13 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 							if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 								if (priority >= _screen->getPriorityX(x2, y2)) {
 									if (!enhancedIs256) {
-										if (colorA == 255) {
+										//if (colorA != 0)
+										{
 											_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
 										}
-										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 											_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 										}
 									} else {
@@ -1539,13 +1545,14 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 								if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 									if (priority >= _screen->getPriorityX(x2, y2)) {
 										if (!enhancedIs256) {
-											if (colorA == 255) {
+											if (colorA != 0)
+											{
 
 												_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 												_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 												_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
 											}
-											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 												_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 											}
 										} else {
@@ -1579,12 +1586,13 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 								if (x2 < _screen->getDisplayWidth() - 2 && y2 < _screen->getDisplayHeight() - 2) {
 									if (priority >= _screen->getPriorityX(x2, y2)) {
 										if (!enhancedIs256) {
-											if (colorA == 255) {
+											if (colorA != 0)
+											{
 												_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 												_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
 												_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
 											}
-											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) == 255) {
+											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 												_screen->putPixelXEtc(x2, y2, drawMask, priority, 0);
 											}
 										} else {

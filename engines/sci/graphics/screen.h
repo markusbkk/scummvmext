@@ -171,6 +171,9 @@ public:
 	byte *_displayScreenG;
 	byte *_displayedScreenG;
 	byte *_displayScreenB;
+	byte *_displayScreenR_BG;
+	byte *_displayScreenG_BG;
+	byte *_displayScreenB_BG;
 	byte *_displayedScreenB;
 
 	Graphics::PixelFormat _format;
@@ -220,7 +223,7 @@ private:
 	 * Only read from this buffer for Save/ShowBits usage.
 	 */
 	byte *_displayScreen;
-
+	byte *_displayScreen_BG;
 	// Display screen copies in r g & b format
 
 	byte *_displayScreenA;
@@ -287,36 +290,85 @@ public:
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_DISABLED:
 				_displayScreen[offset] = color;
-				
+
 				if (g_sci->backgroundIsVideo == false) {
 					_enhancedMatte[offset] = 0;
 				} else {
 					_enhancedMatte[offset] = 128;
 				}
-				if (!bg)
+				if (!bg) {
+					_displayScreenA[offset] = 255;
 					_enhancedMatte[offset] = 0;
+				} else {
+					_displayScreenA[offset] = 0;
+				}
 				break;
 
 			case GFX_SCREEN_UPSCALED_640x400:
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
-			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
-				if (g_sci->backgroundIsVideo == false) {
-					putScaledPixelOnDisplay(x, y, color, false);
-				} else {
-					putScaledPixelOnDisplay(x, y, color, bg);
-				}
-				if (!bg)
-					putScaledPixelOnDisplay(x, y, color, false);
-				
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
+				putScaledPixelOnDisplay(x, y, color, false);
 				break;
+			}
 			default:
 				break;
 			}
 		}
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
 			
+			putScaledPixelInPriority(x, y, priority);
+		}
+		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
+			_controlScreen[offset] = control;
+		}
+	}
+	void putPixel_BG(int16 x, int16 y, byte drawMask, byte color, byte priority, byte control, bool bg) {
+		if (_upscaledHires == GFX_SCREEN_UPSCALED_480x300) {
+			putPixel480x300(x, y, drawMask, color, priority, control);
+			return;
+		}
+
+		// Set pixel for visual, priority and control map directly, those are not upscaled
+		const int offset = y * _width + x;
+	
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+			_visualScreen[offset] = color;
+			if (_paletteMapScreen)
+				_paletteMapScreen[offset] = _curPaletteMapValue;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_DISABLED:
+				_displayScreen_BG[offset] = color;
+
+				if (g_sci->backgroundIsVideo == false) {
+					_enhancedMatte[offset] = 0;
+				} else {
+					_enhancedMatte[offset] = 128;
+				}
+				if (!bg) {
+					_displayScreenA[offset] = 255;
+					_enhancedMatte[offset] = 0;
+				} else {
+					_displayScreenA[offset] = 0;
+				}
+				break;
+
+			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_640x440:
+			case GFX_SCREEN_UPSCALED_640x480:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
+				putScaledPixelOnDisplay(x, y, color, true);
+				break;
+			}
+			default:
+				break;
+			}
+		}
+		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
+
 			putScaledPixelInPriority(x, y, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
@@ -335,6 +387,47 @@ public:
 			_controlScreen[offset] = control;
 		}
 	}
+	void putPixelPaletted_BG(int16 x, int16 y, byte drawMask, byte c, byte priority, byte control, bool bg) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400:
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+					_displayScreenA[displayOffset] = 0;
+					_displayScreen_BG[displayOffset] = c;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 0;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 0;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+					_displayScreenA[displayOffset] = 0;
+					_displayScreen_BG[displayOffset] = c;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 0;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 0;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
 	void putPixelPaletted(int16 x, int16 y, byte drawMask, byte c, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
@@ -348,7 +441,7 @@ public:
 
 				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
-
+					_displayScreenA[displayOffset] = 255;
 					_displayScreen[displayOffset] = c;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
@@ -359,7 +452,7 @@ public:
 						_enhancedMatte[displayOffset] = 0;
 				} else {
 					//assert(_format.bytesPerPixel == 4);
-
+					_displayScreenA[displayOffset] = 255;
 					_displayScreen[displayOffset] = c;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
@@ -368,6 +461,161 @@ public:
 					}
 					if (!bg)
 						_enhancedMatte[displayOffset] = 0;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+	void putPixelR_BG(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control, bool bg) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = 0;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = 0;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				}
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = 0;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+					_displayScreenA[displayOffset] = 0;
+					if (g_sci->backgroundIsVideo == false) {
+						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_enhancedMatte[displayOffset] = 128;
+					}
+					if (!bg)
+						_enhancedMatte[displayOffset] = 255;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	void putPixelG_BG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	void putPixelB_BG(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control) {
+
+		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+				}
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
 				break;
 			}
@@ -389,26 +637,32 @@ public:
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
 						_enhancedMatte[displayOffset] = 128;
 					}
-					if (!bg)
+					if (!bg) {
+						if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
+						_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						_enhancedMatte[displayOffset] = 255;
+					}
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+				
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
 						_enhancedMatte[displayOffset] = 128;
 					}
-					if (!bg)
+					if (!bg) {
+						if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
+						_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						_enhancedMatte[displayOffset] = 255;
+					}
 				}
 				break;
 			}
@@ -419,26 +673,32 @@ public:
 						if (_format.bytesPerPixel == 2) {
 			
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					       
 					        if (g_sci->backgroundIsVideo == false) {
 						        _enhancedMatte[displayOffset] = 255;
 					        } else {
 						        _enhancedMatte[displayOffset] = 128;
 					        }
-					        if (!bg)
+					        if (!bg) {
+						        if (a > 1 && (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
+						        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						        _enhancedMatte[displayOffset] = 255;
+					        }
 						} else {
 							//assert(_format.bytesPerPixel == 4);
 
 							_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					        
 					        if (g_sci->backgroundIsVideo == false) {
 						        _enhancedMatte[displayOffset] = 255;
 					        } else {
 						        _enhancedMatte[displayOffset] = 128;
 					        }
-					        if (!bg)
+					        if (!bg) {
+						        if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
+						        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						        _enhancedMatte[displayOffset] = 255;
+					        }
 						}
 				break;
 			}
@@ -706,24 +966,34 @@ public:
 					byte i = r;
 					byte ir = _palette[3 * i + 0];
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
 						_enhancedMatte[displayOffset] = 255;
 					}
+			
+						if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255)) >= (_displayScreenA[displayOffset]))
+							_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+						
+					
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 					byte i = r;
 					byte ir = _palette[3 * i + 0];
 
 					_displayScreenR[displayOffset] = (_displayScreenR[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (ir * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+					
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
 						_enhancedMatte[displayOffset] = 255;
 					}
+					
+						if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255)) >= (_displayScreenA[displayOffset]))
+							_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a * ((0.003921568627451) * 255));
+						_enhancedMatte[displayOffset] = 255;
+					
 				}
 
 				break;
@@ -812,7 +1082,7 @@ public:
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
-
+				
 				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
 
 				break;
@@ -1035,18 +1305,29 @@ public:
 						byte g = _palette[3 * i + 1];
 						byte b = _palette[3 * i + 2];
 
-						_displayScreenR[displayOffset] = r;
-						_displayScreenG[displayOffset] = g;
-						_displayScreenB[displayOffset] = b;
-						_displayScreenA[displayOffset] = 0;
-						_displayScreen[displayOffset] = color;
+						
+						if (!bg) {
+							_displayScreen[displayOffset] = color;
+							_displayScreenR[displayOffset] = r;
+							_displayScreenG[displayOffset] = g;
+							_displayScreenB[displayOffset] = b;
+						} else {
+							_displayScreen_BG[displayOffset] = color;
+							_displayScreenR_BG[displayOffset] = r;
+							_displayScreenG_BG[displayOffset] = g;
+							_displayScreenB_BG[displayOffset] = b;
+						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
 						} else {
 							_enhancedMatte[displayOffset] = 128;
 						}
-						if (!bg)
+						if (!bg) {
+							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_displayScreenA[displayOffset] = 0;
+						}
 
 					} else if (_format.bytesPerPixel == 4) {
 
@@ -1054,36 +1335,58 @@ public:
 						byte r = _palette[3 * i + 0];
 						byte g = _palette[3 * i + 1];
 						byte b = _palette[3 * i + 2];
-						_displayScreenR[displayOffset] = r;
-						_displayScreenG[displayOffset] = g;
-						_displayScreenB[displayOffset] = b;
-						_displayScreenA[displayOffset] = 0;
-						_displayScreen[displayOffset] = color;
+						
+						if (!bg) {
+							_displayScreen[displayOffset] = color;
+							_displayScreenR[displayOffset] = r;
+							_displayScreenG[displayOffset] = g;
+							_displayScreenB[displayOffset] = b;
+						} else {
+							_displayScreen_BG[displayOffset] = color;
+							_displayScreenR_BG[displayOffset] = r;
+							_displayScreenG_BG[displayOffset] = g;
+							_displayScreenB_BG[displayOffset] = b;
+						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
 						} else {
 							_enhancedMatte[displayOffset] = 128;
 						}
-						if (!bg)
+						if (!bg) {
+							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_displayScreenA[displayOffset] = 0;
+						}
 					} else {
 
 						byte r;
 						byte g;
 						byte b;
 						_format.colorToRGB(color, r, g, b);
-						_displayScreenR[displayOffset] = r;
-						_displayScreenG[displayOffset] = g;
-						_displayScreenB[displayOffset] = b;
-						_displayScreenA[displayOffset] = 0;
-						_displayScreen[displayOffset] = color;
+						
+						if (!bg) {
+							_displayScreen[displayOffset] = color;
+							_displayScreenR[displayOffset] = r;
+							_displayScreenG[displayOffset] = g;
+							_displayScreenB[displayOffset] = b;
+						} else {
+							_displayScreen_BG[displayOffset] = color;
+							_displayScreenR_BG[displayOffset] = r;
+							_displayScreenG_BG[displayOffset] = g;
+							_displayScreenB_BG[displayOffset] = b;
+						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
 						} else {
 							_enhancedMatte[displayOffset] = 128;
 						}
-						if (!bg)
+						if (!bg) {
+							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_displayScreenA[displayOffset] = 0;
+						}
 					}
 				}
 			}
@@ -1130,19 +1433,29 @@ public:
 						byte r = _palette[3 * i + 0];
 						byte g = _palette[3 * i + 1];
 						byte b = _palette[3 * i + 2];
-
-						_displayScreenR[displayOffset] = r;
-						_displayScreenG[displayOffset] = g;
-						_displayScreenB[displayOffset] = b;
-						_displayScreenA[displayOffset] = 0;
-						_displayScreen[displayOffset] = color;
+				
+						if (!bg) {
+							_displayScreen[displayOffset] = color;
+							_displayScreenR[displayOffset] = r;
+							_displayScreenG[displayOffset] = g;
+							_displayScreenB[displayOffset] = b;
+						} else {
+							_displayScreen_BG[displayOffset] = color;
+							_displayScreenR_BG[displayOffset] = r;
+							_displayScreenG_BG[displayOffset] = g;
+							_displayScreenB_BG[displayOffset] = b;
+						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
 						} else {
 							_enhancedMatte[displayOffset] = 128;
 						}
-						if (!bg)
+						if (!bg) {
+							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_displayScreenA[displayOffset] = 0;
+						}
 
 					} else if (_format.bytesPerPixel == 4) {
 
@@ -1150,36 +1463,58 @@ public:
 						byte r = _palette[3 * i + 0];
 						byte g = _palette[3 * i + 1];
 						byte b = _palette[3 * i + 2];
-						_displayScreenR[displayOffset] = r;
-						_displayScreenG[displayOffset] = g;
-						_displayScreenB[displayOffset] = b;
-						_displayScreenA[displayOffset] = 0;
-						_displayScreen[displayOffset] = color;	
+						
+						if (!bg) {
+							_displayScreen[displayOffset] = color;
+							_displayScreenR[displayOffset] = r;
+							_displayScreenG[displayOffset] = g;
+							_displayScreenB[displayOffset] = b;
+						} else {
+							_displayScreen_BG[displayOffset] = color;
+							_displayScreenR_BG[displayOffset] = r;
+							_displayScreenG_BG[displayOffset] = g;
+							_displayScreenB_BG[displayOffset] = b;
+						}	
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
 						} else {
 							_enhancedMatte[displayOffset] = 128;
 						}
-						if (!bg)
+						if (!bg) {
+							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_displayScreenA[displayOffset] = 0;
+						}
 					} else {
 
 						byte r;
 						byte g;
 						byte b;
 						_format.colorToRGB(color, r, g, b);
-						_displayScreenR[displayOffset] = r;
-						_displayScreenG[displayOffset] = g;
-						_displayScreenB[displayOffset] = b;
-						_displayScreenA[displayOffset] = 0;
-						_displayScreen[displayOffset] = color;
+						
+						if (!bg) {
+							_displayScreen[displayOffset] = color;
+							_displayScreenR[displayOffset] = r;
+							_displayScreenG[displayOffset] = g;
+							_displayScreenB[displayOffset] = b;
+						} else {
+							_displayScreen_BG[displayOffset] = color;
+							_displayScreenR_BG[displayOffset] = r;
+							_displayScreenG_BG[displayOffset] = g;
+							_displayScreenB_BG[displayOffset] = b;
+						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
 						} else {
 							_enhancedMatte[displayOffset] = 128;
 						}
-						if (!bg)
+						if (!bg) {
+							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
+						} else {
+							_displayScreenA[displayOffset] = 0;
+						}
 					}
 				}
 			}
@@ -1227,10 +1562,10 @@ public:
 						for (int xxx = 0; xxx < g_sci->_enhancementMultiplier; xxx++) {
 							priorityOffset = (((y * g_sci->_enhancementMultiplier * 2) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier * 2) + xx;
 
-							if (priorityOffset < _displayWidth * _displayHeight -1) {
-
-								_priorityScreenX[priorityOffset] = priority;
-								
+							if (priorityOffset < _displayWidth * _displayHeight - 1) {
+								if (_displayScreenA[priorityOffset] != 0) {
+									_priorityScreenX[priorityOffset] = priority;
+								}
 							}
 						}
 					}

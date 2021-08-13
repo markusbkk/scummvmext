@@ -908,6 +908,7 @@ void SciMusic::soundSetVolume(MusicEntry *pSnd, byte volume) {
 		pSnd->pMidiParser->setVolume(volume);
 		pSnd->pMidiParser->mainThreadEnd();
 	}
+	_pMixer->setChannelVolume(pSnd->hCurrentAud, volume * 2); // Mixer is 0-255, SCI is 0-127
 }
 
 // this is used to set volume of the sample, used for fading only!

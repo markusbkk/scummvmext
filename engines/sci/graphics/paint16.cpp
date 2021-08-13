@@ -532,7 +532,7 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 				case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
 					for (y = r.top * g_sci->_enhancementMultiplier; y < r.bottom * g_sci->_enhancementMultiplier; y++) {
 						for (x = r.left * g_sci->_enhancementMultiplier; x < r.right * g_sci->_enhancementMultiplier; x++) {
-							_screen->putPixelR(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenR[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, true);
+							_screen->putPixelR(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenR[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, false);
 							_screen->putPixelG(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenG[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0);
 							_screen->putPixelB(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenB[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0);
 						}
@@ -556,7 +556,7 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 		} else { // just fill rect with color
 			for (y = r.top; y < r.bottom; y++) {
 				for (x = r.left; x < r.right; x++) {
-					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, true);
+					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
 				}
 			}
 		}

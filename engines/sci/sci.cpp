@@ -111,6 +111,7 @@ std::string videoCutsceneEnd = "-undefined-";
 bool cutscene_mute_midi = false;
 bool preLoadedPNGs = false;
 float blackFade = 1.0;
+
 std::list<std::string> extraDIRList;
 std::list<std::string>::iterator extraDIRListit;
 std::string extraPath = "";

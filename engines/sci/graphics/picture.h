@@ -85,7 +85,7 @@ private:
 	int16 _resourceId;
 	Resource *_resource;
 	int _resourceType;
-	bool enhanced;
+	
 	bool overlay;
 	bool paletted;
 	bool surface;
