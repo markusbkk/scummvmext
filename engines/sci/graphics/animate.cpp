@@ -886,9 +886,7 @@ void GfxAnimate::drawCels() {
 
 void GfxAnimate::updateScreen(byte oldPicNotValid) {
 	
-	if (playingVideoCutscenes && g_sci->_theoraDecoderCutscenes != nullptr) {
-
-	} else {
+	if (!playingVideoCutscenes) {
 		AnimateList::iterator it;
 		const AnimateList::iterator end = _list.end();
 		Common::Rect lsRect;

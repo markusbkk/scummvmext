@@ -704,7 +704,7 @@ void GfxMenu::drawMenu(uint16 oldMenuId, uint16 newMenuId) {
 				pixelPos.y = topPos + (_ports->_curPort->fontHeight >> 1) - 1;
 				pixelPos.x = _menuRect.left - 7;
 				while (pixelPos.x < (_menuRect.right - 1)) {
-					_screen->putPixel(pixelPos.x, pixelPos.y, GFX_SCREEN_MASK_VISUAL, 0, 0, 0, false);
+					_screen->putPixel(pixelPos.x, pixelPos.y, GFX_SCREEN_MASK_VISUAL, 0, 0, 0, true);
 					pixelPos.x += 2;
 				}
 			}

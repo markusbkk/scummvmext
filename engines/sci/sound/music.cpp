@@ -801,6 +801,7 @@ void SciMusic::soundPlay(MusicEntry *pSnd) {
 							muteMidi = false;
 						}
 					} else {
+						debug(("Didn't Find : " + fnStr + ".mp3/.wav").c_str());
 						muteMidi = false;
 					}
 				} else {
@@ -808,17 +809,6 @@ void SciMusic::soundPlay(MusicEntry *pSnd) {
 				}
 			} else {
 				muteMidi = false;
-			}
-
-			if (!muteMidi || !isPlayingWav) {
-				debug(("Didn't Find : " + fnStr + ".mp3").c_str());
-				if (g_system->getMixer()) {
-					if (isPlayingWav) {
-
-						g_system->getMixer()->stopID(wavID);
-					}
-				}
-				isPlayingWav = false;
 			}
 			Common::StackLock lock(_mutex);
 			pSnd->pMidiParser->mainThreadBegin();

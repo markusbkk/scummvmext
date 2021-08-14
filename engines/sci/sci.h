@@ -236,6 +236,8 @@ public:
 	bool prevMirroredFlag;
 	bool prevAddToFlag;
 	int16 prevPaletteId;
+	reg_t bitsHandleMenu;
+	bool dontUpdate = false;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

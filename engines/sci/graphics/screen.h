@@ -309,7 +309,7 @@ public:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
-				putScaledPixelOnDisplay(x, y, color, false);
+				putScaledPixelOnDisplay(x, y, color, true);
 				break;
 			}
 			default:
@@ -1157,7 +1157,7 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 				// For regular upscaled modes forward to the regular putPixel
-				putPixel(x, y, drawMask, color, priority, control, false);
+				putPixel(x, y, drawMask, color, priority, control, true);
 				return;
 				break;
 

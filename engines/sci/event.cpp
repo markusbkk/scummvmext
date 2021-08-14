@@ -35,6 +35,7 @@
 #endif
 #include "sci/graphics/screen.h"
 #include "sci/graphics/paint16.h"
+#include "sci/graphics/animate.h"
 #include <engines/sci/sound/midiparser_sci.h>
 #include "sci/sound/music.h"
 #include <engines/sci/graphics/picture.cpp>
@@ -44,6 +45,7 @@ struct ScancodeRow {
 	int offset;
 	const char *keys;
 };
+bool every2ndFrame = true;
 extern bool playingVideoCutscenes;
 extern bool wasPlayingVideoCutscenes;
 extern MidiParser_SCI *midiMusic;
@@ -437,16 +439,38 @@ void EventManager::updateScreen() {
 			midiMusic->setMasterVolume(_masterVolumeMIDI);
 	}
 	if (!playingVideoCutscenes) {
-		if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 30) {
-			if (g_sci->play_enhanced_BG_anim) {
-				//debug("ANIMATING PIC BACKGROUND!");
-				if (getSciVersion() >= SCI_VERSION_1_EARLY)
-					g_sci->_gfxScreen->_picNotValid = 1;
-				g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
-				g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, g_sci->prevAddToFlag, (GuiResourceId)g_sci->prevPaletteId);
-				g_sci->_gfxPorts->endUpdate(g_sci->_gfxPorts->_picWind);
-				g_sci->enhanced_bg_frame++;
+		if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
+			
+			//every2ndFrame = !every2ndFrame;
+			//if (every2ndFrame)
+			{
+				if (g_sci->play_enhanced_BG_anim) {
+					
+					//reg_t screenBits = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_picWind->rect, 1 | 2);
+					//debug("ANIMATING PIC BACKGROUND!");
+					//g_sci->dontUpdate = true;
+					g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
+					g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
+					
+					//Common::Rect _animDrawArea = g_sci->_gfxPorts->getPort()->rect;
+					//_animDrawArea.bottom = g_sci->_gfxPorts->_picWind->rect.top;
+					//_animDrawArea.top = 0;
+					//g_sci->_gfxPaint16->fillRect(_animDrawArea, 1, g_sci->_gfxScreen->getColorWhite());
+					//g_sci->bitsHandleMenu = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_curPort->rect, 1 | 2);
+					//g_sci->sleep(10);
+					//if (getSciVersion() >= SCI_VERSION_1_EARLY)
+						//g_sci->_gfxScreen->_picNotValid = 1;
+					//g_sci->_gfxAnimate->reAnimate(g_sci->_gfxPorts->_currentViewPort);
+					//g_sci->_gfxPorts->endUpdate(g_sci->_gfxPorts->_picWind);
+					//g_sci->_gfxPaint16->bitsShow(g_sci->_gfxPorts->getPort()->rect);
+					
+				//	g_sci->_gfxPaint16->bitsRestore(screenBits);
+					//g_sci->_gfxPaint16->bitsRestore(g_sci->bitsHandleMenu);
+					//g_sci->dontUpdate = true;
+				}
+				
 			}
+			
 			g_system->updateScreen();
 			s->_screenUpdateTime = g_system->getMillis();
 			// Throttle the checking of shouldQuit() to 60fps as well, since
