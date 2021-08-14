@@ -330,7 +330,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 		char picstrbuffer[32];
 		int retVal, buf_size = 32;
-		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		retVal = snprintf(picstrbuffer, buf_size, "%s", _resource->name().c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
 		Common::String fnNoAnim = _resource->name().c_str();
 		char picnextstrbuffer[32];
@@ -373,7 +373,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
 								g_sci->enhanced_BG = true;
-								g_sci->play_enhanced_BG_anim = true;
+								g_sci->play_enhanced_BG_anim = false;
 							}
 						}
 					}
@@ -388,7 +388,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256 = true;
 								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
-								g_sci->play_enhanced_BG_anim = true;
+								g_sci->play_enhanced_BG_anim = false;
 								paletted = true;
 							}
 						}
@@ -404,7 +404,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256RP = true;
 								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
-								g_sci->play_enhanced_BG_anim = true;
+								g_sci->play_enhanced_BG_anim = false;
 								paletted = true;
 							}
 						}
@@ -484,7 +484,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
 								g_sci->enhanced_BG = true;
-								g_sci->play_enhanced_BG_anim = true;
+								g_sci->play_enhanced_BG_anim = false;
 							}
 						}
 					}
@@ -499,7 +499,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256 = true;
 								pixelCountX = pngPal->w * pngPal->h * 4;
 								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
-								g_sci->play_enhanced_BG_anim = true;
+								g_sci->play_enhanced_BG_anim = false;
 								paletted = true;
 							}
 						}
@@ -515,7 +515,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256RP = true;
 								pixelCountX = pngPal->w * pngPal->h * 4;
 								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
-								g_sci->play_enhanced_BG_anim = true;
+								g_sci->play_enhanced_BG_anim = false;
 								paletted = true;
 							}
 						}
