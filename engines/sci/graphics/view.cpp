@@ -958,7 +958,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 					const int x2 = clipRectTranslated.left + x;
 					const int y2 = clipRectTranslated.top + y;
 					if (color != clearKey && priority >= _screen->getPriority(x2, y2))
-						_screen->putPixel(x2, y2, drawMask, color, priority, 0, true);
+						_screen->putPixel(x2, y2, drawMask, color, priority, 0, false);
 				}
 			}
 		} else if (upscaledHires) {
@@ -985,7 +985,7 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 						const int y2 = clipRectTranslated.top + y;
 						if (priority >= _screen->getPriorityX((clipRectTranslated.left + x) * g_sci->_enhancementMultiplier, (clipRectTranslated.top + y) * g_sci->_enhancementMultiplier))
 						{
-							_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0, true);
+							_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0, false);
 						}
 					}
 				}
@@ -1349,7 +1349,7 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 				const int y2 = clipRectTranslated.top + y;
 				if (color != clearKey) {
 					if (priority >= _screen->getPriorityX((clipRectTranslated.left + x) * g_sci->_enhancementMultiplier, (clipRectTranslated.top + y) * g_sci->_enhancementMultiplier)) {
-						_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0, true);
+						_screen->putPixel(x2, y2, drawMask, getMappedColor(color, scaleSignal, palette, x2, y2), priority, 0, false);
 					}
 				}
 			}

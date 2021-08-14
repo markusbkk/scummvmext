@@ -801,7 +801,7 @@ void SciMusic::soundPlay(MusicEntry *pSnd) {
 							muteMidi = false;
 						}
 					} else {
-						debug(("Didn't Find : " + fnStr + ".mp3/.wav").c_str());
+						//debug(("Didn't Find : " + fnStr + ".mp3/.wav").c_str());
 						muteMidi = false;
 					}
 				} else {

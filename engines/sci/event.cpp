@@ -443,13 +443,14 @@ void EventManager::updateScreen() {
 			//every2ndFrame = !every2ndFrame;
 			//if (every2ndFrame)
 			{
-				if (g_sci->play_enhanced_BG_anim) {
+				//if (g_sci->play_enhanced_BG_anim)
+				{
 					
 					//reg_t screenBits = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_picWind->rect, 1 | 2);
 					//debug("ANIMATING PIC BACKGROUND!");
 					//g_sci->dontUpdate = true;
 					//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
-					g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
+					//g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
 					
 					//Common::Rect _animDrawArea = g_sci->_gfxPorts->getPort()->rect;
 					//_animDrawArea.bottom = g_sci->_gfxPorts->_picWind->rect.top;

@@ -308,7 +308,7 @@ public:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA:
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
-				putScaledPixelOnDisplay(x, y, color, true);
+				putScaledPixelOnDisplay(x, y, color, false);
 				break;
 			}
 			default:

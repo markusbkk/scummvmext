@@ -544,9 +544,9 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 						for (x = r.left; x < r.right; x++) {
 							curVisual = _screen->getVisual(x, y);
 							if (curVisual == color) {
-								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, priority, 0, 0, true);
+								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, priority, 0, 0, false);
 							} else if (curVisual == priority) {
-								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, true);
+								_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
 							}
 						}
 					}
@@ -556,7 +556,7 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 		} else { // just fill rect with color
 			for (y = r.top; y < r.bottom; y++) {
 				for (x = r.left; x < r.right; x++) {
-					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, true);
+					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
 				}
 			}
 		}
@@ -573,13 +573,13 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 	if (oldPenMode != 2) {
 		for (y = r.top; y < r.bottom; y++) {
 			for (x = r.left; x < r.right; x++) {
-				_screen->putPixel(x, y, drawFlags, 0, priority, control, true);
+				_screen->putPixel(x, y, drawFlags, 0, priority, control, false);
 			}
 		}
 	} else {
 		for (y = r.top; y < r.bottom; y++) {
 			for (x = r.left; x < r.right; x++) {
-				_screen->putPixel(x, y, drawFlags, 0, !_screen->getPriority(x, y), !_screen->getControl(x, y), true);
+				_screen->putPixel(x, y, drawFlags, 0, !_screen->getPriority(x, y), !_screen->getControl(x, y), false);
 			}
 		}
 	}
