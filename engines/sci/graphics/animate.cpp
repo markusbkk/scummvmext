@@ -279,22 +279,25 @@ void GfxAnimate::LoadAllExtraPNG() {
 	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
 	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
 
-		if (it->path().filename().string().rfind("view", 0) == 0 && hazEnding(it->path().generic_string(), ".png") && !strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
+		if ((it->path().filename().string().rfind("pic.", 0) == 0 || it->path().filename().string().rfind("view.", 0) == 0) && hazEnding(it->path().generic_string(), ".png")) {
 
 			Common::String cn = it->path().filename().string().c_str();
 			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
 			if (file) {
-				Graphics::Surface *viewpngtmp = loadCelPNG(file);
-				if (viewpngtmp) {
-					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
-					if (viewenh) {
-						std::pair<Graphics::Surface *, const byte *> tmp;
-						tmp.first = viewpngtmp;
-						tmp.second = viewenh;
-						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
-						Common::String dbg = "CACHED : " + fn;
-						debug(dbg.c_str());
+				if (!strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP") && !strstr(it->path().generic_string().c_str(), "_o") && !strstr(it->path().generic_string().c_str(), "_p") && !strstr(it->path().generic_string().c_str(), "_s")) {
+
+					Graphics::Surface *viewpngtmp = loadCelPNG(file);
+					if (viewpngtmp) {
+						const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+						if (viewenh) {
+							std::pair<Graphics::Surface *, const byte *> tmp;
+							tmp.first = viewpngtmp;
+							tmp.second = viewenh;
+							viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+							Common::String dbg = "CACHED : " + fn;
+							debug(dbg.c_str());
+						}
 					}
 				}
 			}

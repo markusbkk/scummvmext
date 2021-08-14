@@ -34,8 +34,10 @@
 #include "sci/graphics/frameout.h"
 #endif
 #include "sci/graphics/screen.h"
+#include "sci/graphics/paint16.h"
 #include <engines/sci/sound/midiparser_sci.h>
 #include "sci/sound/music.h"
+#include <engines/sci/graphics/picture.cpp>
 namespace Sci {
 
 struct ScancodeRow {
@@ -46,6 +48,7 @@ extern bool playingVideoCutscenes;
 extern bool wasPlayingVideoCutscenes;
 extern MidiParser_SCI *midiMusic;
 extern byte _masterVolumeMIDI;
+extern SciSpan<const byte> _previousBGResource;
 static const ScancodeRow scancodeAltifyRows[] = {
 	{ 0x10, "QWERTYUIOP[]"  },
 	{ 0x1e, "ASDFGHJKL;'\\" },
@@ -434,7 +437,16 @@ void EventManager::updateScreen() {
 			midiMusic->setMasterVolume(_masterVolumeMIDI);
 	}
 	if (!playingVideoCutscenes) {
-		if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
+		if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 30) {
+			if (g_sci->play_enhanced_BG_anim) {
+				//debug("ANIMATING PIC BACKGROUND!");
+				if (getSciVersion() >= SCI_VERSION_1_EARLY)
+					g_sci->_gfxScreen->_picNotValid = 1;
+				g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
+				g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, g_sci->prevAddToFlag, (GuiResourceId)g_sci->prevPaletteId);
+				g_sci->_gfxPorts->endUpdate(g_sci->_gfxPorts->_picWind);
+				g_sci->enhanced_bg_frame++;
+			}
 			g_system->updateScreen();
 			s->_screenUpdateTime = g_system->getMillis();
 			// Throttle the checking of shouldQuit() to 60fps as well, since

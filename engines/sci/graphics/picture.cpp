@@ -170,7 +170,7 @@ Graphics::Surface *loadPNG(Common::SeekableReadStream *s) {
 	if (!s)
 		return nullptr;
 	d.loadStream(*s);
-	delete s;
+	//delete s;
 
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 	return srf;
@@ -182,7 +182,7 @@ Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s, GfxScreen *_tehScr
 	if (!s)
 		return nullptr;
 	d.loadStream(*s);
-	delete s;
+	//delete s;
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
 	return srf;
 }
@@ -193,7 +193,7 @@ Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen 
 	if (!s)
 		return nullptr;
 	d.loadStream(*s);
-	delete s;
+	//delete s;
 	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), d.getPalette());
 
 	for (int16 i = 0; i < 256; i++) {
@@ -206,8 +206,8 @@ Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen 
 	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
-bool fileIsInExtraDIRPicture(std::string fileName) {
-	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName);
+bool fileIsInExtraDIRPicture(Common::String fileName) {
+	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName.c_str());
 	// Check if iterator points to end or not
 	if (extraDIRListit != extraDIRList.end()) {
 		return true;
@@ -216,7 +216,6 @@ bool fileIsInExtraDIRPicture(std::string fileName) {
 	}
 }
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
-	
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
@@ -326,14 +325,129 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			debug(10, ("NO " + _resource->name() + ".cts").c_str());
 		}
 	}
-	Common::FSNode folder;
+	
 	if (ConfMan.hasKey("extrapath")) {
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + ".png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+		Common::FSNode folder= Common::FSNode(ConfMan.get("extrapath"));
+		char picstrbuffer[32];
+		int retVal, buf_size = 32;
+		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		Common::String fn = picstrbuffer;
+		bool preloaded = false;
+		bool preloaded_256 = false;
+		bool preloaded_256RP = false;
+		bool preloaded_o = false;
+		bool preloaded_p = false;
+		bool preloaded_s = false;
+		if (fileIsInExtraDIRPicture(fn + ".png")) {
 
-			if (!file) {
-				fileName = folder.getChild(_resource->name() + ".png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			if (viewsMap.size() > 0)
+				for (viewsMapit = viewsMap.begin();
+				     viewsMapit != viewsMap.end(); ++viewsMapit) {
+
+					if (strcmp(viewsMapit->first.c_str(), (fn + ".png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						//debug("RELOADED FROM RAM");
+						png = tmp.first;
+						if (png) {
+							enh = (const byte *)png->getPixels();
+							if (enh) {
+								preloaded = true;
+								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+								g_sci->enhanced_BG = true;
+								g_sci->play_enhanced_BG_anim = true;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngPal = tmp.first;
+						if (pngPal) {
+							enhPal = (const byte *)pngPal->getPixels();
+							if (enhPal) {
+								preloaded_256 = true;
+								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+								g_sci->play_enhanced_BG_anim = true;
+								paletted = true;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngPal = tmp.first;
+						if (pngPal) {
+							enhPal = (const byte *)pngPal->getPixels();
+							if (enhPal) {
+								preloaded_256RP = true;
+								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+								g_sci->play_enhanced_BG_anim = true;
+								paletted = true;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_o.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngOverlay = tmp.first;
+						if (pngOverlay) {
+							enhOverlay = (const byte *)pngOverlay->getPixels();
+							if (enhOverlay) {
+								overlay = true;
+								preloaded_o = true;
+								debug((fn + "_o.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_p.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngPrio = tmp.first;
+						if (pngPrio) {
+							enhPrio = (const byte *)pngPrio->getPixels();
+							if (enhPrio) {
+								enhancedPrio = true;
+								preloaded_p = true;
+								debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_s.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngSurface = tmp.first;
+						if (pngSurface) {
+							enhSurface = (const byte *)pngSurface->getPixels();
+							if (enhSurface) {
+								pixelCountX = pngSurface->w * pngSurface->h * 4;
+								surface = true;
+								preloaded_s = true;
+								debug((fn + "_s.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+							}
+						}
+					}
+				}
+
+			if (!preloaded) {
+
+				fileName = folder.getChild(fn + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -343,19 +457,163 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					if (png) {
 						enh = (const byte *)png->getPixels();
 						if (enh) {
+							debug((fn + ".png FOUND").c_str());
 							pixelCountX = png->w * png->h * 4;
 							g_sci->enhanced_BG = true;
+							g_sci->play_enhanced_BG_anim = true;
+							std::pair<Graphics::Surface *, const byte *> tmp;
+							tmp.first = png;
+							tmp.second = enh;
+							viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
 						}
 					}
 				}
 			}
-		}
-		
-		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-		if (folder.exists() && folder.getChild(_resource->name() + ".ogg").exists()) {
-			debug(".ogg BACKGROUND VIDEO SUPPORT HAS BEEN TEMPORARILY DISABLED IN THIS BUILD! :/");
-			/*
-			    Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+		} else {
+			//debug((fn + ".png NOT FOUND").c_str());
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
+			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+			g_sci->enhanced_bg_frame = 0;
+			fn = _resource->name().c_str();
+			if (viewsMap.size() > 0)
+				for (viewsMapit = viewsMap.begin();
+					 viewsMapit != viewsMap.end(); ++viewsMapit) {
+
+										if (strcmp(viewsMapit->first.c_str(), (fn + ".png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						//debug("RELOADED FROM RAM");
+						png = tmp.first;
+						if (png) {
+							enh = (const byte *)png->getPixels();
+							if (enh) {
+								preloaded = true;
+								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+								g_sci->enhanced_BG = true;
+								g_sci->play_enhanced_BG_anim = false;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngPal = tmp.first;
+						if (pngPal) {
+							enhPal = (const byte *)pngPal->getPixels();
+							if (enhPal) {
+								preloaded_256 = true;
+								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+								g_sci->play_enhanced_BG_anim = false;
+								paletted = true;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngPal = tmp.first;
+						if (pngPal) {
+							enhPal = (const byte *)pngPal->getPixels();
+							if (enhPal) {
+								preloaded_256RP = true;
+								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+								g_sci->play_enhanced_BG_anim = false;
+								paletted = true;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_o.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngOverlay = tmp.first;
+						if (pngOverlay) {
+							enhOverlay = (const byte *)pngOverlay->getPixels();
+							if (enhOverlay) {
+								overlay = true;
+								preloaded_o = true;
+								debug((fn + "_o.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_p.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngPrio = tmp.first;
+						if (pngPrio) {
+							enhPrio = (const byte *)pngPrio->getPixels();
+							if (enhPrio) {
+								enhancedPrio = true;
+								preloaded_p = true;
+								debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+							}
+						}
+					}
+					if (strcmp(viewsMapit->first.c_str(), (fn + "_s.png").c_str()) == 0) {
+
+						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+
+						pngSurface = tmp.first;
+						if (pngSurface) {
+							enhSurface = (const byte *)pngSurface->getPixels();
+							if (enhSurface) {
+								pixelCountX = pngSurface->w * pngSurface->h * 4;
+								surface = true;
+								preloaded_s = true;
+								debug((fn + "_s.png WAS ALREADY CACHED :)").c_str());
+								pixelCountX = png->w * png->h * 4;
+							}
+						}
+					}
+				}
+			}
+			if (!preloaded) {
+				if (fileIsInExtraDIRPicture(fn + ".png")) {
+					Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
+					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+					if (!file) {
+						fileName = folder.getChild(fn + ".png").getName();
+						file = SearchMan.createReadStreamForMember(fileName);
+						if (!file) {
+							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+						} else {
+							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+							png = loadPNG(file);
+							if (png) {
+								enh = (const byte *)png->getPixels();
+								if (enh) {
+									pixelCountX = png->w * png->h * 4;
+									g_sci->enhanced_BG = true;
+									std::pair<Graphics::Surface *, const byte *> tmp;
+									tmp.first = png;
+									tmp.second = enh;
+									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+								}
+							}
+						}
+					}
+					g_sci->play_enhanced_BG_anim = true;
+					if (!fileIsInExtraDIRPicture(fn + ".1.png")) {
+						g_sci->play_enhanced_BG_anim = false;
+					}
+				}
+			}
+		    if (!preloaded) {
+			    if (fileIsInExtraDIRPicture(fn + ".ogg")) {
+				    Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".ogg").getName();
+				    debug(".ogg BACKGROUND VIDEO SUPPORT HAS BEEN TEMPORARILY DISABLED IN THIS BUILD! :/");
+				    /*
+			    Common::String fileName = (folder.getPath() + folder.getChild(fn + ".ogg").getName()).c_str();
 				debug((fileName).c_str());
 				g_sci->_theoraDecoder = new Video::TheoraDecoder();
 			    g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
@@ -373,120 +631,150 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			    g_sci->oggBackground = _resource->name() + ".ogg";
 		} else {
 			debug(10, ("No File " + _resource->name() + ".ogg").c_str());*/
+			    }
+		    }
+		    if (!preloaded_256) {
+			    if (fileIsInExtraDIRPicture(fn + "_256.png")) {
+				    Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256.png").getName();
+				    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				    if (!file) {
+					    fileName = folder.getChild(fn + "_256.png").getName();
+					    file = SearchMan.createReadStreamForMember(fileName);
+					    if (!file) {
+						    debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					    } else {
+						    debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						    pngPal = loadPNGCLUT(file, _screen);
+						    if (pngPal) {
+							    enhPal = (const byte *)pngPal->getPixels();
+							    if (enhPal) {
+								    pixelCountX = pngPal->w * pngPal->h * 4;
+								    paletted = true;
+								    g_sci->_gfxPalette16->overridePalette = false;
+								    std::pair<Graphics::Surface *, const byte *> tmp;
+								    tmp.first = pngPal;
+								    tmp.second = enhPal;
+								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256.png").c_str(), tmp));
+							    }
+						    }
+					    }
+				    }
+			    }
 		}
-		
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256.png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+		    if (!preloaded_256RP) {
+			    if (fileIsInExtraDIRPicture(fn + "_256RP.png")) {
+				    Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256RP.png").getName();
+				    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
-			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_256.png").getName();
-				file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-				} else {
-					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUT(file, _screen);
-					if (pngPal) {
-						enhPal = (const byte *)pngPal->getPixels();
-						if (enhPal) {
-							pixelCountX = pngPal->w * pngPal->h * 4;
-							paletted = true;
-							g_sci->_gfxPalette16->overridePalette = false;
-						}
-					}
-				}
-			}
-		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256RP.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256RP.png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				    if (!file) {
+					    fileName = folder.getChild(fn + "_256RP.png").getName();
+					    file = SearchMan.createReadStreamForMember(fileName);
+					    if (!file) {
+						    debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					    } else {
+						    debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						    pngPal = loadPNGCLUTOverride(file, _screen);
+						    if (pngPal) {
+							    enhPal = (const byte *)pngPal->getPixels();
+							    if (enhPal) {
+								    pixelCountX = pngPal->w * pngPal->h * 4;
+								    paletted = true;
+								    g_sci->_gfxPalette16->overridePalette = true;
+								    std::pair<Graphics::Surface *, const byte *> tmp;
+								    tmp.first = pngPal;
+								    tmp.second = enhPal;
+								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256RP.png").c_str(), tmp));
+							    }
+						    }
+					    }
+				    }
+			    }
+		    }
+		    if (!preloaded_o) {
+			    if (fileIsInExtraDIRPicture(fn + "_o.png")) {
 
-			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
-				file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-				} else {
-					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUTOverride(file, _screen);
-					if (pngPal) {
-						enhPal = (const byte *)pngPal->getPixels();
-						if (enhPal) {
-							pixelCountX = pngPal->w * pngPal->h * 4;
-							paletted = true;
-							g_sci->_gfxPalette16->overridePalette = true;
-						}
-					}
-				}
-			}
-		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
+				    Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
+				    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_o.png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+				    if (!file) {
+					    fileName = folder.getChild(fn + "_o.png").getName();
+					    file = SearchMan.createReadStreamForMember(fileName);
+					    if (!file) {
+						    debug(10, "Enhanced Overlay %s error", fileName.c_str());
+					    } else {
+						    debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
+						    pngOverlay = loadPNG(file);
+						    if (pngOverlay) {
+							    enhOverlay = (const byte *)pngOverlay->getPixels();
+							    if (enhOverlay) {
+								    pixelCountX = pngOverlay->w * pngOverlay->h * 4;
+								    overlay = true;
+								    std::pair<Graphics::Surface *, const byte *> tmp;
+								    tmp.first = pngOverlay;
+								    tmp.second = enhOverlay;
+								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
+							    }
+						    }
+					    }
+				    }
+			    }
+		    }
+		    if (!preloaded_p) {
+			    if (fileIsInExtraDIRPicture(fn + "_p.png")) {
+				    Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fn + "_p.png").getName();
+				    Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
-			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_o.png").getName();
-				file = SearchMan.createReadStreamForMember(fileName);
-				if (!file) {
-					debug(10, "Enhanced Overlay %s error", fileName.c_str());
-				} else {
-					debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngOverlay = loadPNG(file);
-					if (pngOverlay) {
-						enhOverlay = (const byte *)pngOverlay->getPixels();
-						if (enhOverlay) {
-							pixelCountX = pngOverlay->w * pngOverlay->h * 4;
-							overlay = true;
-						}
-					}
-				}
-			}
-		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_p.png").exists()) {
-			Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(_resource->name() + "_p.png").getName();
-			Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
+				    if (!filePrio) {
+					    fileNamePrio = folder.getChild(fn + "_p.png").getName();
+					    filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
+					    if (!filePrio) {
+						    debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
+					    } else {
+						    debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
+						    pngPrio = loadPNG(filePrio);
+						    if (pngPrio) {
+							    enhPrio = (const byte *)pngPrio->getPixels();
+							    if (enhPrio) {
+								    pixelCountX = pngPrio->w * pngPrio->h * 4;
+								    enhancedPrio = true;
+								    std::pair<Graphics::Surface *, const byte *> tmp;
+								    tmp.first = pngPrio;
+								    tmp.second = enhPrio;
+								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_p.png").c_str(), tmp));
+							    }
+						    }
+					    }
+				    }
+			    }
+		    }
+		    if (!preloaded_s) {
+			    if (fileIsInExtraDIRPicture(fn + "_s.png")) {
+				    Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fn + "_s.png").getName();
+				    Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
-			if (!filePrio) {
-				fileNamePrio = folder.getChild(_resource->name() + "_p.png").getName();
-				filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
-				if (!filePrio) {
-					debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
-				} else {
-					debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
-					pngPrio = loadPNG(filePrio);
-					if (pngPrio) {
-						enhPrio = (const byte *)pngPrio->getPixels();
-						if (enhPrio) {
-							pixelCountX = pngPrio->w * pngPrio->h * 4;
-							enhancedPrio = true;
-						}
-					}
-				}
-			}
-		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_s.png").exists()) {
-			Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(_resource->name() + "_s.png").getName();
-			Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
-
-			if (!fileSurf) {
-				fileNameSurf = folder.getChild(_resource->name() + "_s.png").getName();
-				fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
-				if (!fileSurf) {
-					debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
-				} else {
-					debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
-					pngSurface = loadPNG(fileSurf);
-					if (pngSurface) {
-						enhSurface = (const byte *)pngSurface->getPixels();
-						if (enhSurface) {
-							pixelCountX = pngSurface->w * pngSurface->h * 4;
-							surface = true;
-						}
-					}
-				}
-			}
+				    if (!fileSurf) {
+					    fileNameSurf = folder.getChild(fn + "_s.png").getName();
+					    fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
+					    if (!fileSurf) {
+						    debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
+					    } else {
+						    debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
+						    pngSurface = loadPNG(fileSurf);
+						    if (pngSurface) {
+							    enhSurface = (const byte *)pngSurface->getPixels();
+							    if (enhSurface) {
+								    pixelCountX = pngSurface->w * pngSurface->h * 4;
+								    surface = true;
+								    std::pair<Graphics::Surface *, const byte *> tmp;
+								    tmp.first = pngSurface;
+								    tmp.second = enhSurface;
+								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_s.png").c_str(), tmp));
+							    }
+						    }
+					    }
+				    }
+			    }
 		}
 	}
 
@@ -1119,7 +1407,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	//g_sci->_gfxMenu->SaveMenuBits();
-	
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
 	byte priority = _priority;
@@ -1137,14 +1424,19 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	surface = false;
 	enhancedPrio = false;
 
-	Common::FSNode folder;
+	
 	if (ConfMan.hasKey("extrapath")) {
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + ".png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + ".png").getName();
+		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
+		char picstrbuffer[32];
+		int retVal, buf_size = 32;
+		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		Common::String fn = picstrbuffer;
+		if (fileIsInExtraDIRPicture(fn + ".png")) {
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
-				fileName = folder.getChild(_resource->name() + ".png").getName();
+				fileName = folder.getChild(fn + ".png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -1154,18 +1446,49 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					if (png) {
 						enh = (const byte *)png->getPixels();
 						if (enh) {
+							debug((fn + ".png FOUND").c_str());
 							pixelCountX = png->w * png->h * 4;
 							g_sci->enhanced_BG = true;
+							g_sci->play_enhanced_BG_anim = true;
 						}
 					}
 				}
 			}
+		} else {
+			g_sci->enhanced_bg_frame = 0;
+			fn = _resource->name().c_str();
+			if (fileIsInExtraDIRPicture(fn + ".png")) {
+				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+				if (!file) {
+					fileName = folder.getChild(fn + ".png").getName();
+					file = SearchMan.createReadStreamForMember(fileName);
+					if (!file) {
+						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
+					} else {
+						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+						png = loadPNG(file);
+						if (png) {
+							enh = (const byte *)png->getPixels();
+							if (enh) {
+								pixelCountX = png->w * png->h * 4;
+								g_sci->enhanced_BG = true;
+
+							}
+						}
+					}
+				}
+				g_sci->play_enhanced_BG_anim = true;
+				if (!fileIsInExtraDIRPicture(fn + ".1.png")) {
+					g_sci->play_enhanced_BG_anim = false;
+				}
+			}
 		}
-		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-		if (folder.exists() && folder.getChild(_resource->name() + ".ogg").exists()) {
+		if (fileIsInExtraDIRPicture(fn + ".ogg")) {
 			debug(".ogg BACKGROUND VIDEO SUPPORT HAS BEEN TEMPORARILY DISABLED IN THIS BUILD! :/");
 			/*
-			Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+			Common::String fileName = (folder.getPath() + folder.getChild(fn + ".ogg").getName()).c_str();
 			debug((fileName).c_str());
 			g_sci->_theoraDecoder = new Video::TheoraDecoder();
 			g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
@@ -1184,12 +1507,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		} else {
 			debug(10, ("No File " + _resource->name() + ".ogg").c_str());*/
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256.png").getName();
+		if (fileIsInExtraDIRPicture(fn + "_256.png")) {
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_256.png").getName();
+				fileName = folder.getChild(fn + "_256.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -1207,12 +1530,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_256RP.png").exists()) {
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_256RP.png").getName();
+		if (fileIsInExtraDIRPicture(fn + "_256RP.png")) {
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256RP.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_256RP.png").getName();
+				fileName = folder.getChild(fn + "_256RP.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -1230,13 +1553,13 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_o.png").exists()) {
+		if (fileIsInExtraDIRPicture(fn + "_o.png")) {
 
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(_resource->name() + "_o.png").getName();
+			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 			if (!file) {
-				fileName = folder.getChild(_resource->name() + "_o.png").getName();
+				fileName = folder.getChild(fn + "_o.png").getName();
 				file = SearchMan.createReadStreamForMember(fileName);
 				if (!file) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -1253,12 +1576,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_p.png").exists()) {
-			Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(_resource->name() + "_p.png").getName();
+		if (fileIsInExtraDIRPicture(fn + "_p.png")) {
+			Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fn + "_p.png").getName();
 			Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
 			if (!filePrio) {
-				fileNamePrio = folder.getChild(_resource->name() + "_p.png").getName();
+				fileNamePrio = folder.getChild(fn + "_p.png").getName();
 				filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 				if (!filePrio) {
 					debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
@@ -1275,12 +1598,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			}
 		}
-		if ((folder = Common::FSNode(ConfMan.get("extrapath"))).exists() && folder.getChild(_resource->name() + "_s.png").exists()) {
-			Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(_resource->name() + "_s.png").getName();
+		if (fileIsInExtraDIRPicture(fn + "_s.png")) {
+			Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fn + "_s.png").getName();
 			Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
 			if (!fileSurf) {
-				fileNameSurf = folder.getChild(_resource->name() + "_s.png").getName();
+				fileNameSurf = folder.getChild(fn + "_s.png").getName();
 				fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 				if (!fileSurf) {
 					debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());

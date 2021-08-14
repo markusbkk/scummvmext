@@ -37,6 +37,7 @@
 #ifndef WIN32
 #include <dirent.h>
 #endif // !WIN32
+#include <engines/sci/graphics/helpers.h>
 
 
 struct ADGameDescription;
@@ -142,9 +143,10 @@ enum kLanguage {
 
 class SciEngine : public Engine {
 	friend class Console;
+
 public:
 	void LoadAllExtraPNG();
-	
+
 	SciEngine(OSystem *syst, const ADGameDescription *desc, SciGameId gameId);
 	~SciEngine() override;
 	void CreateDIRListing();
@@ -164,11 +166,11 @@ public:
 	void updateSoundMixerVolumes();
 	uint32 getTickCount();
 	void setTickCount(const uint32 ticks);
-	
+
 	const SciGameId &getGameId() const { return _gameId; }
 	const char *getGameIdStr() const;
 	Common::Language getLanguage() const;
-	bool isLanguageRTL() const;		// true if language's direction is from Right To Left
+	bool isLanguageRTL() const; // true if language's direction is from Right To Left
 	Common::Platform getPlatform() const;
 	bool isDemo() const;
 	bool isCD() const;
@@ -228,6 +230,12 @@ public:
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
 	bool enhanced_BG = false;
+	int16 enhanced_bg_frame = 0;
+	bool play_enhanced_BG_anim = false;
+	GuiResourceId prevPictureId;
+	bool prevMirroredFlag;
+	bool prevAddToFlag;
+	int16 prevPaletteId;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);
