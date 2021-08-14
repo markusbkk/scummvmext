@@ -164,7 +164,7 @@ void GfxPicture::drawSci11Vga() {
 
 extern void unpackCelData(const SciSpan<const byte> &inBuffer, SciSpan<byte> &celBitmap, byte clearColor, int rlePos, int literalPos, ViewType viewType, uint16 width, bool isMacSci11ViewData);
 
-Graphics::Surface *loadPNG(Common::SeekableReadStream *s) {
+Graphics::Surface *loadPNGPicture(Common::SeekableReadStream *s) {
 	Image::PNGDecoder d;
 
 	if (!s)
@@ -176,7 +176,7 @@ Graphics::Surface *loadPNG(Common::SeekableReadStream *s) {
 	return srf;
 }
 
-Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
+Graphics::Surface *loadPNGCLUTPicture(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
 	Image::PNGDecoder d;
 	
 	if (!s)
@@ -187,7 +187,7 @@ Graphics::Surface *loadPNGCLUT(Common::SeekableReadStream *s, GfxScreen *_tehScr
 	return srf;
 }
 
-Graphics::Surface *loadPNGCLUTOverride(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
+Graphics::Surface *loadPNGCLUTOverridePicture(Common::SeekableReadStream *s, GfxScreen *_tehScreen) {
 	Image::PNGDecoder d;
 
 	if (!s)
@@ -576,7 +576,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						png = loadPNG(file);
+						png = loadPNGPicture(file);
 						if (png) {
 							enh = (const byte *)png->getPixels();
 							if (enh) {
@@ -629,7 +629,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngPal = loadPNGCLUT(file, _screen);
+						pngPal = loadPNGCLUTPicture(file, _screen);
 						if (pngPal) {
 							enhPal = (const byte *)pngPal->getPixels();
 							if (enhPal) {
@@ -655,7 +655,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngPal = loadPNGCLUT(file, _screen);
+						pngPal = loadPNGCLUTPicture(file, _screen);
 						if (pngPal) {
 							enhPal = (const byte *)pngPal->getPixels();
 							if (enhPal) {
@@ -684,7 +684,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngPal = loadPNGCLUTOverride(file, _screen);
+						pngPal = loadPNGCLUTOverridePicture(file, _screen);
 						if (pngPal) {
 							enhPal = (const byte *)pngPal->getPixels();
 							if (enhPal) {
@@ -710,7 +710,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngPal = loadPNGCLUTOverride(file, _screen);
+						pngPal = loadPNGCLUTOverridePicture(file, _screen);
 						if (pngPal) {
 							enhPal = (const byte *)pngPal->getPixels();
 							if (enhPal) {
@@ -740,7 +740,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Overlay %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngOverlay = loadPNG(file);
+						pngOverlay = loadPNGPicture(file);
 						if (pngOverlay) {
 							enhOverlay = (const byte *)pngOverlay->getPixels();
 							if (enhOverlay) {
@@ -766,7 +766,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Overlay %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngOverlay = loadPNG(file);
+						pngOverlay = loadPNGPicture(file);
 						if (pngOverlay) {
 							enhOverlay = (const byte *)pngOverlay->getPixels();
 							if (enhOverlay) {
@@ -794,7 +794,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
 					} else {
 						debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
-						pngPrio = loadPNG(filePrio);
+						pngPrio = loadPNGPicture(filePrio);
 						if (pngPrio) {
 							enhPrio = (const byte *)pngPrio->getPixels();
 							if (enhPrio) {
@@ -819,7 +819,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
 					} else {
 						debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
-						pngPrio = loadPNG(filePrio);
+						pngPrio = loadPNGPicture(filePrio);
 						if (pngPrio) {
 							enhPrio = (const byte *)pngPrio->getPixels();
 							if (enhPrio) {
@@ -847,7 +847,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
 					} else {
 						debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
-						pngSurface = loadPNG(fileSurf);
+						pngSurface = loadPNGPicture(fileSurf);
 						if (pngSurface) {
 							enhSurface = (const byte *)pngSurface->getPixels();
 							if (enhSurface) {
@@ -872,7 +872,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
 					} else {
 						debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
-						pngSurface = loadPNG(fileSurf);
+						pngSurface = loadPNGPicture(fileSurf);
 						if (pngSurface) {
 							enhSurface = (const byte *)pngSurface->getPixels();
 							if (enhSurface) {
@@ -1554,7 +1554,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					png = loadPNG(file);
+					png = loadPNGPicture(file);
 					if (png) {
 						enh = (const byte *)png->getPixels();
 						if (enh) {
@@ -1579,7 +1579,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 					} else {
 						debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						png = loadPNG(file);
+						png = loadPNGPicture(file);
 						if (png) {
 							enh = (const byte *)png->getPixels();
 							if (enh) {
@@ -1629,7 +1629,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUT(file, _screen);
+					pngPal = loadPNGCLUTPicture(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
@@ -1652,7 +1652,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngPal = loadPNGCLUTOverride(file, _screen);
+					pngPal = loadPNGCLUTOverridePicture(file, _screen);
 					if (pngPal) {
 						enhPal = (const byte *)pngPal->getPixels();
 						if (enhPal) {
@@ -1676,7 +1676,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 				} else {
 					debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-					pngOverlay = loadPNG(file);
+					pngOverlay = loadPNGPicture(file);
 					if (pngOverlay) {
 						enhOverlay = (const byte *)pngOverlay->getPixels();
 						if (enhOverlay) {
@@ -1698,7 +1698,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
 				} else {
 					debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
-					pngPrio = loadPNG(filePrio);
+					pngPrio = loadPNGPicture(filePrio);
 					if (pngPrio) {
 						enhPrio = (const byte *)pngPrio->getPixels();
 						if (enhPrio) {
@@ -1720,7 +1720,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
 				} else {
 					debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
-					pngSurface = loadPNG(fileSurf);
+					pngSurface = loadPNGPicture(fileSurf);
 					if (pngSurface) {
 						enhSurface = (const byte *)pngSurface->getPixels();
 						if (enhSurface) {

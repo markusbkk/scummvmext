@@ -30,7 +30,6 @@
 #include "graphics/sjis.h"
 #include "graphics/korfont.h"
 #include "graphics/pixelformat.h"
-#include "sci/graphics/picture.h"
 namespace Sci {
 
 enum {

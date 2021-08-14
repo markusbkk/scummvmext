@@ -38,7 +38,6 @@
 #include "sci/graphics/animate.h"
 #include <engines/sci/sound/midiparser_sci.h>
 #include "sci/sound/music.h"
-#include <engines/sci/graphics/picture.cpp>
 namespace Sci {
 
 struct ScancodeRow {
@@ -449,7 +448,7 @@ void EventManager::updateScreen() {
 					//reg_t screenBits = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_picWind->rect, 1 | 2);
 					//debug("ANIMATING PIC BACKGROUND!");
 					//g_sci->dontUpdate = true;
-					g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
+					//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
 					g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
 					
 					//Common::Rect _animDrawArea = g_sci->_gfxPorts->getPort()->rect;
