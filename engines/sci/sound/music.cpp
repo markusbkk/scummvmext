@@ -41,6 +41,7 @@
 #include <string>
 #include <iostream>
 #include <list>
+#include <algorithm>
 //#define DEBUG_REMAP
 
 namespace Sci {

@@ -36,6 +36,8 @@
 #include <image/png.h>
 #include <map>
 #include <list>
+#include <algorithm>
+#include <string>
 #include <engines/sci/sound/midiparser_sci.h>
 namespace Sci {
 
@@ -206,15 +208,25 @@ Graphics::Surface *loadPNGCLUTOverridePicture(Common::SeekableReadStream *s, Gfx
 	//_tehScreen->setPalette(d.getPalette(), 0, 256, true);
 	return srf;
 }
-bool fileIsInExtraDIRPicture(Common::String fileName) {
-	extraDIRListit = std::find(extraDIRList.begin(), extraDIRList.end(), fileName.c_str());
-	// Check if iterator points to end or not
-	if (extraDIRListit != extraDIRList.end()) {
+bool fileIsInExtraDIRPicture(std::string fileName) {
+	
+	bool found = false;
+	std::list<std::string>::iterator it;
+	for (it = extraDIRList.begin(); it != extraDIRList.end(); ++it) {
+		std::string s = it->c_str();
+		if (s.compare(fileName) == 0) {
+			found = true;
+		}
+	}
+	if (found) {
+		debug("FOUND : %s", fileName.c_str());
 		return true;
 	} else {
+		
 		return false;
 	}
 }
+
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	g_sci->_gfxPalette16->overridePalette = false;
 	g_sci->backgroundIsVideo = false;
@@ -330,19 +342,32 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 		char picstrbuffer[32];
 		int retVal, buf_size = 32;
-		retVal = snprintf(picstrbuffer, buf_size, "%s", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
-		Common::String fnNoAnim = _resource->name().c_str();
+		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		char picnextstrbuffer[32];
 		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
-		if (!fileIsInExtraDIRPicture(nextAnim + ".png")) {
-			debug(nextAnim.c_str());
+		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
+			//debug(nextAnim.c_str());
 			g_sci->enhanced_bg_frame = 0;
-			g_sci->play_enhanced_BG_anim = false;
+			if (g_sci->play_enhanced_BG_anim) {
+				g_sci->play_enhanced_BG_anim = false;
+				
+			}
+			fn = fnNoAnim;
 		} else {
-			debug(nextAnim.c_str());
-			g_sci->enhanced_bg_frame++;
+			if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
+				//debug(nextAnim.c_str());
+				g_sci->enhanced_bg_frame++;
+				debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", (nextAnim + ".png").c_str());
+				g_sci->play_enhanced_BG_anim = true;
+			} else {
+				if (fileIsInExtraDIRPicture((fnNoAnim + ".0.png").c_str())) {
+					g_sci->enhanced_bg_frame = 0;
+					g_sci->play_enhanced_BG_anim = true;
+				}
+			}
 		}
 		
 		bool preloaded = false;
@@ -352,7 +377,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		bool preloaded_p = false;
 		bool preloaded_s = false;
 		
-		if (fileIsInExtraDIRPicture(fn + ".png")) {
+		if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
 
 			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -373,7 +398,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
 								g_sci->enhanced_BG = true;
-								g_sci->play_enhanced_BG_anim = false;
+								
 							}
 						}
 					}
@@ -388,7 +413,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256 = true;
 								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
-								g_sci->play_enhanced_BG_anim = false;
+								
 								paletted = true;
 							}
 						}
@@ -404,7 +429,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256RP = true;
 								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
-								g_sci->play_enhanced_BG_anim = false;
+								
 								paletted = true;
 							}
 						}
@@ -456,11 +481,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-
-			if (!preloaded) {
-				g_sci->play_enhanced_BG_anim = false;
-				fn = _resource->name().c_str();
-			}
 		}
 		
 		if (!preloaded) {
@@ -484,7 +504,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
 								g_sci->enhanced_BG = true;
-								g_sci->play_enhanced_BG_anim = false;
+								
 							}
 						}
 					}
@@ -499,7 +519,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256 = true;
 								pixelCountX = pngPal->w * pngPal->h * 4;
 								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
-								g_sci->play_enhanced_BG_anim = false;
+								
 								paletted = true;
 							}
 						}
@@ -515,7 +535,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								preloaded_256RP = true;
 								pixelCountX = pngPal->w * pngPal->h * 4;
 								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
-								g_sci->play_enhanced_BG_anim = false;
+								
 								paletted = true;
 							}
 						}
@@ -565,7 +585,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-			if (fileIsInExtraDIRPicture(fn + ".png")) {
+			if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -593,7 +613,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (!preloaded) {
-			if (fileIsInExtraDIRPicture(fn + ".ogg")) {
+			if (fileIsInExtraDIRPicture((fn + ".ogg").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".ogg").getName();
 				debug(".ogg BACKGROUND VIDEO SUPPORT HAS BEEN TEMPORARILY DISABLED IN THIS BUILD! :/");
 				/*
@@ -618,7 +638,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (!preloaded_256) {
-			if (fileIsInExtraDIRPicture(fn + "_256.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_256.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -644,7 +664,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_256.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_256.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_256.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -673,7 +693,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (!preloaded_256RP) {
-			if (fileIsInExtraDIRPicture(fn + "_256RP.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_256RP.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256RP.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -699,7 +719,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_256RP.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_256RP.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_256RP.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -728,7 +748,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (!preloaded_o) {
-			if (fileIsInExtraDIRPicture(fn + "_o.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_o.png").c_str())) {
 
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -754,7 +774,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_o.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_o.png").c_str())) {
 
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_o.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -783,7 +803,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (!preloaded_p) {
-			if (fileIsInExtraDIRPicture(fn + "_p.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_p.png").c_str())) {
 				Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fn + "_p.png").getName();
 				Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
@@ -808,7 +828,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_p.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_p.png").c_str())) {
 				Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_p.png").getName();
 				Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
@@ -836,7 +856,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (!preloaded_s) {
-			if (fileIsInExtraDIRPicture(fn + "_s.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_s.png").c_str())) {
 				Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fn + "_s.png").getName();
 				Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
@@ -861,7 +881,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_s.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_s.png").c_str())) {
 				Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_s.png").getName();
 				Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
@@ -888,6 +908,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
+		
 	}
 
 	Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
@@ -1536,24 +1557,92 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	surface = false;
 	enhancedPrio = false;
 
-	
+	if (videoCutsceneEnd == _resource->name().c_str()) {
+		playingVideoCutscenes = false;
+		wasPlayingVideoCutscenes = true;
+		videoCutsceneEnd = "-undefined-";
+		videoCutsceneStart = "-undefined-";
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+		Common::String dbg = "Cutscene ENDED on : " + _resource->name();
+		debug(dbg.c_str());
+	}
+	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
+		if (fileIsInExtraDIRPicture((_resource->name() + ".cts").c_str())) {
+			Common::String cfgfileName = _resource->name() + ".cts";
+			debug(cfgfileName.c_str());
+			Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
+			if (cfg) {
+				Common::String line, texttmp;
+				cutscene_mute_midi = false;
+				while (!cfg->eos()) {
+					texttmp = cfg->readLine();
+					if (texttmp.firstChar() != '#') {
+						if (texttmp.contains("mute_midi")) {
+							cutscene_mute_midi = true;
+						} else {
+							videoCutsceneEnd = texttmp.c_str();
+						}
+					}
+				}
+				videoCutsceneStart = _resource->name().c_str();
+
+				g_sci->oggBackground = _resource->name() + ".ogg";
+
+				g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
+
+				g_sci->_theoraDecoderCutscenes->loadFile(_resource->name() + ".ogg");
+				g_sci->_theoraDecoderCutscenes->start();
+				int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
+
+				playingVideoCutscenes = true;
+				wasPlayingVideoCutscenes = true;
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
+				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
+
+				if (cutscene_mute_midi) {
+					if (midiMusic != NULL)
+						midiMusic->setMasterVolume(0);
+				}
+				Common::String dbg = "Cutscene STARTED on : " + _resource->name();
+				debug(dbg.c_str());
+				dbg = "Cutscene set to end on : ";
+				dbg += videoCutsceneEnd.c_str();
+				debug(dbg.c_str());
+			}
+		} else {
+			debug(10, ("NO " + _resource->name() + ".cts").c_str());
+		}
+	}
 	if (ConfMan.hasKey("extrapath")) {
 		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 		char picstrbuffer[32];
 		int retVal, buf_size = 32;
-		retVal = snprintf(picstrbuffer, buf_size, "%s", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
-		Common::String fnNoAnim = _resource->name().c_str();
+		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		char picnextstrbuffer[32];
 		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
-		if (!fileIsInExtraDIRPicture(nextAnim + ".png")) {
-			debug(nextAnim.c_str());
+		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
+			//debug(nextAnim.c_str());
 			g_sci->enhanced_bg_frame = 0;
 			g_sci->play_enhanced_BG_anim = false;
+			fn = fnNoAnim;
 		} else {
-			debug(nextAnim.c_str());
-			g_sci->enhanced_bg_frame++;
+			if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
+				//debug(nextAnim.c_str());
+				g_sci->enhanced_bg_frame++;
+				debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", (nextAnim + ".png").c_str());
+				g_sci->play_enhanced_BG_anim = true;
+			} else {
+				if (fileIsInExtraDIRPicture((fnNoAnim + ".0.png").c_str())) {
+					g_sci->enhanced_bg_frame = 0;
+					g_sci->play_enhanced_BG_anim = true;
+				}
+			}
 		}
 
 		bool preloaded = false;
@@ -1562,8 +1651,8 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		bool preloaded_o = false;
 		bool preloaded_p = false;
 		bool preloaded_s = false;
-
-		if (fileIsInExtraDIRPicture(fn + ".png")) {
+		
+		if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
 
 			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -1584,10 +1673,11 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
 								g_sci->enhanced_BG = true;
-								g_sci->play_enhanced_BG_anim = false;
+								
 							}
 						}
-					} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
+					}
+					else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
 
 						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 
@@ -1598,11 +1688,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 								preloaded_256 = true;
 								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
-								g_sci->play_enhanced_BG_anim = false;
+								
 								paletted = true;
 							}
 						}
-					} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
+					}
+					else if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
 
 						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 
@@ -1613,7 +1704,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 								preloaded_256RP = true;
 								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
 								pixelCountX = png->w * png->h * 4;
-								g_sci->play_enhanced_BG_anim = false;
+								
 								paletted = true;
 							}
 						}
@@ -1665,114 +1756,10 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-
-			if (!preloaded) {
-				g_sci->play_enhanced_BG_anim = false;
-				fn = _resource->name().c_str();
-			}
 		}
-
+		
 		if (!preloaded) {
-
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-			if (viewsMap.size() > 0)
-				for (viewsMapit = viewsMap.begin();
-				     viewsMapit != viewsMap.end(); ++viewsMapit) {
-
-					if (strcmp(viewsMapit->first.c_str(), (fn + ".png").c_str()) == 0) {
-
-						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-						//debug("RELOADED FROM RAM");
-						png = tmp.first;
-						if (png) {
-							enh = (const byte *)png->getPixels();
-							if (enh) {
-								preloaded = true;
-								debug((fn + ".png WAS ALREADY CACHED :)").c_str());
-								pixelCountX = png->w * png->h * 4;
-								g_sci->enhanced_BG = true;
-								g_sci->play_enhanced_BG_anim = false;
-							}
-						}
-					} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
-
-						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-						pngPal = tmp.first;
-						if (pngPal) {
-							enhPal = (const byte *)pngPal->getPixels();
-							if (enhPal) {
-								preloaded_256 = true;
-								pixelCountX = pngPal->w * pngPal->h * 4;
-								debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
-								g_sci->play_enhanced_BG_anim = false;
-								paletted = true;
-							}
-						}
-					} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
-
-						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-						pngPal = tmp.first;
-						if (pngPal) {
-							enhPal = (const byte *)pngPal->getPixels();
-							if (enhPal) {
-								preloaded_256RP = true;
-								pixelCountX = pngPal->w * pngPal->h * 4;
-								debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
-								g_sci->play_enhanced_BG_anim = false;
-								paletted = true;
-							}
-						}
-					}
-					if (strcmp(viewsMapit->first.c_str(), (fn + "_o.png").c_str()) == 0) {
-
-						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-						pngOverlay = tmp.first;
-						if (pngOverlay) {
-							enhOverlay = (const byte *)pngOverlay->getPixels();
-							if (enhOverlay) {
-								overlay = true;
-								preloaded_o = true;
-								debug((fn + "_o.png WAS ALREADY CACHED :)").c_str());
-							}
-						}
-					}
-					if (strcmp(viewsMapit->first.c_str(), (fn + "_p.png").c_str()) == 0) {
-
-						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-						pngPrio = tmp.first;
-						if (pngPrio) {
-							enhPrio = (const byte *)pngPrio->getPixels();
-							if (enhPrio) {
-								enhancedPrio = true;
-								preloaded_p = true;
-								debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
-							}
-						}
-					}
-					if (strcmp(viewsMapit->first.c_str(), (fn + "_s.png").c_str()) == 0) {
-
-						std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-						pngSurface = tmp.first;
-						if (pngSurface) {
-							enhSurface = (const byte *)pngSurface->getPixels();
-							if (enhSurface) {
-								pixelCountX = pngSurface->w * pngSurface->h * 4;
-								surface = true;
-								preloaded_s = true;
-								debug((fn + "_s.png WAS ALREADY CACHED :)").c_str());
-								pixelCountX = png->w * png->h * 4;
-							}
-						}
-					}
-				}
-			if (fileIsInExtraDIRPicture(fn + ".png")) {
+			if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -1800,7 +1787,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (!preloaded) {
-			if (fileIsInExtraDIRPicture(fn + ".ogg")) {
+			if (fileIsInExtraDIRPicture((fn + ".ogg").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".ogg").getName();
 				debug(".ogg BACKGROUND VIDEO SUPPORT HAS BEEN TEMPORARILY DISABLED IN THIS BUILD! :/");
 				/*
@@ -1825,7 +1812,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (!preloaded_256) {
-			if (fileIsInExtraDIRPicture(fn + "_256.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_256.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -1851,7 +1838,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_256.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_256.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_256.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -1880,7 +1867,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (!preloaded_256RP) {
-			if (fileIsInExtraDIRPicture(fn + "_256RP.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_256RP.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256RP.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -1906,12 +1893,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_256RP.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_256RP.png").c_str())) {
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_256RP.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
 				if (!file) {
-					fileName = folder.getChild(fnNoAnim + "_256RP.png").getName();
+					fileName = folder.getChild((fnNoAnim + "_256RP.png").c_str()).getName();
 					file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
 						debug(10, "Enhanced Bitmap %s error", fileName.c_str());
@@ -1935,7 +1922,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (!preloaded_o) {
-			if (fileIsInExtraDIRPicture(fn + "_o.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_o.png").c_str())) {
 
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -1961,7 +1948,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_o.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_o.png").c_str())) {
 
 				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_o.png").getName();
 				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -1990,7 +1977,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (!preloaded_p) {
-			if (fileIsInExtraDIRPicture(fn + "_p.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_p.png").c_str())) {
 				Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fn + "_p.png").getName();
 				Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
@@ -2015,7 +2002,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_p.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_p.png").c_str())) {
 				Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_p.png").getName();
 				Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
 
@@ -2043,7 +2030,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (!preloaded_s) {
-			if (fileIsInExtraDIRPicture(fn + "_s.png")) {
+			if (fileIsInExtraDIRPicture((fn + "_s.png").c_str())) {
 				Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fn + "_s.png").getName();
 				Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
@@ -2068,7 +2055,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture(fnNoAnim + "_s.png")) {
+			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_s.png").c_str())) {
 				Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_s.png").getName();
 				Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
 
@@ -2095,8 +2082,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			}
 		}
+
 	}
-	
+	if (g_sci->enhanced_BG || g_sci->backgroundIsVideo || overlay || paletted || enhancedPrio || surface) {
 
 		Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
 
@@ -2363,7 +2351,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				x--;
 			}
 		}
-	
+	}
 	
 }
 

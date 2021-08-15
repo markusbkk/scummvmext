@@ -36,6 +36,7 @@
 #include "sci/graphics/screen.h"
 #include "sci/graphics/paint16.h"
 #include "sci/graphics/animate.h"
+#include "sci/graphics/ports.h"
 #include <engines/sci/sound/midiparser_sci.h>
 #include "sci/sound/music.h"
 namespace Sci {
@@ -443,15 +444,24 @@ void EventManager::updateScreen() {
 			//every2ndFrame = !every2ndFrame;
 			//if (every2ndFrame)
 			{
-				//if (g_sci->play_enhanced_BG_anim)
-				{
+				
 					
 					//reg_t screenBits = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_picWind->rect, 1 | 2);
 					//debug("ANIMATING PIC BACKGROUND!");
 					//g_sci->dontUpdate = true;
 					//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
-					//g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
-					
+					Common::Rect _statusDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxPorts->_curPort->top);
+					reg_t screenBits = g_sci->_gfxPaint16->bitsSave(_statusDrawArea, 1 | 2);
+					if (g_sci->play_enhanced_BG_anim)
+					{
+					    if (g_sci->prevPictureId != NULL) {
+						    if (g_sci->_gfxPorts->_curPort->top == 10) {
+							    g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
+							    Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
+							    g_sci->_gfxAnimate->reAnimate(_animDrawArea);
+								g_sci->_gfxPaint16->bitsRestore(screenBits);
+						    }
+					    }
 					//Common::Rect _animDrawArea = g_sci->_gfxPorts->getPort()->rect;
 					//_animDrawArea.bottom = g_sci->_gfxPorts->_picWind->rect.top;
 					//_animDrawArea.top = 0;

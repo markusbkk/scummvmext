@@ -43,6 +43,7 @@
 #include <fstream>
 #include <string>
 #include <list>
+#include <algorithm>
 #include <engines/sci/sound/midiparser_sci.h>
 namespace Sci {
 extern bool playingVideoCutscenes;

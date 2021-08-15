@@ -48,6 +48,7 @@
 #include <cctype>
 #include <common/system.h>
 #include <list>
+#include <algorithm>
 #include <engines/sci/sound/midiparser_sci.h>
 #ifdef WIN32
 #include <boost/filesystem.hpp>

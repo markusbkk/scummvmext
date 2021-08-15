@@ -42,6 +42,7 @@
 #include "audio/decoders/wave.h"
 #include <engines/sci/sound/midiparser_sci.h>
 #include <list>
+#include <algorithm>
 
 namespace Sci {
 Common::String prevMP3Text = "Scummvmext";

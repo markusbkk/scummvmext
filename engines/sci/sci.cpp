@@ -89,6 +89,7 @@
 #include <common/events.h>
 #include <image/png.h>
 #include <list>
+#include <algorithm>
 #include <map>
 #include <string>
 

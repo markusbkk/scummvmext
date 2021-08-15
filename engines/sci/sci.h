@@ -232,7 +232,7 @@ public:
 	bool enhanced_BG = false;
 	int16 enhanced_bg_frame = 0;
 	bool play_enhanced_BG_anim = false;
-	GuiResourceId prevPictureId;
+	GuiResourceId prevPictureId = NULL;
 	bool prevMirroredFlag;
 	bool prevAddToFlag;
 	int16 prevPaletteId;
