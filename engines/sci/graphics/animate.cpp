@@ -747,27 +747,28 @@ void GfxAnimate::update() {
 	const AnimateList::iterator end = _list.end();
 
 	// Remove all no-update cels, if requested
-	for (it = _list.reverse_begin(); it != end; --it) {
-		if (it->signal & kSignalNoUpdate) {
-			if (!(it->signal & kSignalRemoveView)) {
-				bitsHandle = readSelector(_s->_segMan, it->object, SELECTOR(underBits));
-				if (_screen->_picNotValid != 1) {
-					_paint16->bitsRestore(bitsHandle);
-					it->showBitsFlag = true;
-				} else	{
-					_paint16->bitsFree(bitsHandle);
+	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
+		for (it = _list.reverse_begin(); it != end; --it) {
+			if (it->signal & kSignalNoUpdate) {
+				if (!(it->signal & kSignalRemoveView)) {
+					bitsHandle = readSelector(_s->_segMan, it->object, SELECTOR(underBits));
+					if (_screen->_picNotValid != 1) {
+						_paint16->bitsRestore(bitsHandle);
+						it->showBitsFlag = true;
+					} else {
+						_paint16->bitsFree(bitsHandle);
+					}
+					writeSelectorValue(_s->_segMan, it->object, SELECTOR(underBits), 0);
 				}
-				writeSelectorValue(_s->_segMan, it->object, SELECTOR(underBits), 0);
+				it->signal &= ~kSignalForceUpdate;
+				if (it->signal & kSignalViewUpdated)
+					it->signal &= ~(kSignalViewUpdated | kSignalNoUpdate);
+			} else if (it->signal & kSignalStopUpdate) {
+				it->signal &= ~kSignalStopUpdate;
+				it->signal |= kSignalNoUpdate;
 			}
-			it->signal &= ~kSignalForceUpdate;
-			if (it->signal & kSignalViewUpdated)
-				it->signal &= ~(kSignalViewUpdated | kSignalNoUpdate);
-		} else if (it->signal & kSignalStopUpdate) {
-			it->signal &= ~kSignalStopUpdate;
-			it->signal |= kSignalNoUpdate;
 		}
 	}
-
 	// Draw always-update cels
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalAlwaysUpdate) {
@@ -859,7 +860,7 @@ void GfxAnimate::drawCels() {
 						if (g_sci->_gfxPorts->_curPort->top == 10) {
 							//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
 							g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
-							Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
+							//Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
 							//g_sci->_gfxAnimate->reAnimate(_animDrawArea);
 							//g_sci->_gfxPaint16->bitsRestore(g_sci->menuSaveBits);
 							//g_sci->_gfxPorts->endUpdate(g_sci->_gfxPorts->_picWind);
@@ -914,12 +915,12 @@ void GfxAnimate::drawCels() {
 								//if (g_sci->_theoraSurface != nullptr)
 								{
 									if (g_sci->prevPictureId != NULL) {
-										if (g_sci->_gfxPorts->_curPort->top == 10) {
-											g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
-											//Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
-											//g_sci->_gfxAnimate->reAnimate(_animDrawArea);
-											//g_sci->_gfxPaint16->bitsRestore(g_sci->menuSaveBits);
-										}
+										//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
+										g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
+										//Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
+										//g_sci->_gfxAnimate->reAnimate(_animDrawArea);
+										//g_sci->_gfxPaint16->bitsRestore(g_sci->menuSaveBits);
+										//g_sci->_gfxPorts->endUpdate(g_sci->_gfxPorts->_picWind);
 									}
 								}
 							}

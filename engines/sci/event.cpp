@@ -438,12 +438,7 @@ void EventManager::updateScreen() {
 		if (midiMusic != NULL)
 			midiMusic->setMasterVolume(_masterVolumeMIDI);
 	}
-	if (g_sci->_gfxPorts->_curPort->top == 10) {
-		
-	} else {
-		Common::Rect _statusDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getDisplayWidth(), 50);
-		g_sci->menuSaveBits = g_sci->_gfxPaint16->bitsSave(_statusDrawArea, 1 | 2);
-	}
+
 
 	 if (playingVideoCutscenes)
 	 {
