@@ -442,6 +442,12 @@ public:
 				if (_format.bytesPerPixel == 2) {
 					_displayScreenA[displayOffset] = 255;
 					_displayScreen[displayOffset] = c;
+					byte r = _palette[3 * c + 0];
+					byte g = _palette[3 * c + 1];
+					byte b = _palette[3 * c + 2];
+					_displayScreenR[displayOffset] = r;
+					_displayScreenG[displayOffset] = g;
+					_displayScreenB[displayOffset] = b;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
 					} else {
@@ -453,6 +459,12 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 					_displayScreenA[displayOffset] = 255;
 					_displayScreen[displayOffset] = c;
+					byte r = _palette[3 * c + 0];
+					byte g = _palette[3 * c + 1];
+					byte b = _palette[3 * c + 2];
+					_displayScreenR[displayOffset] = r;
+					_displayScreenG[displayOffset] = g;
+					_displayScreenB[displayOffset] = b;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
 					} else {
