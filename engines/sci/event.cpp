@@ -445,7 +445,6 @@ void EventManager::updateScreen() {
 		g_sci->menuSaveBits = g_sci->_gfxPaint16->bitsSave(_statusDrawArea, 1 | 2);
 	}
 
-						//	g_sci->_gfxPaint16->bitsRestore(screenBits);
 	 if (playingVideoCutscenes)
 	 {
 		if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoderCutscenes->getTimeToNextFrame() * 2) {
