@@ -386,7 +386,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					}
 				} else {
 
-					debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (_resource->name()).c_str());
+					//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (_resource->name()).c_str());
 
 					g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 					enh = (const byte *)g_sci->_theoraSurface->getPixels();
@@ -411,7 +411,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
 					g_sci->enhanced_bg_frame++;
-					debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
+					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
 					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
@@ -422,7 +422,9 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 		}
 		if (g_sci->enhanced_bg_frame <= 1) {
-			fn = fnNoAnim;
+			if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
+				fn = fnNoAnim;
+			}
 		}
 		bool preloaded = false;
 		bool preloaded_256 = false;
@@ -1707,7 +1709,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					}
 				} else {
 
-					debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (_resource->name()).c_str());
+					//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (_resource->name()).c_str());
 
 					g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 					enh = (const byte *)g_sci->_theoraSurface->getPixels();
@@ -1732,7 +1734,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
 					g_sci->enhanced_bg_frame++;
-					debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
+					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
 					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
@@ -1743,7 +1745,9 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (g_sci->enhanced_bg_frame <= 1) {
-			fn = fnNoAnim;
+			if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
+				fn = fnNoAnim;
+			}
 		}
 		bool preloaded = false;
 		bool preloaded_256 = false;
