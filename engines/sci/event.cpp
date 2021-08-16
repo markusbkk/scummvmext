@@ -479,7 +479,7 @@ void EventManager::updateScreen() {
 				s->abortScriptProcessing = kAbortQuitGame;
 		}
 	 } else {
-		 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 30) {
+		 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
 			 s->_screenUpdateTime = g_system->getMillis();
 
 			 g_system->updateScreen();
