@@ -480,24 +480,28 @@ public:
 
 				if (_format.bytesPerPixel == 2) {
 
-					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = 0;
+					
+					//_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
+						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 					} else {
 						_enhancedMatte[displayOffset] = 128;
+						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a)) * _displayScreenA[displayOffset];
 					}
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 
-					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = 0;
+					
+					//_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
+						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 					} else {
 						_enhancedMatte[displayOffset] = 128;
+						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a)) * _displayScreenA[displayOffset];
 					}
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
@@ -511,7 +515,7 @@ public:
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = 0;
+					//_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
@@ -523,7 +527,7 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 
 					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					_displayScreenA[displayOffset] = 0;
+					//_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
