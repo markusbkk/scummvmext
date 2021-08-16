@@ -230,7 +230,7 @@ public:
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
 	bool enhanced_BG = false;
-	int16 enhanced_bg_frame = 0;
+	int16 enhanced_bg_frame = 1;
 	bool play_enhanced_BG_anim = false;
 	GuiResourceId prevPictureId = NULL;
 	bool prevMirroredFlag;
@@ -238,7 +238,7 @@ public:
 	int16 prevPaletteId;
 	reg_t bitsHandleMenu;
 	bool dontUpdate = false;
-
+	reg_t menuSaveBits;
 public:
 	bool checkKernelBreakpoint(const Common::String &name);
 
@@ -293,6 +293,7 @@ public:
 	GfxTransitions *_gfxTransitions; // transitions between screens for 16-bit gfx
 	GfxMacIconBar *_gfxMacIconBar; // Mac Icon Bar manager
 	Video::TheoraDecoder *_theoraDecoder;
+	
 	Video::TheoraDecoder *_theoraDecoderCutscenes;
 	
 #ifdef ENABLE_SCI32
