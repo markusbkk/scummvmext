@@ -886,7 +886,98 @@ void GfxAnimate::drawCels() {
 }
 
 void GfxAnimate::updateScreen(byte oldPicNotValid) {
-	
+	if (!playingVideoCutscenes) {
+		EngineState *s = g_sci->getEngineState();
+			if (!g_sci->backgroundIsVideo) {
+				//every2ndFrame = !every2ndFrame;
+				//if (every2ndFrame)
+				{
+					if (g_system->getMillis() - s->_screenUpdateTime >= (1000 / 30) * 2) {
+
+						int16 frameDrop = (int)((g_system->getMillis() - s->_screenUpdateTime) / (1000 / 30));
+						if (frameDrop > 0) {
+							g_sci->enhanced_bg_frame += frameDrop;
+						}
+					}
+					g_sci->enhanced_bg_frame++;
+					//reg_t screenBits = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_picWind->rect, 1 | 2);
+					//debug("ANIMATING PIC BACKGROUND!");
+					//g_sci->dontUpdate = true;
+					//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
+
+					if (g_sci->play_enhanced_BG_anim) {
+						if (g_sci->prevPictureId != NULL) {
+							if (g_sci->_gfxPorts->_curPort->top == 10) {
+								g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
+								Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
+								g_sci->_gfxAnimate->reAnimate(_animDrawArea);
+								//g_sci->_gfxPaint16->bitsRestore(g_sci->menuSaveBits);
+							}
+						}
+						//Common::Rect _animDrawArea = g_sci->_gfxPorts->getPort()->rect;
+						//_animDrawArea.bottom = g_sci->_gfxPorts->_picWind->rect.top;
+						//_animDrawArea.top = 0;
+						//g_sci->_gfxPaint16->fillRect(_animDrawArea, 1, g_sci->_gfxScreen->getColorWhite());
+						//g_sci->bitsHandleMenu = g_sci->_gfxPaint16->bitsSave(g_sci->_gfxPorts->_curPort->rect, 1 | 2);
+						//g_sci->sleep(10);
+						//if (getSciVersion() >= SCI_VERSION_1_EARLY)
+						//g_sci->_gfxScreen->_picNotValid = 1;
+						//g_sci->_gfxAnimate->reAnimate(g_sci->_gfxPorts->_currentViewPort);
+						//g_sci->_gfxPorts->endUpdate(g_sci->_gfxPorts->_picWind);
+						//g_sci->_gfxPaint16->bitsShow(g_sci->_gfxPorts->getPort()->rect);
+
+						//	g_sci->_gfxPaint16->bitsRestore(screenBits);
+						//g_sci->_gfxPaint16->bitsRestore(g_sci->bitsHandleMenu);
+						//g_sci->dontUpdate = true;
+					}
+				}
+			} else {
+				// Throttle the checking of shouldQuit() to 60fps as well, since
+				// Engine::shouldQuit() invokes 2 virtual functions
+				// (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
+				// which is very expensive to invoke constantly without any
+				// throttling at all.
+				if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoder->getTimeToNextFrame() * 2) {
+					if (g_sci->_theoraDecoder->getTimeToNextFrame() != 0) {
+						int16 frameDrop = (int)((g_system->getMillis() - s->_screenUpdateTime) / g_sci->_theoraDecoder->getTimeToNextFrame());
+						if (frameDrop > 0) {
+							g_sci->_theoraDecoder->seekToFrame(g_sci->_theoraDecoder->getCurFrame() + frameDrop);
+						}
+					}
+				}
+
+				if (g_sci->prevPictureId != NULL) {
+					if (g_sci->_gfxPorts->_curPort->top == 10) {
+						if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoder->getTimeToNextFrame()) {
+
+							s->_screenUpdateTime = g_system->getMillis();
+							if (g_sci->_theoraDecoder->getCurFrame() == -1) {
+								//g_sci->_theoraDecoder->decodeNextFrame();
+							} else {
+								//g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
+
+								//if (g_sci->_theoraSurface != nullptr)
+								{
+									if (g_sci->prevPictureId != NULL) {
+										if (g_sci->_gfxPorts->_curPort->top == 10) {
+											g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
+											Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
+											g_sci->_gfxAnimate->reAnimate(_animDrawArea);
+											//g_sci->_gfxPaint16->bitsRestore(g_sci->menuSaveBits);
+										}
+									}
+								}
+							}
+						}
+					} else {
+						debug("%u", g_sci->_gfxPorts->_curPort->top);
+					}
+				}
+			}
+
+			
+		
+	}
 	if (!playingVideoCutscenes) {
 		AnimateList::iterator it;
 		const AnimateList::iterator end = _list.end();

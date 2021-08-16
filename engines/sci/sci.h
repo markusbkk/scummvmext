@@ -239,6 +239,8 @@ public:
 	reg_t bitsHandleMenu;
 	bool dontUpdate = false;
 	reg_t menuSaveBits;
+	reg_t statusSaveBits;
+
 public:
 	bool checkKernelBreakpoint(const Common::String &name);
 
