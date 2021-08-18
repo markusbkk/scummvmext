@@ -215,7 +215,8 @@ SciEvent EventManager::getScummVMEvent() {
 	} while (found && ev.type == Common::EVENT_MOUSEMOVE);
 
 	Common::Point mousePos = em->getMousePos();
-
+	g_sci->mousePosDepth = mousePos;
+	
 #if ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
 		const GfxFrameout *gfxFrameout = g_sci->_gfxFrameout;
@@ -481,6 +482,11 @@ void EventManager::updateScreen() {
 	 } else {
 		 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
 			 s->_screenUpdateTime = g_system->getMillis();
+
+			 if (g_sci->enhanced_DEPTH) {
+				 int perspective = (int)((float)((float)(g_sci->mousePosDepth.x * g_sci->_enhancementMultiplier)));
+				 g_sci->_gfxScreen->renderFrameDepthFirst(perspective);
+			 }
 
 			 g_system->updateScreen();
 			 // Throttle the checking of shouldQuit() to 60fps as well, since

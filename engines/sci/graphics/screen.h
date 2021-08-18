@@ -30,6 +30,8 @@
 #include "graphics/sjis.h"
 #include "graphics/korfont.h"
 #include "graphics/pixelformat.h"
+
+
 namespace Sci {
 
 enum {
@@ -170,12 +172,36 @@ public:
 	byte *_displayScreenG;
 	byte *_displayedScreenG;
 	byte *_displayScreenB;
+	byte *_displayScreenR_BGtmp;
+	byte *_displayScreenG_BGtmp;
+	byte *_displayScreenB_BGtmp;
 	byte *_displayScreenR_BG;
 	byte *_displayScreenG_BG;
 	byte *_displayScreenB_BG;
 	byte *_displayedScreenB;
+	byte *_displayScreenDEPTH_IN;
+	byte *_displayScreenDEPTH_OUT;
 
 	Graphics::PixelFormat _format;
+
+	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
+	//variables to set
+	float moveAmp = 0.12;       // default 10
+	float focusPoint = 1;   //default = 2; 0 = focus bg
+	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
+	int nbFrames = 128;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
+	int myFrameRate = 60;
+	int correctionRadius = 1;     //can prevent small artifacts but can be ugly. set to 0-1 or 2 max
+	//computing variables
+	int totalFrames = 2 * nbFrames + 1;
+	int frameId = 0;
+	bool goingRight = true;
+	bool rendering = true;
+	int nbLayers = (int)(moveAmp + focusPoint) + 1;
+	int greyColor, disp;
+	int f, i, dx, dy, newX, dxx, maxDifX;
+	byte color, pixelColorR, pixelColorG, pixelColorB;
+
 private:
 	
 	uint _pixels;
@@ -517,6 +543,10 @@ public:
 					}
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
+					
+				}
+				if (g_sci->enhanced_DEPTH) {
+						_displayScreenR_BGtmp[displayOffset] = _displayScreenR_BG[displayOffset];
 				}
 				break;
 			}
@@ -547,6 +577,9 @@ public:
 					}
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
+				}
+				if (g_sci->enhanced_DEPTH) {
+					_displayScreenR_BGtmp[displayOffset] = _displayScreenR_BG[displayOffset];
 				}
 				break;
 			}
@@ -575,6 +608,10 @@ public:
 
 					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 				}
+
+				if (g_sci->enhanced_DEPTH) {
+					_displayScreenG_BGtmp[displayOffset] = _displayScreenG_BG[displayOffset];
+				}
 				break;
 			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
@@ -589,6 +626,10 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 
 					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+
+				if (g_sci->enhanced_DEPTH) {
+					_displayScreenG_BGtmp[displayOffset] = _displayScreenG_BG[displayOffset];
 				}
 				break;
 			}
@@ -617,6 +658,10 @@ public:
 
 					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
+
+				if (g_sci->enhanced_DEPTH) {
+					_displayScreenB_BGtmp[displayOffset] = _displayScreenB_BG[displayOffset];
+				}
 				break;
 			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
@@ -632,10 +677,88 @@ public:
 
 					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
+
+				if (g_sci->enhanced_DEPTH) {
+					_displayScreenB_BGtmp[displayOffset] = _displayScreenB_BG[displayOffset];
+				}
 				break;
 			}
 			default:
 				break;
+			}
+		}
+	}
+	void putPixel_DEPTH(int16 x, int16 y, byte d) {
+
+			int displayOffset = 0;
+
+			switch (_upscaledHires) {
+			case GFX_SCREEN_UPSCALED_640x400: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenDEPTH_IN[displayOffset] = d;
+
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenDEPTH_IN[displayOffset] = d;
+			    }
+				break;
+			}
+			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
+
+				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
+				if (_format.bytesPerPixel == 2) {
+
+					_displayScreenDEPTH_IN[displayOffset] = d;
+				} else {
+					//assert(_format.bytesPerPixel == 4);
+
+					_displayScreenDEPTH_IN[displayOffset] = d;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		
+	}
+	int clip(int n, int lower, int upper) {
+		return std::max(lower, std::min(n, upper));
+	}
+	void renderFrameDepthFirst(int frameDif) {
+		//debug("%u", frameDif);
+		nbFrames = _displayWidth;
+		int sizeX = _displayWidth;
+		int sizeY = _displayHeight;
+		for (i = 0; i <= 25; i++) {
+			for (dy = 0; dy < sizeY; dy++) {
+				//print("y : "+ y + "\n");
+				for (dx = 0; dx < sizeX; dx++) {
+					//print("x : "+ x + "\n");
+					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
+					//print("grey : " + (int)greyColor + " i : " + i +"\n");
+					if ((int)(greyColor / 10) == i) {
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (frameDif - (nbFrames / 2)) / nbFrames), (int)0, (int)(sizeX - 1));
+						pixelColorR = _displayScreenR_BGtmp[dy * sizeX + dx];
+						pixelColorG = _displayScreenG_BGtmp[dy * sizeX + dx];
+						pixelColorB = _displayScreenB_BGtmp[dy * sizeX + dx];
+						for (dxx = clip((int)(newX - correctionRadius), 0, sizeX); dxx < clip((int)(newX + correctionRadius), 0, sizeX); dxx++) {
+							//print("xx : "+ xx + "\n");
+							if (greyColor > _displayScreenDEPTH_IN[dy * sizeX + dxx]) {
+								_displayScreenR_BG[dy * sizeX + dxx] = pixelColorR;
+								_displayScreenG_BG[dy * sizeX + dxx] = pixelColorG;
+								_displayScreenB_BG[dy * sizeX + dxx] = pixelColorB;
+							}
+						}
+						_displayScreenR_BG[dy * sizeX + newX] = pixelColorR;
+						_displayScreenG_BG[dy * sizeX + newX] = pixelColorG;
+						_displayScreenB_BG[dy * sizeX + newX] = pixelColorB;
+					}
+				}
 			}
 		}
 	}

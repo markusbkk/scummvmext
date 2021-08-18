@@ -193,7 +193,14 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	_displayScreenR_BG = (byte *)calloc(_displayPixels, 1);
 	_displayScreenG_BG = (byte *)calloc(_displayPixels, 1);
 	_displayScreenB_BG = (byte *)calloc(_displayPixels, 1);
+	_displayScreenR_BGtmp = (byte *)calloc(_displayPixels, 1);
+	_displayScreenG_BGtmp = (byte *)calloc(_displayPixels, 1);
+	_displayScreenB_BGtmp = (byte *)calloc(_displayPixels, 1);
+	memset(_displayScreenR_BGtmp, 0, _displayPixels);
+	memset(_displayScreenG_BGtmp, 0, _displayPixels);
+	memset(_displayScreenB_BGtmp, 0, _displayPixels);
 	_displayScreenA = (byte *)calloc(_displayPixels, 1);
+	_displayScreenDEPTH_IN = (byte *)calloc(_displayPixels, 1);
 	_enhancedMatte = (byte *)calloc(_displayPixels, 1);
 	_priorityScreenX = (byte *)calloc(_displayPixels, 1);
 	_surfaceScreen = (byte *)calloc(_displayPixels, 1);
@@ -344,7 +351,11 @@ GfxScreen::~GfxScreen() {
 	free(_displayScreenR_BG);
 	free(_displayScreenG_BG);
 	free(_displayScreenB_BG);
+	free(_displayScreenR_BGtmp);
+	free(_displayScreenG_BGtmp);
+	free(_displayScreenB_BGtmp);
 	free(_displayScreenA);
+	free(_displayScreenDEPTH_IN);
 	free(_paletteMapScreen);
 	free(_displayedScreen);
 	free(_displayedScreenR);
@@ -372,6 +383,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 				const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
 				const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
 				const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
+
 				byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
 
 				// TODO: Reduce code duplication here
@@ -589,6 +601,7 @@ void GfxScreen::displayRectRGB(const Common::Rect &rect, int x, int y) {
 		memcpy(_displayedScreenR + targetOffset, _activeScreenR + offset, rect.width());
 		memcpy(_displayedScreenG + targetOffset, _activeScreenG + offset, rect.width());
 		memcpy(_displayedScreenB + targetOffset, _activeScreenB + offset, rect.width());
+
 	}
 
 	// 2. Convert to RGB
@@ -628,7 +641,11 @@ void GfxScreen::clearForRestoreGame() {
 	memset(_displayScreenR_BG, 0, _displayPixels);
 	memset(_displayScreenG_BG, 0, _displayPixels);
 	memset(_displayScreenB_BG, 0, _displayPixels);
+	memset(_displayScreenR_BGtmp, 0, _displayPixels);
+	memset(_displayScreenG_BGtmp, 0, _displayPixels);
+	memset(_displayScreenB_BGtmp, 0, _displayPixels);
 	memset(_displayScreenA, 0, _displayPixels);
+	memset(_displayScreenDEPTH_IN, 0, _displayPixels);
 	memset(_priorityScreenX, 0, _displayPixels);
 	if (_displayedScreen) {
 		memset(_displayedScreen, 0, _displayPixels);

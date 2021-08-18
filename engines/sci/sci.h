@@ -230,6 +230,7 @@ public:
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
 	bool enhanced_BG = false;
+	bool enhanced_DEPTH = false;
 	int16 enhanced_bg_frame = 1;
 	bool play_enhanced_BG_anim = false;
 	GuiResourceId prevPictureId = NULL;
@@ -240,6 +241,7 @@ public:
 	bool dontUpdate = false;
 	reg_t menuSaveBits;
 	reg_t statusSaveBits;
+	Common::Point mousePosDepth;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);
