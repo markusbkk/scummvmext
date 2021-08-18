@@ -730,6 +730,7 @@ public:
 		return std::max(lower, std::min(n, upper));
 	}
 	void renderFrameDepthFirst(int frameDif) {
+		memcpy(g_sci->_gfxScreen->_priorityScreenXtmp, g_sci->_gfxScreen->_priorityScreenX, g_sci->_gfxScreen->_displayPixels);
 		//debug("%u", frameDif);
 		nbFrames = _displayWidth / 2;
 		int sizeX = _displayWidth;
