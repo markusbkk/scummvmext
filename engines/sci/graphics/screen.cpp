@@ -203,6 +203,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	_displayScreenDEPTH_IN = (byte *)calloc(_displayPixels, 1);
 	_enhancedMatte = (byte *)calloc(_displayPixels, 1);
 	_priorityScreenX = (byte *)calloc(_displayPixels, 1);
+	_priorityScreenXtmp = (byte *)calloc(_displayPixels, 1);
 	_surfaceScreen = (byte *)calloc(_displayPixels, 1);
 
 	memset(&_ditheredPicColors, 0, sizeof(_ditheredPicColors));
@@ -341,6 +342,7 @@ GfxScreen::~GfxScreen() {
 	free(_visualScreenG);
 	free(_visualScreenB);
 	free(_priorityScreenX);
+	free(_priorityScreenXtmp);
 	free(_enhancedMatte);
 	free(_surfaceScreen);
 	free(_displayScreen);
@@ -647,6 +649,7 @@ void GfxScreen::clearForRestoreGame() {
 	memset(_displayScreenA, 0, _displayPixels);
 	memset(_displayScreenDEPTH_IN, 0, _displayPixels);
 	memset(_priorityScreenX, 0, _displayPixels);
+	memset(_priorityScreenXtmp, 0, _displayPixels);
 	if (_displayedScreen) {
 		memset(_displayedScreen, 0, _displayPixels);
 		memset(_displayedScreenR, 0, _displayPixels);

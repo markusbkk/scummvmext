@@ -181,12 +181,14 @@ public:
 	byte *_displayedScreenB;
 	byte *_displayScreenDEPTH_IN;
 	byte *_displayScreenDEPTH_OUT;
+	byte *_priorityScreenX;
+	byte *_priorityScreenXtmp;
 
 	Graphics::PixelFormat _format;
 
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 0.12;       // default 10
+	float moveAmp = 1.6;       // default 10
 	float focusPoint = 1;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
 	int nbFrames = 128;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
@@ -200,7 +202,7 @@ public:
 	int nbLayers = (int)(moveAmp + focusPoint) + 1;
 	int greyColor, disp;
 	int f, i, dx, dy, newX, dxx, maxDifX;
-	byte color, pixelColorR, pixelColorG, pixelColorB;
+	byte color, pixelColorR, pixelColorG, pixelColorB, pixelColorP;
 
 private:
 	
@@ -238,8 +240,6 @@ private:
 	byte *_visualScreenR;
 	byte *_visualScreenG;
 	byte *_visualScreenB;
-
-	byte *_priorityScreenX;
 
 	byte *_surfaceScreen;
 	/**
@@ -731,7 +731,7 @@ public:
 	}
 	void renderFrameDepthFirst(int frameDif) {
 		//debug("%u", frameDif);
-		nbFrames = _displayWidth;
+		nbFrames = _displayWidth / 2;
 		int sizeX = _displayWidth;
 		int sizeY = _displayHeight;
 		for (i = 0; i <= 25; i++) {
@@ -746,17 +746,20 @@ public:
 						pixelColorR = _displayScreenR_BGtmp[dy * sizeX + dx];
 						pixelColorG = _displayScreenG_BGtmp[dy * sizeX + dx];
 						pixelColorB = _displayScreenB_BGtmp[dy * sizeX + dx];
+						pixelColorP = _priorityScreenXtmp[dy * sizeX + dx];
 						for (dxx = clip((int)(newX - correctionRadius), 0, sizeX); dxx < clip((int)(newX + correctionRadius), 0, sizeX); dxx++) {
 							//print("xx : "+ xx + "\n");
 							if (greyColor > _displayScreenDEPTH_IN[dy * sizeX + dxx]) {
 								_displayScreenR_BG[dy * sizeX + dxx] = pixelColorR;
 								_displayScreenG_BG[dy * sizeX + dxx] = pixelColorG;
 								_displayScreenB_BG[dy * sizeX + dxx] = pixelColorB;
+								_priorityScreenX[dy * sizeX + dxx] = pixelColorP;
 							}
 						}
 						_displayScreenR_BG[dy * sizeX + newX] = pixelColorR;
 						_displayScreenG_BG[dy * sizeX + newX] = pixelColorG;
 						_displayScreenB_BG[dy * sizeX + newX] = pixelColorB;
+						_priorityScreenX[dy * sizeX + newX] = pixelColorP;
 					}
 				}
 			}
@@ -1214,7 +1217,9 @@ public:
 			case GFX_SCREEN_UPSCALED_640x400: {
 
 				_priorityScreenX[((y) * (_width * 2)) + (x)] = priority;
-
+				if (g_sci->enhanced_DEPTH) {
+					_priorityScreenXtmp[((y) * (_width * 2)) + (x)] = _priorityScreenX[((y) * (_width * 2)) + (x)];
+				}
 				break;
 			}
 			case GFX_SCREEN_UPSCALED_640x440:
@@ -1222,12 +1227,16 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 				
 				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
-
+				if (g_sci->enhanced_DEPTH) {
+					_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+				}
 				break;
 			}
 			default: {
 				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
-				
+				if (g_sci->enhanced_DEPTH) {
+					_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+				}
 				break;
 			}
 			}
@@ -1235,6 +1244,7 @@ public:
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
 			_controlScreen[offset] = control;
 		}
+
 	}
 	void putPixelSurface(int16 x, int16 y, byte drawMask, byte surface) {
 

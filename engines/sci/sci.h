@@ -241,7 +241,7 @@ public:
 	bool dontUpdate = false;
 	reg_t menuSaveBits;
 	reg_t statusSaveBits;
-	Common::Point mousePosDepth;
+	Common::Point depthLookPos;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

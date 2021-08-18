@@ -359,7 +359,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 	    // Clear lists
 	    _list.clear();
 	    _lastCastData.clear();
-
+	    int totalListCelX = 0;
+	    int totalListCelCount = 0;
 	    // Fill the list
 	    for (listNr = 0; curNode != 0; listNr++) {
 		    AnimateEntry listEntry;
@@ -375,6 +376,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 
 		    listEntry.paletteNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(palette));
 		    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
+		    totalListCelX += listEntry.x;
+		    totalListCelCount++;
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 		    listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		    listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
@@ -578,7 +581,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 	    curAddress = curNode->succ;
 	    curNode = _s->_segMan->lookupNode(curAddress);
     }
-	
+	    if (totalListCelCount != 0)
+		    g_sci->depthLookPos.x = (int16)((g_sci->depthLookPos.x + (int16)((float)(totalListCelX / totalListCelCount))) / 2);
 	// Possible TODO: As noted in the comment in sortHelper we actually
 	// require a stable sorting algorithm here. Since Common::sort is not stable
 	// at the time of writing this comment, we work around that in our ordering
@@ -775,7 +779,7 @@ void GfxAnimate::update() {
 			// draw corresponding cel
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
-
+			
 			it->signal &= ~(kSignalStopUpdate | kSignalViewUpdated | kSignalNoUpdate | kSignalForceUpdate);
 			if (!(it->signal & kSignalIgnoreActor)) {
 				
@@ -817,8 +821,10 @@ void GfxAnimate::update() {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
 
-				_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+
 			
+
 			it->showBitsFlag = true;
 
 			if (!(it->signal & kSignalIgnoreActor)) {
@@ -828,6 +834,7 @@ void GfxAnimate::update() {
 			}
 		}
 	}
+	
 	
 }
 

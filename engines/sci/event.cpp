@@ -215,7 +215,7 @@ SciEvent EventManager::getScummVMEvent() {
 	} while (found && ev.type == Common::EVENT_MOUSEMOVE);
 
 	Common::Point mousePos = em->getMousePos();
-	g_sci->mousePosDepth = mousePos;
+	//g_sci->depthLookPos = mousePos;
 	
 #if ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
@@ -484,7 +484,7 @@ void EventManager::updateScreen() {
 			 s->_screenUpdateTime = g_system->getMillis();
 
 			 if (g_sci->enhanced_DEPTH) {
-				 int perspective = (int)((float)((float)(g_sci->mousePosDepth.x * g_sci->_enhancementMultiplier)));
+				 int perspective = g_sci->_gfxScreen->getDisplayWidth() - (int)((float)((float)(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier)));
 				 g_sci->_gfxScreen->renderFrameDepthFirst(perspective);
 			 }
 
