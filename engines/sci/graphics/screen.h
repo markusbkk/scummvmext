@@ -182,6 +182,7 @@ public:
 	byte *_displayScreenDEPTH_IN;
 	byte *_displayScreenDEPTH_OUT;
 	byte *_priorityScreenX;
+	byte *_priorityScreenX_BG;
 	byte *_priorityScreenXtmp;
 
 	Graphics::PixelFormat _format;
@@ -1216,27 +1217,51 @@ public:
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
 			switch (_upscaledHires) {
 			case GFX_SCREEN_UPSCALED_640x400: {
-
-				_priorityScreenX[((y) * (_width * 2)) + (x)] = priority;
-				if (bg && g_sci->enhanced_DEPTH) {
-					_priorityScreenXtmp[((y) * (_width * 2)) + (x)] = _priorityScreenX[((y) * (_width * 2)) + (x)];
+				if (bg) {
+					_priorityScreenX_BG[((y) * (_width * 2)) + (x)] = priority;
+				} else {
+					_priorityScreenX[((y) * (_width * 2)) + (x)] = priority;
+				}
+				
+				if (g_sci->enhanced_DEPTH) {
+					if (_priorityScreenX[((y) * (_width * 2)) + (x)] > _priorityScreenX_BG[((y) * (_width * 2)) + (x)]) {
+						_priorityScreenXtmp[((y) * (_width * 2)) + (x)] = _priorityScreenX[((y) * (_width * 2)) + (x)];
+					} else {
+						_priorityScreenXtmp[((y) * (_width * 2)) + (x)] = _priorityScreenX_BG[((y) * (_width * 2)) + (x)];
+					}
 				}
 				break;
 			}
 			case GFX_SCREEN_UPSCALED_640x440:
 			case GFX_SCREEN_UPSCALED_640x480:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
-				
-				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
-				if (bg && g_sci->enhanced_DEPTH) {
-					_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+				if (bg) {
+					_priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
+				} else {
+					_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
+
+				}
+				if (g_sci->enhanced_DEPTH) {
+					if (_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] > _priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x]) {
+						_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+					} else {
+						_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+					}
 				}
 				break;
 			}
 			default: {
-				_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
-				if (bg && g_sci->enhanced_DEPTH) {
-					_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+				if (bg) {
+					_priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
+				} else {
+					_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
+				}
+				if (g_sci->enhanced_DEPTH) {
+					if (_priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x] > _priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x]) {
+						_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+					} else {
+						_priorityScreenXtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = _priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x];
+					}
 				}
 				break;
 			}
@@ -1950,7 +1975,13 @@ public:
 		return getPixel(_visualScreen, x, y);
 	}
 	byte getPriorityX(int16 x, int16 y) {
-		return getPixelX(_priorityScreenX, (int)(x), (int)(y)); //
+		if (getPixelX(_priorityScreenX, (int)(x), (int)(y)) > getPixelX(_priorityScreenX_BG, (int)(x), (int)(y))) {
+			return getPixelX(_priorityScreenX, (int)(x), (int)(y)); //
+		}
+		else {
+			return getPixelX(_priorityScreenX_BG, (int)(x), (int)(y)); 
+		}
+
 	}
 	byte getSurface(int16 x, int16 y) {
 		return getPixelX(_surfaceScreen, (int)(x), (int)(y)); //
