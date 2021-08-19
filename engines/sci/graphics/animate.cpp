@@ -78,6 +78,11 @@ extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::ite
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
 extern bool preLoadedPNGs;
+
+int clip(int n, int lower, int upper) {
+	return std::max(lower, std::min(n, upper));
+}
+
 void GfxAnimate::init() {
 	_lastCastData.clear();
 
@@ -377,7 +382,8 @@ void GfxAnimate::LoadAllExtraPNG() {
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 		    if (g_sci->enhanced_DEPTH) {
 			    listEntry.orig_x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-			    listEntry.x = (int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier;
+			    listEntry.x = clip((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier, 0, g_sci->_gfxScreen->getDisplayWidth() / g_sci->_enhancementMultiplier);
+			    ;
 		    } else {
 			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 			    listEntry.x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
@@ -951,7 +957,7 @@ void GfxAnimate::drawCels() {
 	}
 	for (it = _list.begin(); it != end; ++it) {
 		if (g_sci->enhanced_DEPTH) {
-			it->x = (int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, it->orig_x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier;
+			it->x = clip((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, it->orig_x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier, 0, g_sci->_gfxScreen->getDisplayWidth() / g_sci->_enhancementMultiplier);
 
 		} else {
 			it->x = it->orig_x;
