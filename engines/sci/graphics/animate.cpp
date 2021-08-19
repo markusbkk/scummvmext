@@ -359,8 +359,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 	    // Clear lists
 	    _list.clear();
 	    _lastCastData.clear();
-	    int totalListCelX = 0;
-	    int totalListCelCount = 0;
+
 	    // Fill the list
 	    for (listNr = 0; curNode != 0; listNr++) {
 		    AnimateEntry listEntry;
@@ -375,10 +374,15 @@ void GfxAnimate::LoadAllExtraPNG() {
 		    listEntry.celNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(cel));
 
 		    listEntry.paletteNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(palette));
-		    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-		    totalListCelX += listEntry.x;
-		    totalListCelCount++;
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
+		    if (g_sci->enhanced_DEPTH) {
+			    listEntry.orig_x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
+			    listEntry.x = (int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier;
+		    } else {
+			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
+			    listEntry.x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
+		    }
+		    
 		    listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		    listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
 		    listEntry.signal = readSelectorValue(_s->_segMan, curObject, SELECTOR(signal));
@@ -581,8 +585,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 	    curAddress = curNode->succ;
 	    curNode = _s->_segMan->lookupNode(curAddress);
     }
-	    if (totalListCelCount != 0)
-		    g_sci->depthLookPos.x = (int16)((g_sci->depthLookPos.x + (int16)((float)(totalListCelX / totalListCelCount))) / 2);
+
 	// Possible TODO: As noted in the comment in sortHelper we actually
 	// require a stable sorting algorithm here. Since Common::sort is not stable
 	// at the time of writing this comment, we work around that in our ordering
@@ -704,7 +707,6 @@ void GfxAnimate::applyGlobalScaling(AnimateList::iterator entry, GfxView *view) 
 
 void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 	bool shouldSetNsRect = true;
-
 	// Create rect according to coordinates and given cel
 	if (it->scaleSignal & kScaleSignalDoScaling) {
 		if (!it->viewEnhanced) {
@@ -750,7 +752,10 @@ void GfxAnimate::update() {
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
 
+
+
 	// Remove all no-update cels, if requested
+	
 	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
 		for (it = _list.reverse_begin(); it != end; --it) {
 			if (it->signal & kSignalNoUpdate) {
@@ -776,6 +781,7 @@ void GfxAnimate::update() {
 	// Draw always-update cels
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalAlwaysUpdate) {
+
 			// draw corresponding cel
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
@@ -820,7 +826,7 @@ void GfxAnimate::update() {
 	for (it = _list.begin(); it != end; ++it) {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
-
+			
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 
 			
@@ -839,6 +845,10 @@ void GfxAnimate::update() {
 }
 
 void GfxAnimate::drawCels() {
+	if (g_sci->enhanced_DEPTH) {
+		int perspective = g_sci->_gfxScreen->getDisplayWidth() - (int)((float)((float)(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier)));
+		g_sci->_gfxScreen->renderFrameDepthFirst(perspective);
+	}
 	reg_t bitsHandle;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
@@ -940,6 +950,12 @@ void GfxAnimate::drawCels() {
 		}
 	}
 	for (it = _list.begin(); it != end; ++it) {
+		if (g_sci->enhanced_DEPTH) {
+			it->x = (int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, it->orig_x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier;
+
+		} else {
+			it->x = it->orig_x;
+		}
 		if (!(it->signal & (kSignalNoUpdate | kSignalHidden | kSignalAlwaysUpdate))) {
 			// Save background
 			//_paint16->frameRect(it->bitsRect);

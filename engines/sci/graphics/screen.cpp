@@ -201,13 +201,14 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	memset(_displayScreenB_BGtmp, 0, _displayPixels);
 	_displayScreenA = (byte *)calloc(_displayPixels, 1);
 	_displayScreenDEPTH_IN = (byte *)calloc(_displayPixels, 1);
+	_displayScreenDEPTH_SHIFT = (int16 *)calloc(_displayPixels, 1);
 	_enhancedMatte = (byte *)calloc(_displayPixels, 1);
 	_priorityScreenX = (byte *)calloc(_displayPixels, 1);
 	_priorityScreenX_BG = (byte *)calloc(_displayPixels, 1);
-	_priorityScreenXtmp = (byte *)calloc(_displayPixels, 1);
+	_priorityScreenX_BGtmp = (byte *)calloc(_displayPixels, 1);
 	memset(_priorityScreenX, 0, _displayPixels);
 	memset(_priorityScreenX_BG, 0, _displayPixels);
-	memset(_priorityScreenXtmp, 0, _displayPixels);
+	memset(_priorityScreenX_BGtmp, 0, _displayPixels);
 	_surfaceScreen = (byte *)calloc(_displayPixels, 1);
 
 	memset(&_ditheredPicColors, 0, sizeof(_ditheredPicColors));
@@ -347,7 +348,7 @@ GfxScreen::~GfxScreen() {
 	free(_visualScreenB);
 	free(_priorityScreenX);
 	free(_priorityScreenX_BG);
-	free(_priorityScreenXtmp);
+	free(_priorityScreenX_BGtmp);
 	free(_enhancedMatte);
 	free(_surfaceScreen);
 	free(_displayScreen);
@@ -653,9 +654,10 @@ void GfxScreen::clearForRestoreGame() {
 	memset(_displayScreenB_BGtmp, 0, _displayPixels);
 	memset(_displayScreenA, 0, _displayPixels);
 	memset(_displayScreenDEPTH_IN, 0, _displayPixels);
+	memset(_displayScreenDEPTH_SHIFT, 0, _displayPixels);
 	memset(_priorityScreenX, 0, _displayPixels);
 	memset(_priorityScreenX_BG, 0, _displayPixels);
-	memset(_priorityScreenXtmp, 0, _displayPixels);
+	memset(_priorityScreenX_BGtmp, 0, _displayPixels);
 	if (_displayedScreen) {
 		memset(_displayedScreen, 0, _displayPixels);
 		memset(_displayedScreenR, 0, _displayPixels);
@@ -1072,7 +1074,7 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
 		bitsSaveDisplayScreen(rect, _priorityScreenX, memoryPtr);
 		bitsSaveDisplayScreen(rect, _priorityScreenX_BG, memoryPtr);
-		bitsSaveDisplayScreen(rect, _priorityScreenXtmp, memoryPtr);
+		bitsSaveDisplayScreen(rect, _priorityScreenX_BGtmp, memoryPtr);
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		bitsSaveScreen(rect, _controlScreen, _width, memoryPtr);
@@ -1161,7 +1163,7 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 	if (mask & GFX_SCREEN_MASK_PRIORITY) {
 		bitsRestoreDisplayScreen(rect, memoryPtr, _priorityScreenX);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _priorityScreenX_BG);
-		bitsRestoreDisplayScreen(rect, memoryPtr, _priorityScreenXtmp);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _priorityScreenX_BGtmp);
 	}
 	if (mask & GFX_SCREEN_MASK_CONTROL) {
 		bitsRestoreScreen(rect, memoryPtr, _controlScreen, _width);

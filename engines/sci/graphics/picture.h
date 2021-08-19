@@ -89,7 +89,6 @@ private:
 	bool overlay;
 	bool paletted;
 	bool surface;
-	bool enhancedPrio;
 	bool _mirroredFlag;
 	bool _addToFlag;
 	int16 _EGApaletteNo;
