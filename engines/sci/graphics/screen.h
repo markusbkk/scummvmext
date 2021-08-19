@@ -764,19 +764,30 @@ public:
 		nbFrames = _displayWidth / 2;
 		int sizeX = _displayWidth;
 		int sizeY = _displayHeight;
-
+		int minX = sizeX;
+		int maxX = 0;
 		for (di = 0; di <= 25; di++) {
 			for (dy = 0; dy < sizeY; dy++) {
 				//print("y : "+ y + "\n");
-
+				bool drewPx = false;
+				if (di == 0) {
+					minX = sizeX;
+					maxX = 0;
+				}
 				for (dx = 0; dx < sizeX; dx++) {
 					//print("x : "+ x + "\n");
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
 					
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
 					if ((int)(greyColor / 10) == di) {
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (frameDif - (nbFrames / 2)) / nbFrames), (int)0, (int)(sizeX - 1));
 						
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (frameDif - (nbFrames / 2)) / nbFrames), (int)0, (int)(sizeX - 1));
+						if (newX < minX) {
+							minX = newX;
+						}
+						if (newX > maxX) {
+							maxX = newX;
+						}
 						pixelColorR = _displayScreenR_BGtmp[dy * sizeX + dx];
 						pixelColorG = _displayScreenG_BGtmp[dy * sizeX + dx];
 						pixelColorB = _displayScreenB_BGtmp[dy * sizeX + dx];
@@ -796,8 +807,25 @@ public:
 						_displayScreenG_BG[dy * sizeX + newX] = pixelColorG;
 						_displayScreenB_BG[dy * sizeX + newX] = pixelColorB;
 						_priorityScreenX_BG[dy * sizeX + newX] = pixelColorP;
+
 						_displayScreenDEPTH_SHIFT[dy * sizeX + dx] = newX;
 							
+					}
+				}
+				if (di == 25) {
+					for (int dmx = 0; dmx < sizeX; dmx++) {
+						if (dmx < minX) {
+							// fill left / right margins black.
+							_displayScreenR_BG[dy * sizeX + dmx] = 0;
+							_displayScreenG_BG[dy * sizeX + dmx] = 0;
+							_displayScreenB_BG[dy * sizeX + dmx] = 0;
+						}
+						if (dmx > maxX) {
+							// fill left / right margins black.
+							_displayScreenR_BG[dy * sizeX + dmx] = 0;
+							_displayScreenG_BG[dy * sizeX + dmx] = 0;
+							_displayScreenB_BG[dy * sizeX + dmx] = 0;
+						}
 					}
 				}
 			}

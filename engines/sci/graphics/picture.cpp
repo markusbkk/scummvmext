@@ -1293,7 +1293,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						        if (g_sci->enhanced_DEPTH) {
 							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-							        if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+							        if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
 								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -1414,7 +1414,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						        if (g_sci->enhanced_DEPTH) {
 							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-							        if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+							        if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
 								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -2532,7 +2532,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-						if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
 							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -2649,7 +2649,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-						if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
 							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
