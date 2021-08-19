@@ -345,7 +345,6 @@ public:
 		}
 		
 		if (drawMask & GFX_SCREEN_MASK_PRIORITY) {
-			
 			putScaledPixelInPriority(x, y, priority);
 		}
 		if (drawMask & GFX_SCREEN_MASK_CONTROL) {
@@ -765,19 +764,24 @@ public:
 		nbFrames = _displayWidth / 2;
 		int sizeX = _displayWidth;
 		int sizeY = _displayHeight;
+
 		for (di = 0; di <= 25; di++) {
 			for (dy = 0; dy < sizeY; dy++) {
 				//print("y : "+ y + "\n");
+
 				for (dx = 0; dx < sizeX; dx++) {
 					//print("x : "+ x + "\n");
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
+					
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
 					if ((int)(greyColor / 10) == di) {
 						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (frameDif - (nbFrames / 2)) / nbFrames), (int)0, (int)(sizeX - 1));
+						
 						pixelColorR = _displayScreenR_BGtmp[dy * sizeX + dx];
 						pixelColorG = _displayScreenG_BGtmp[dy * sizeX + dx];
 						pixelColorB = _displayScreenB_BGtmp[dy * sizeX + dx];
 						pixelColorP = _priorityScreenX_BGtmp[dy * sizeX + dx];
+
 						for (dxx = clip((int)(newX - correctionRadius), 0, sizeX); dxx < clip((int)(newX + correctionRadius), 0, sizeX); dxx++) {
 							//print("xx : "+ xx + "\n");
 							if (greyColor > _displayScreenDEPTH_IN[dy * sizeX + dxx]) {

@@ -82,7 +82,7 @@ GfxPicture::GfxPicture(ResourceManager *resMan, GfxCoordAdjuster16 *coordAdjuste
 	overlay = true;
 	paletted = true;
 	surface = true;
-	enhancedPrio = true;
+	g_sci->enhanced_PRIORITY = true;
 	initData(resourceId);
 }
 
@@ -269,7 +269,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	overlay = false;
 	paletted = false;
 	surface = false;
-	enhancedPrio = false;
+	g_sci->enhanced_PRIORITY = false;
 	// if the picture is not an overlay and we are also not in EGA mode, use priority 0
 	if (!isEGA && !_addToFlag)
 		priority = 0;
@@ -578,7 +578,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							if (pngPrio) {
 								enhPrio = (const byte *)pngPrio->getPixels();
 								if (enhPrio) {
-									enhancedPrio = true;
+									g_sci->enhanced_PRIORITY = true;
 									preloaded_p = true;
 									debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
 
@@ -858,7 +858,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								enhPrio = (const byte *)pngPrio->getPixels();
 								if (enhPrio) {
 									
-									enhancedPrio = true;
+									g_sci->enhanced_PRIORITY = true;
 									std::pair<Graphics::Surface *, const byte *> tmp;
 									tmp.first = pngPrio;
 									tmp.second = enhPrio;
@@ -883,7 +883,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								enhPrio = (const byte *)pngPrio->getPixels();
 								if (enhPrio) {
 									
-									enhancedPrio = true;
+									g_sci->enhanced_PRIORITY = true;
 									std::pair<Graphics::Surface *, const byte *> tmp;
 									tmp.first = pngPrio;
 									tmp.second = enhPrio;
@@ -1134,7 +1134,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if (g_sci->enhanced_BG || overlay || paletted || enhancedPrio || surface || g_sci->enhanced_DEPTH || g_sci->backgroundIsVideo) {
+		if (g_sci->enhanced_BG || overlay || paletted || g_sci->enhanced_PRIORITY || surface || g_sci->enhanced_DEPTH || g_sci->backgroundIsVideo) {
 			y = (displayArea.top * g_sci->_enhancementMultiplier) + drawY;
 			if (g_sci->_gfxScreen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
 				lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
@@ -1163,7 +1163,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				enhSurface += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
 				enhSurface += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
 			}
-			if (enhancedPrio) {
+			if (g_sci->enhanced_PRIORITY) {
 				enhPrio += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
 				enhPrio += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
 			}
@@ -1220,7 +1220,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								}
 							}
 							
-								if (enhancedPrio) {
+								if (g_sci->enhanced_PRIORITY) {
 									if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 										_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
 									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
@@ -1292,8 +1292,13 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							    }
 
 						        if (g_sci->enhanced_DEPTH) {
-									_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-								}
+							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
+							        if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
+								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
+								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
+							        }
+						        }
 							
 						
 						x++;
@@ -1336,7 +1341,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									
 								}
 							}
-								if (enhancedPrio) {
+								if (g_sci->enhanced_PRIORITY) {
 									if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 										_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
 									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
@@ -1408,7 +1413,12 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							    }
 
 						        if (g_sci->enhanced_DEPTH) {
-							        _screen->putPixel_DEPTH(x, y, enh[offset + 1]);
+							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
+							        if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
+								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
+								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
+							        }
 						        }
 						
 						if (x == leftX) {
@@ -1454,7 +1464,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								
 							}
 							
-							if (enhancedPrio) {
+							if (g_sci->enhanced_PRIORITY) {
 								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 									_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
 								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
@@ -1563,7 +1573,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								    _screen->putPixelB_BG(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 								
 							}
-							if (enhancedPrio) {
+							if (g_sci->enhanced_PRIORITY) {
 								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 									_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
 								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
@@ -1673,7 +1683,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	overlay = false;
 	paletted = false;
 	surface = false;
-	enhancedPrio = false;
+	g_sci->enhanced_PRIORITY = false;
 
 	if (videoCutsceneEnd == _resource->name().c_str()) {
 		playingVideoCutscenes = false;
@@ -1952,7 +1962,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							if (pngPrio) {
 								enhPrio = (const byte *)pngPrio->getPixels();
 								if (enhPrio) {
-									enhancedPrio = true;
+									g_sci->enhanced_PRIORITY = true;
 									preloaded_p = true;
 									debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
 								}
@@ -2230,7 +2240,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							enhPrio = (const byte *)pngPrio->getPixels();
 							if (enhPrio) {
 
-								enhancedPrio = true;
+								g_sci->enhanced_PRIORITY = true;
 								std::pair<Graphics::Surface *, const byte *> tmp;
 								tmp.first = pngPrio;
 								tmp.second = enhPrio;
@@ -2255,7 +2265,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							enhPrio = (const byte *)pngPrio->getPixels();
 							if (enhPrio) {
 
-								enhancedPrio = true;
+								g_sci->enhanced_PRIORITY = true;
 								std::pair<Graphics::Surface *, const byte *> tmp;
 								tmp.first = pngPrio;
 								tmp.second = enhPrio;
@@ -2371,7 +2381,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 	}
-	if (g_sci->enhanced_BG || g_sci->backgroundIsVideo || overlay || paletted || enhancedPrio || surface || g_sci->enhanced_DEPTH) {
+	if (g_sci->enhanced_BG || g_sci->backgroundIsVideo || overlay || paletted || g_sci->enhanced_PRIORITY || surface || g_sci->enhanced_DEPTH) {
 
 		Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
 
@@ -2449,7 +2459,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							_screen->putPixelB_BG(x, y, GFX_SCREEN_MASK_VISUAL, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 						}
 					}
-					if (enhancedPrio) {
+					if (g_sci->enhanced_PRIORITY) {
 						if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 							_screen->putPixelXEtc(true, x, y, GFX_SCREEN_MASK_PRIORITY, 0, 0);
 						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
@@ -2522,6 +2532,11 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
+						if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
+							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
+							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
+						}
 					}
 
 				}
@@ -2561,7 +2576,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							_screen->putPixelB_BG(x, y, GFX_SCREEN_MASK_VISUAL, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
 						}
 					}
-					if (enhancedPrio) {
+					if (g_sci->enhanced_PRIORITY) {
 						if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
 							_screen->putPixelXEtc(true, x, y, GFX_SCREEN_MASK_PRIORITY, 0, 0);
 						else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
@@ -2633,7 +2648,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					}
 
 					if (g_sci->enhanced_DEPTH) {
-						_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
+						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
+						if (x < 10 || x > g_sci->_gfxScreen->getDisplayWidth() - 10) {
+							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
+							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
+							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
+						}
 					}
 
 				}
