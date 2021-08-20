@@ -786,6 +786,9 @@ void GfxAnimate::update() {
 	}
 	// Draw always-update cels
 	for (it = _list.begin(); it != end; ++it) {
+		if (it->signal & kSignalNoUpdate) {
+			it->signal &= ~kSignalAlwaysUpdate;
+		}
 		if (it->signal & kSignalAlwaysUpdate) {
 
 			// draw corresponding cel
@@ -997,7 +1000,42 @@ void GfxAnimate::drawCels() {
 				bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
 				writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 			}
-
+			if (it->signal & kSignalNoUpdate) {
+				// Save background
+				//_paint16->frameRect(it->bitsRect);
+				if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400 || _screen->_upscaledHires == GFX_SCREEN_UPSCALED_320x200_X_EGA) {
+					// Save background
+					//_paint16->frameRect(it->bitsRect);
+					if (it->bitsRect.left > it->bitsRect.right) {
+						int l = it->bitsRect.left;
+						it->bitsRect.left = it->bitsRect.right;
+						it->bitsRect.right = l;
+					}
+					if (it->bitsRect.top > it->bitsRect.bottom) {
+						int t = it->bitsRect.top;
+						it->bitsRect.top = it->bitsRect.bottom;
+						it->bitsRect.bottom = t;
+					}
+					bitsHandle = _paint16->bitsSave(it->bitsRect, GFX_SCREEN_MASK_ALL);
+					writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
+					// draw corresponding cel
+				} else {
+					// Save background
+					//_paint16->frameRect(it->bitsRect);
+					if (it->celRect.left > it->celRect.right) {
+						int l = it->celRect.left;
+						it->celRect.left = it->celRect.right;
+						it->celRect.right = l;
+					}
+					if (it->celRect.top > it->celRect.bottom) {
+						int t = it->celRect.top;
+						it->celRect.top = it->celRect.bottom;
+						it->celRect.bottom = t;
+					}
+					bitsHandle = _paint16->bitsSave(it->celRect, GFX_SCREEN_MASK_ALL);
+					writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
+				}
+			}
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
 			it->showBitsFlag = true;
 

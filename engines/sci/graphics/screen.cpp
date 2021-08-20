@@ -552,7 +552,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							byte r;
 							byte g;
 							byte b;
-							if (g_sci->enhanced_BG || g_sci->backgroundIsVideo) {
+							if (g_sci->enhanced_BG || g_sci->backgroundIsVideo || g_sci->enhanced_DEPTH) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));

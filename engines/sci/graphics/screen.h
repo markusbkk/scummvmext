@@ -521,7 +521,7 @@ public:
 				if (_format.bytesPerPixel == 2) {
 
 					
-					//_displayScreenA[displayOffset] = 0;
+					_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
@@ -532,10 +532,10 @@ public:
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
 				} else {
-					//assert(_format.bytesPerPixel == 4);
+					assert(_format.bytesPerPixel == 4);
 
 					
-					//_displayScreenA[displayOffset] = 0;
+					_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
@@ -559,7 +559,7 @@ public:
 				if (_format.bytesPerPixel == 2) {
 
 					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					//_displayScreenA[displayOffset] = 0;
+					_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
@@ -568,10 +568,10 @@ public:
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
 				} else {
-					//assert(_format.bytesPerPixel == 4);
+					assert(_format.bytesPerPixel == 4);
 
 					_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
-					//_displayScreenA[displayOffset] = 0;
+					_displayScreenA[displayOffset] = 0;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 255;
 					} else {
@@ -1540,10 +1540,13 @@ public:
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
 						} else {
-							_displayScreen_BG[displayOffset] = color;
-							_displayScreenR_BG[displayOffset] = r;
-							_displayScreenG_BG[displayOffset] = g;
-							_displayScreenB_BG[displayOffset] = b;
+							if (!g_sci->enhanced_BG) {
+
+								_displayScreen_BG[displayOffset] = color;
+								_displayScreenR_BG[displayOffset] = r;
+								_displayScreenG_BG[displayOffset] = g;
+								_displayScreenB_BG[displayOffset] = b;
+							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
@@ -1584,7 +1587,9 @@ public:
 							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
 						} else {
-							_displayScreenA[displayOffset] = 0;
+							if (!g_sci->enhanced_BG) {
+								_displayScreenA[displayOffset] = 0;
+							}
 						}
 					} else {
 
@@ -1599,10 +1604,12 @@ public:
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
 						} else {
-							_displayScreen_BG[displayOffset] = color;
-							_displayScreenR_BG[displayOffset] = r;
-							_displayScreenG_BG[displayOffset] = g;
-							_displayScreenB_BG[displayOffset] = b;
+							if (!g_sci->enhanced_BG) {
+								_displayScreen_BG[displayOffset] = color;
+								_displayScreenR_BG[displayOffset] = r;
+								_displayScreenG_BG[displayOffset] = g;
+								_displayScreenB_BG[displayOffset] = b;
+							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
@@ -1613,7 +1620,9 @@ public:
 							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
 						} else {
-							_displayScreenA[displayOffset] = 0;
+							if (!g_sci->enhanced_BG) {
+								_displayScreenA[displayOffset] = 0;
+							}
 						}
 					}
 				}
@@ -1668,10 +1677,12 @@ public:
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
 						} else {
-							_displayScreen_BG[displayOffset] = color;
-							_displayScreenR_BG[displayOffset] = r;
-							_displayScreenG_BG[displayOffset] = g;
-							_displayScreenB_BG[displayOffset] = b;
+							if (!g_sci->enhanced_BG) {
+								_displayScreen_BG[displayOffset] = color;
+								_displayScreenR_BG[displayOffset] = r;
+								_displayScreenG_BG[displayOffset] = g;
+								_displayScreenB_BG[displayOffset] = b;
+							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
@@ -1682,7 +1693,9 @@ public:
 							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
 						} else {
-							_displayScreenA[displayOffset] = 0;
+							if (!g_sci->enhanced_BG) {
+								_displayScreenA[displayOffset] = 0;
+							}
 						}
 
 					} else if (_format.bytesPerPixel == 4) {
@@ -1698,10 +1711,12 @@ public:
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
 						} else {
-							_displayScreen_BG[displayOffset] = color;
-							_displayScreenR_BG[displayOffset] = r;
-							_displayScreenG_BG[displayOffset] = g;
-							_displayScreenB_BG[displayOffset] = b;
+							if (!g_sci->enhanced_BG) {
+								_displayScreen_BG[displayOffset] = color;
+								_displayScreenR_BG[displayOffset] = r;
+								_displayScreenG_BG[displayOffset] = g;
+								_displayScreenB_BG[displayOffset] = b;
+							}
 						}	
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
@@ -1712,7 +1727,9 @@ public:
 							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
 						} else {
-							_displayScreenA[displayOffset] = 0;
+							if (!g_sci->enhanced_BG) {
+								_displayScreenA[displayOffset] = 0;
+							}
 						}
 					} else {
 
@@ -1727,10 +1744,12 @@ public:
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
 						} else {
-							_displayScreen_BG[displayOffset] = color;
-							_displayScreenR_BG[displayOffset] = r;
-							_displayScreenG_BG[displayOffset] = g;
-							_displayScreenB_BG[displayOffset] = b;
+							if (!g_sci->enhanced_BG) {
+								_displayScreen_BG[displayOffset] = color;
+								_displayScreenR_BG[displayOffset] = r;
+								_displayScreenG_BG[displayOffset] = g;
+								_displayScreenB_BG[displayOffset] = b;
+							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
@@ -1741,7 +1760,9 @@ public:
 							_displayScreenA[displayOffset] = 255;
 							_enhancedMatte[displayOffset] = 0;
 						} else {
-							_displayScreenA[displayOffset] = 0;
+							if (!g_sci->enhanced_BG) {
+								_displayScreenA[displayOffset] = 0;
+							}
 						}
 					}
 				}
