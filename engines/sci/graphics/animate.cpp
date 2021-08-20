@@ -855,7 +855,7 @@ void GfxAnimate::update() {
 
 void GfxAnimate::drawCels() {
 	if (g_sci->enhanced_DEPTH) {
-		int perspective = g_sci->_gfxScreen->getDisplayWidth() - (int)((float)((float)(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier)));
+		int perspective = (int)((float)((float)(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier)));
 		g_sci->_gfxScreen->renderFrameDepthFirst(perspective);
 	}
 	reg_t bitsHandle;

@@ -190,8 +190,8 @@ public:
 
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 0.4;       // default 10
-	float focusPoint = 0.7;   //default = 2; 0 = focus bg
+	float moveAmp = 0.06;       // default 10
+	float focusPoint = 2;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
 	int nbFrames = 128;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
 	int myFrameRate = 60;
@@ -781,7 +781,7 @@ public:
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
 					if ((int)(greyColor / 10) == di) {
 						
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (frameDif - (nbFrames / 2)) / nbFrames), (int)0, (int)(sizeX - 1));
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (-((frameDif / nbFrames)-0.500f))), (int)0, (int)(sizeX - 1));
 						if (newX < minX) {
 							minX = newX;
 						}
