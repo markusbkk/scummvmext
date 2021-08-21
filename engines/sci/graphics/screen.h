@@ -761,7 +761,7 @@ public:
 	}
 	void renderFrameDepthFirst(int mouseX, int mouseY) {
 		
-		debug("%u", mouseX);
+		//debug("%u", mouseX);
 		dispWidth = _displayWidth / 2;
 		int sizeX = _displayWidth;
 		int sizeY = _displayHeight;
