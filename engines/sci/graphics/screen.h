@@ -181,7 +181,8 @@ public:
 	byte *_displayedScreenB;
 	byte *_displayScreenDEPTH_IN;
 	byte *_displayScreenDEPTH_OUT;
-	int16 *_displayScreenDEPTH_SHIFT;
+	int *_displayScreenDEPTH_SHIFT_X;
+	int *_displayScreenDEPTH_SHIFT_Y;
 	byte *_priorityScreenX;
 	byte *_priorityScreenX_BG;
 	byte *_priorityScreenX_BGtmp;
@@ -190,20 +191,20 @@ public:
 
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 0.06;       // default 10
-	float focusPoint = 2;   //default = 2; 0 = focus bg
+	float moveAmp = 0.750f;       // default 10
+	float focusPoint = 2.000f;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
-	int nbFrames = 128;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
+	int dispWidth = 320;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
 	int myFrameRate = 60;
-	int correctionRadius = 1;     //can prevent small artifacts but can be ugly. set to 0-1 or 2 max
+	int correctionRadius = 0;     //can prevent small artifacts but can be ugly. set to 0-1 or 2 max
 	//computing variables
-	int totalFrames = 2 * nbFrames + 1;
+	int totalFrames = 2 * dispWidth + 1;
 	int frameId = 0;
 	bool goingRight = true;
 	bool rendering = true;
-	int nbLayers = (int)(moveAmp + focusPoint) + 1;
+	int nbLayers = 25;
 	int greyColor, disp;
-	int f, di, dx, dy, newX, dxx, maxDifX;
+	int f, di, dx, dy, newX, newY, dxx, maxDifX;
 	byte pixelColorR, pixelColorG, pixelColorB, pixelColorP;
 
 private:
@@ -728,7 +729,7 @@ public:
 			}
 		
 	}
-	int16 getDepthShiftX(int16 *screen, int16 x, int16 y) {
+	int16 getDepthShiftX(int *screen, int16 x, int16 y) {
 		int offset = (y * _displayWidth) + x;
 		switch (_upscaledHires) {
 		case GFX_SCREEN_UPSCALED_480x300: {
@@ -758,15 +759,15 @@ public:
 	int clip(int n, int lower, int upper) {
 		return std::max(lower, std::min(n, upper));
 	}
-	void renderFrameDepthFirst(int frameDif) {
+	void renderFrameDepthFirst(int mouseX, int mouseY) {
 		
-		//debug("%u", frameDif);
-		nbFrames = _displayWidth / 2;
+		debug("%u", mouseX);
+		dispWidth = _displayWidth / 2;
 		int sizeX = _displayWidth;
 		int sizeY = _displayHeight;
 		int minX = sizeX;
 		int maxX = 0;
-		for (di = 0; di <= 25; di++) {
+		for (di = 0; di <= 255; di++) {
 			for (dy = 0; dy < sizeY; dy++) {
 				//print("y : "+ y + "\n");
 				bool drewPx = false;
@@ -779,9 +780,10 @@ public:
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
 					
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
-					if ((int)(greyColor / 10) == di) {
+					if ((int)(greyColor) == di) {
 						
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (-((frameDif / nbFrames)-0.500f))), (int)0, (int)(sizeX - 1));
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseX / (float)dispWidth) - 1.0f)), (int)0, (int)(sizeX - 1));
+						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseY / (float)(_displayHeight/2)) - 1.0f)), (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;
 						}
@@ -792,7 +794,7 @@ public:
 						pixelColorG = _displayScreenG_BGtmp[dy * sizeX + dx];
 						pixelColorB = _displayScreenB_BGtmp[dy * sizeX + dx];
 						pixelColorP = _priorityScreenX_BGtmp[dy * sizeX + dx];
-
+						/*
 						for (dxx = clip((int)(newX - correctionRadius), 0, sizeX); dxx < clip((int)(newX + correctionRadius), 0, sizeX); dxx++) {
 							//print("xx : "+ xx + "\n");
 							if (greyColor > _displayScreenDEPTH_IN[dy * sizeX + dxx]) {
@@ -802,16 +804,16 @@ public:
 								_priorityScreenX_BG[dy * sizeX + dxx] = pixelColorP;
 								_displayScreenDEPTH_SHIFT[dy * sizeX + dx] = dxx;
 							}
-						}
-						_displayScreenR_BG[dy * sizeX + newX] = pixelColorR;
-						_displayScreenG_BG[dy * sizeX + newX] = pixelColorG;
-						_displayScreenB_BG[dy * sizeX + newX] = pixelColorB;
-						_priorityScreenX_BG[dy * sizeX + newX] = pixelColorP;
-
-						_displayScreenDEPTH_SHIFT[dy * sizeX + dx] = newX;
+						}*/
+						_displayScreenR_BG[newY * sizeX + newX] = pixelColorR;
+						_displayScreenG_BG[newY * sizeX + newX] = pixelColorG;
+						_displayScreenB_BG[newY * sizeX + newX] = pixelColorB;
+						_priorityScreenX_BG[newY * sizeX + newX] = pixelColorP;
+						_displayScreenDEPTH_SHIFT_X[dy * sizeX + dx] = newX;
+						_displayScreenDEPTH_SHIFT_Y[dy * sizeX + dx] = newY;
 							
 					}
-				}
+				} /*
 				if (di == 25) {
 					for (int dmx = 0; dmx < sizeX; dmx++) {
 						if (dmx < minX) {
@@ -827,7 +829,7 @@ public:
 							_displayScreenB_BG[dy * sizeX + dmx] = 0;
 						}
 					}
-				}
+				}*/
 			}
 		}
 	}

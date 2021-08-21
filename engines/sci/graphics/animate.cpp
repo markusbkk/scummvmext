@@ -382,11 +382,17 @@ void GfxAnimate::LoadAllExtraPNG() {
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 		    if (g_sci->enhanced_DEPTH) {
 			    listEntry.orig_x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-			    listEntry.x = clip((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier, 0, g_sci->_gfxScreen->getDisplayWidth() / g_sci->_enhancementMultiplier);
-			    ;
+			    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) + (readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) - ((int16) g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
 		    } else {
 			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 			    listEntry.x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
+		    }
+		    if (g_sci->enhanced_DEPTH) {
+			    listEntry.orig_y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
+			    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) + (readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
+		    } else {
+			    listEntry.orig_y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
+			    listEntry.y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
 		    }
 		    
 		    listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
@@ -757,9 +763,15 @@ void GfxAnimate::update() {
 	Common::Rect rect;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
-
-
-
+	for (it = _list.begin(); it != end; ++it) {
+		if (g_sci->enhanced_DEPTH) {
+			it->x = it->orig_x + (it->orig_x - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
+			it->y = it->orig_y + (it->orig_y - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
+		} else {
+			it->x = it->orig_x;
+			it->y = it->orig_y;
+		}
+	}
 	// Remove all no-update cels, if requested
 	
 	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
@@ -855,8 +867,7 @@ void GfxAnimate::update() {
 
 void GfxAnimate::drawCels() {
 	if (g_sci->enhanced_DEPTH) {
-		int perspective = (int)((float)((float)(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier)));
-		g_sci->_gfxScreen->renderFrameDepthFirst(perspective);
+		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier, g_sci->depthLookPos.y * g_sci->_enhancementMultiplier);
 	}
 	reg_t bitsHandle;
 	AnimateList::iterator it;
@@ -960,10 +971,11 @@ void GfxAnimate::drawCels() {
 	}
 	for (it = _list.begin(); it != end; ++it) {
 		if (g_sci->enhanced_DEPTH) {
-			it->x = clip((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT, it->orig_x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier, 0, g_sci->_gfxScreen->getDisplayWidth() / g_sci->_enhancementMultiplier);
-
+			it->x = it->orig_x + (it->orig_x - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
+			it->y = it->orig_y + (it->orig_y - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
 		} else {
 			it->x = it->orig_x;
+			it->y = it->orig_y;
 		}
 		if (!(it->signal & (kSignalNoUpdate | kSignalHidden | kSignalAlwaysUpdate))) {
 			// Save background
