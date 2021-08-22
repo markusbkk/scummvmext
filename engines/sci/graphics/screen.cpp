@@ -187,6 +187,7 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 
 	_displayScreen = (byte *)calloc(_displayPixels, 1);
 	_displayScreen_BG = (byte *)calloc(_displayPixels, 1);
+	_displayScreen_BGtmp = (byte *)calloc(_displayPixels, 1);
 	_displayScreenR = (byte *)calloc(_displayPixels, 1);
 	_displayScreenG = (byte *)calloc(_displayPixels, 1);
 	_displayScreenB = (byte *)calloc(_displayPixels, 1);
@@ -357,6 +358,7 @@ GfxScreen::~GfxScreen() {
 	free(_surfaceScreen);
 	free(_displayScreen);
 	free(_displayScreen_BG);
+	free(_displayScreen_BGtmp);
 	free(_displayScreenR);
 	free(_displayScreenG);
 	free(_displayScreenB);
@@ -649,6 +651,7 @@ void GfxScreen::clearForRestoreGame() {
 	memset(_surfaceScreen, 0, _displayPixels);
 	memset(_displayScreen, 0, _displayPixels);
 	memset(_displayScreen_BG, 0, _displayPixels);
+	memset(_displayScreen_BGtmp, 0, _displayPixels);
 	memset(_displayScreenR, 0, _displayPixels);
 	memset(_displayScreenG, 0, _displayPixels);
 	memset(_displayScreenB, 0, _displayPixels);
@@ -999,12 +1002,16 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 			byteCount += pixels; // _surfaceScreen
 			byteCount += pixels; // _displayScreen
 			byteCount += pixels; // _displayScreen_BG
+			byteCount += pixels; // _displayScreen_BGtmp
 			byteCount += pixels; // _displayScreenR
 			byteCount += pixels; // _displayScreenG
 			byteCount += pixels; // _displayScreenB
 			byteCount += pixels; // _displayScreenR_BG
 			byteCount += pixels; // _displayScreenG_BG
 			byteCount += pixels; // _displayScreenB_BG
+			byteCount += pixels; // _displayScreenR_BGtmp
+			byteCount += pixels; // _displayScreenG_BGtmp
+			byteCount += pixels; // _displayScreenB_BGtmp
 			byteCount += pixels; // _displayScreenA
 			if (_paletteMapScreen)
 				byteCount += pixels; // _paletteMapScreen
@@ -1015,12 +1022,16 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 			byteCount += rectHeight * rectWidth; // _surfaceScreen (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreen (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreen_BG (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreen_BGtmp (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenR (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenG (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenB (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenR_BG (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenG_BG (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenB_BG (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreenR_BGtmp (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreenG_BGtmp (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreenB_BGtmp (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenA (upscaled hires)
 			if (_paletteMapScreen)
 				byteCount += rectHeight * rectWidth; // _paletteMapScreen (upscaled hires)
@@ -1068,12 +1079,16 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		bitsSaveDisplayScreen(rect, _surfaceScreen, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreen, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreen_BG, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreen_BGtmp, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenR, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenG, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenB, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenR_BG, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenG_BG, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenB_BG, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreenR_BGtmp, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreenG_BGtmp, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreenB_BGtmp, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenA, memoryPtr);
 		if (_paletteMapScreen)
 			bitsSaveDisplayScreen(rect, _paletteMapScreen, memoryPtr);
@@ -1093,12 +1108,16 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		bitsSaveScreen(rect, _surfaceScreen, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreen, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreen_BG, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreen_BGtmp, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenR, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenG, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenB, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenR_BG, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenG_BG, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenB_BG, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreenR_BGtmp, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreenG_BGtmp, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreenB_BGtmp, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenA, _displayWidth, memoryPtr);
 		if (_paletteMapScreen)
 			bitsSaveScreen(rect, _paletteMapScreen, _displayWidth, memoryPtr);
@@ -1157,12 +1176,16 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		bitsRestoreDisplayScreen(rect, memoryPtr, _surfaceScreen);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreen);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreen_BG);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreen_BGtmp);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR_BG);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG_BG);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB_BG);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR_BGtmp);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG_BGtmp);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB_BGtmp);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenA);
 		if (_paletteMapScreen)
 			bitsRestoreDisplayScreen(rect, memoryPtr, _paletteMapScreen);
@@ -1182,12 +1205,16 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		bitsRestoreScreen(rect, memoryPtr, _surfaceScreen, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreen, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreen_BG, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreen_BGtmp, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenR, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenG, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenB, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenR_BG, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenG_BG, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenB_BG, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreenR_BGtmp, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreenG_BGtmp, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreenB_BGtmp, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenA, _displayWidth);
 		if (_paletteMapScreen)
 			bitsRestoreScreen(rect, memoryPtr, _paletteMapScreen, _displayWidth);

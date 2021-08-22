@@ -377,27 +377,27 @@ void GfxAnimate::LoadAllExtraPNG() {
 		    listEntry.viewId = readSelectorValue(_s->_segMan, curObject, SELECTOR(view));
 		    listEntry.loopNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(loop));
 		    listEntry.celNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(cel));
-
 		    listEntry.paletteNo = readSelectorValue(_s->_segMan, curObject, SELECTOR(palette));
+		    listEntry.signal = readSelectorValue(_s->_segMan, curObject, SELECTOR(signal));
+
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 		    if (g_sci->enhanced_DEPTH) {
-			    listEntry.orig_x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-			    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) + (readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) - ((int16) g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
+			    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
+			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 		    } else {
 			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 			    listEntry.x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 		    }
 		    if (g_sci->enhanced_DEPTH) {
-			    listEntry.orig_y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
-			    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) + (readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, readSelectorValue(_s->_segMan, curObject, SELECTOR(x)) * g_sci->_enhancementMultiplier, readSelectorValue(_s->_segMan, curObject, SELECTOR(y)) * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
-		    } else {
+			    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
+			    listEntry.orig_y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
+			} else {
 			    listEntry.orig_y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
 			    listEntry.y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
 		    }
-		    
+
 		    listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		    listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
-		    listEntry.signal = readSelectorValue(_s->_segMan, curObject, SELECTOR(signal));
 		    if (getSciVersion() >= SCI_VERSION_1_1) {
 			    // Cel scaling
 			    listEntry.scaleSignal = readSelectorValue(_s->_segMan, curObject, SELECTOR(scaleSignal));
@@ -721,10 +721,31 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 	bool shouldSetNsRect = true;
 	// Create rect according to coordinates and given cel
 	if (it->scaleSignal & kScaleSignalDoScaling) {
-		if (!it->viewEnhanced) {
-			view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+		if (!g_sci->enhanced_DEPTH) {
+			if (!it->viewEnhanced) {
+				view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+			} else {
+				view->getCelScaledRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+			}
 		} else {
-			view->getCelScaledRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+			if (g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X && (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)) > 16 && (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)) < g_sci->_gfxScreen->getScriptWidth() - 16) {
+
+				if (!it->viewEnhanced) {
+					view->getCelScaledRect(it->loopNo, it->celNo, (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), ((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier), it->z, it->scaleX, it->scaleY, it->celRect);
+				} else {
+					view->getCelScaledRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), ((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier), it->z, it->scaleX, it->scaleY, it->celRect);
+				}
+				it->celRect.clip(_ports->_curPort->rect);
+				it->bitsRect.clip(_ports->_curPort->rect);
+			} else {
+				if (!it->viewEnhanced) {
+					view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+				} else {
+					view->getCelScaledRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
+				}
+				it->celRect.clip(_ports->_curPort->rect);
+				it->bitsRect.clip(_ports->_curPort->rect);
+			}
 		}
 		// when being scaled, only set nsRect, if object will get drawn
 		if ((it->signal & kSignalHidden) && !(it->signal & kSignalAlwaysUpdate))
@@ -737,14 +758,38 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 			view->getCelSpecialHoyle4Rect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
 			shouldSetNsRect = false;
 		} else {
-			if (!it->viewEnhanced) {
-				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
-				view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+			if (!g_sci->enhanced_DEPTH) {
+				if (!it->viewEnhanced) {
+					view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+					view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+				} else {
+					view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+					view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+					it->bitsRect.clip(_ports->_curPort->rect);
+				}
 			} else {
-				view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
-				view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
-				it->bitsRect.clip(_ports->_curPort->rect);
-				
+				if ((((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)) > 16 && (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)) < g_sci->_gfxScreen->getScriptWidth() - 16) {
+
+					if (!it->viewEnhanced) {
+						view->getCelRect(it->loopNo, it->celNo, (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), it->z, it->celRect);
+						view->getCelRect(it->loopNo, it->celNo, (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), it->z, it->bitsRect);
+					} else {
+						view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), it->z, it->celRect);
+						view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)), it->z, it->bitsRect);
+						it->celRect.clip(_ports->_curPort->rect);
+						it->bitsRect.clip(_ports->_curPort->rect);
+					}
+				} else {
+					if (!it->viewEnhanced) {
+						view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+						view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+					} else {
+						view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+						view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+						it->celRect.clip(_ports->_curPort->rect);
+						it->bitsRect.clip(_ports->_curPort->rect);
+					}
+				}
 			}
 		}
 	}
@@ -756,6 +801,7 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 			g_sci->_gfxCompare->setNSRect(it->object, it->celRect);
 		}
 	}
+
 }
 
 void GfxAnimate::update() {
@@ -763,15 +809,7 @@ void GfxAnimate::update() {
 	Common::Rect rect;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();
-	for (it = _list.begin(); it != end; ++it) {
-		if (g_sci->enhanced_DEPTH) {
-			it->x = it->orig_x + (it->orig_x - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
-			it->y = it->orig_y + (it->orig_y - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
-		} else {
-			it->x = it->orig_x;
-			it->y = it->orig_y;
-		}
-	}
+
 	// Remove all no-update cels, if requested
 	
 	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
@@ -848,7 +886,7 @@ void GfxAnimate::update() {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
 			
-			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 
 			
 
@@ -970,13 +1008,10 @@ void GfxAnimate::drawCels() {
 		}
 	}
 	for (it = _list.begin(); it != end; ++it) {
-		if (g_sci->enhanced_DEPTH) {
-			it->x = it->orig_x + (it->orig_x - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
-			it->y = it->orig_y + (it->orig_y - ((int16)g_sci->_gfxScreen->getDepthShiftX(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->orig_x * g_sci->_enhancementMultiplier, it->orig_y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier));
-		} else {
+		
 			it->x = it->orig_x;
 			it->y = it->orig_y;
-		}
+		
 		if (!(it->signal & (kSignalNoUpdate | kSignalHidden | kSignalAlwaysUpdate))) {
 			// Save background
 			//_paint16->frameRect(it->bitsRect);
@@ -1048,7 +1083,11 @@ void GfxAnimate::drawCels() {
 					writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 				}
 			}
-			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
+			if (it->signal & kSignalNoUpdate) {
+				_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
+			} else {
+				_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
+			}
 			it->showBitsFlag = true;
 
 			if (it->signal & kSignalRemoveView)

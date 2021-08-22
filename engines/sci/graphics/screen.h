@@ -205,7 +205,7 @@ public:
 	int nbLayers = 25;
 	int greyColor, disp;
 	int f, di, dx, dy, newX, newY, dxx, maxDifX;
-	byte pixelColorR, pixelColorG, pixelColorB, pixelColorP;
+	byte pixelColor, pixelColorR, pixelColorG, pixelColorB, pixelColorPrio;
 
 private:
 	
@@ -252,6 +252,7 @@ private:
 	 */
 	byte *_displayScreen;
 	byte *_displayScreen_BG;
+	byte *_displayScreen_BGtmp;
 	// Display screen copies in r g & b format
 
 	byte *_displayScreenA;
@@ -430,6 +431,8 @@ public:
 				if (_format.bytesPerPixel == 2) {
 					_displayScreenA[displayOffset] = 0;
 					_displayScreen_BG[displayOffset] = c;
+					if (g_sci->enhanced_DEPTH)
+					_displayScreen_BGtmp[displayOffset] = c;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
 					} else {
@@ -441,6 +444,8 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 					_displayScreenA[displayOffset] = 0;
 					_displayScreen_BG[displayOffset] = c;
+					if (g_sci->enhanced_DEPTH)
+					_displayScreen_BGtmp[displayOffset] = c;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
 					} else {
@@ -729,7 +734,7 @@ public:
 			}
 		
 	}
-	int16 getDepthShiftX(int *screen, int16 x, int16 y) {
+	int16 getDepthShift(int *screen, int16 x, int16 y) {
 		int offset = (y * _displayWidth) + x;
 		switch (_upscaledHires) {
 		case GFX_SCREEN_UPSCALED_480x300: {
@@ -767,7 +772,7 @@ public:
 		int sizeY = _displayHeight;
 		int minX = sizeX;
 		int maxX = 0;
-		for (di = 0; di <= 255; di++) {
+		for (di = 0; di <= 5; di++) { // 255 was too slow in 2021
 			for (dy = 0; dy < sizeY; dy++) {
 				//print("y : "+ y + "\n");
 				bool drewPx = false;
@@ -780,7 +785,7 @@ public:
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
 					
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
-					if ((int)(greyColor) == di) {
+					if ((int)(greyColor / 51) == di) { // 255 was too slow in 2021
 						
 						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseX / (float)dispWidth) - 1.0f)), (int)0, (int)(sizeX - 1));
 						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseY / (float)(_displayHeight/2)) - 1.0f)), (int)0, (int)(sizeY - 1));
@@ -790,10 +795,11 @@ public:
 						if (newX > maxX) {
 							maxX = newX;
 						}
+						pixelColor = _displayScreen_BGtmp[dy * sizeX + dx];
 						pixelColorR = _displayScreenR_BGtmp[dy * sizeX + dx];
 						pixelColorG = _displayScreenG_BGtmp[dy * sizeX + dx];
 						pixelColorB = _displayScreenB_BGtmp[dy * sizeX + dx];
-						pixelColorP = _priorityScreenX_BGtmp[dy * sizeX + dx];
+						pixelColorPrio = _priorityScreenX_BGtmp[dy * sizeX + dx];
 						/*
 						for (dxx = clip((int)(newX - correctionRadius), 0, sizeX); dxx < clip((int)(newX + correctionRadius), 0, sizeX); dxx++) {
 							//print("xx : "+ xx + "\n");
@@ -801,14 +807,15 @@ public:
 								_displayScreenR_BG[dy * sizeX + dxx] = pixelColorR;
 								_displayScreenG_BG[dy * sizeX + dxx] = pixelColorG;
 								_displayScreenB_BG[dy * sizeX + dxx] = pixelColorB;
-								_priorityScreenX_BG[dy * sizeX + dxx] = pixelColorP;
+								_priorityScreenX_BG[dy * sizeX + dxx] = pixelColorPrio;
 								_displayScreenDEPTH_SHIFT[dy * sizeX + dx] = dxx;
 							}
 						}*/
+						_displayScreen_BG[newY * sizeX + newX] = pixelColor;
 						_displayScreenR_BG[newY * sizeX + newX] = pixelColorR;
 						_displayScreenG_BG[newY * sizeX + newX] = pixelColorG;
 						_displayScreenB_BG[newY * sizeX + newX] = pixelColorB;
-						_priorityScreenX_BG[newY * sizeX + newX] = pixelColorP;
+						_priorityScreenX_BG[newY * sizeX + newX] = pixelColorPrio;
 						_displayScreenDEPTH_SHIFT_X[dy * sizeX + dx] = newX;
 						_displayScreenDEPTH_SHIFT_Y[dy * sizeX + dx] = newY;
 							

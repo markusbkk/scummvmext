@@ -230,6 +230,7 @@ public:
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
 	bool enhanced_BG = false;
+	bool paletted_enhanced_BG = false;
 	bool enhanced_PRIORITY = false;
 	bool enhanced_DEPTH = false;
 	int16 enhanced_bg_frame = 1;

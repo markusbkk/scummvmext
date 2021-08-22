@@ -87,7 +87,6 @@ private:
 	int _resourceType;
 	
 	bool overlay;
-	bool paletted;
 	bool surface;
 	bool _mirroredFlag;
 	bool _addToFlag;

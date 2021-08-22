@@ -289,7 +289,9 @@ void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo,
 void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	drawCel(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, _cache->getView(viewId), loopNo, celNo, tweenNo, celRect, priority, paletteNo, scaleX, scaleY, scaleSignal);
 }
-
+void GfxPaint16::drawCelNoUpdate(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
+	drawCelNoUpdate(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, _cache->getView(viewId), loopNo, celNo, tweenNo, celRect, priority, paletteNo, scaleX, scaleY, scaleSignal);
+}
 // This version of drawCel is not supposed to call BitsShow()!
 void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GfxView *view, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	Common::Rect clipRect = celRect;
@@ -316,6 +318,31 @@ void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pi
 		view->drawScaled(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, celRect, clipRect, clipRectTranslated, loopNo, celNo, tweenNo, priority, scaleX, scaleY, scaleSignal);
 }
 
+// This version of drawCel is not supposed to call BitsShow()!
+void GfxPaint16::drawCelNoUpdate(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GfxView *view, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
+	Common::Rect clipRect = celRect;
+	Common::Rect curPortRectX;
+	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+		curPortRectX.left = _ports->_curPort->rect.left * 2;
+		curPortRectX.right = _ports->_curPort->rect.right * 2;
+		curPortRectX.top = _ports->_curPort->rect.top * 2;
+		curPortRectX.bottom = _ports->_curPort->rect.bottom * 2;
+	} else {
+		curPortRectX = _ports->_curPort->rect;
+	}
+	clipRect.clip(curPortRectX);
+
+	_currentViewPort = _ports->_curPort->rect;
+	if (clipRect.isEmpty()) // nothing to draw
+		return;
+
+	Common::Rect clipRectTranslated = clipRect;
+	_ports->offsetRect(clipRectTranslated);
+	if (scaleX == 128 && scaleY == 128)
+		view->drawNoUpdate(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, celRect, clipRect, clipRectTranslated, loopNo, celNo, tweenNo, priority, paletteNo, false, scaleSignal);
+	else
+		view->drawScaledNoUpdate(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, celRect, clipRect, clipRectTranslated, loopNo, celNo, tweenNo, priority, scaleX, scaleY, scaleSignal);
+}
 // This is used as replacement for drawCelAndShow() when hires-cels are drawn to
 // screen. Hires-cels are available only SCI 1.1+.
 void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, uint16 leftPos, uint16 topPos, byte priority, uint16 paletteNo, reg_t upscaledHiresHandle, uint16 scaleX, uint16 scaleY) {
