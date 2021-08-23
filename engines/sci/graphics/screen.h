@@ -187,6 +187,13 @@ public:
 	byte *_priorityScreenX_BG;
 	byte *_priorityScreenX_BGtmp;
 
+	uint _pixels;
+	uint16 _scriptWidth;
+	uint16 _scriptHeight;
+	uint16 _displayWidth;
+	uint16 _displayHeight;
+	uint _displayPixels;
+
 	Graphics::PixelFormat _format;
 
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
@@ -209,12 +216,7 @@ public:
 
 private:
 	
-	uint _pixels;
-	uint16 _scriptWidth;
-	uint16 _scriptHeight;
-	uint16 _displayWidth;
-	uint16 _displayHeight;
-	uint _displayPixels;
+
 
 	
 
@@ -514,6 +516,7 @@ public:
 			}
 		}
 	}
+	
 	void putPixelR_BG(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
@@ -751,7 +754,7 @@ public:
 		}
 		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
 		case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
-			offset = (int)((y)*_displayWidth) + ((int)(x));
+			offset = clip((int)((y)*_displayWidth) + ((int)(x)), 0, _displayWidth * _displayHeight - 1);
 
 			return screen[offset];
 			break;

@@ -251,6 +251,8 @@ bool fileIsInExtraDIRPicture(std::string fileName) {
 
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
 	g_sci->_gfxPalette16->overridePalette = false;
+	memset(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, 0, g_sci->_gfxScreen->_displayPixels);
+	memset(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, 0, g_sci->_gfxScreen->_displayPixels);
 	const SciSpan<const byte> headerPtr = inbuffer.subspan(headerPos);
 	const SciSpan<const byte> rlePtr = inbuffer.subspan(rlePos);
 	// displaceX, displaceY fields are ignored, and may contain garbage
