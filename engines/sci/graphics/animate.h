@@ -61,7 +61,7 @@ struct AnimateEntry {
 	int16 celNo;
 	bool processed;
 	int16 paletteNo;
-	int16 orig_x, x, orig_y, y, z;
+	int16 prev_x, x, prev_y, y, z;
 	int16 priority;
 	uint16 signal;
 	uint16 scaleSignal;

@@ -198,7 +198,7 @@ public:
 
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 0.750f;       // default 10
+	float moveAmp = 1.0f;       // default 10
 	float focusPoint = 2.000f;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
 	int dispWidth = 320;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
@@ -216,10 +216,6 @@ public:
 
 private:
 	
-
-
-	
-
 	byte _colorWhite;
 	byte _colorDefaultVectorData;
 
@@ -768,7 +764,6 @@ public:
 		return std::max(lower, std::min(n, upper));
 	}
 	void renderFrameDepthFirst(int mouseX, int mouseY) {
-		
 		//debug("%u", mouseX);
 		dispWidth = _displayWidth / 2;
 		int sizeX = _displayWidth;
@@ -790,8 +785,8 @@ public:
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
 					if ((int)(greyColor / 51) == di) { // 255 was too slow in 2021
 						
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseX / (float)dispWidth) - 1.0f)), (int)0, (int)(sizeX - 1));
-						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseY / (float)(_displayHeight/2)) - 1.0f)), (int)0, (int)(sizeY - 1));
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseX / (float)_displayWidth) - 0.5f)), (int)0, (int)(sizeX - 1));
+						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseY / (float)(_displayHeight)) - 0.5f)), (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;
 						}
@@ -815,12 +810,13 @@ public:
 							}
 						}*/
 						_displayScreen_BG[newY * sizeX + newX] = pixelColor;
-						_displayScreenR_BG[newY * sizeX + newX] = pixelColorR;
-						_displayScreenG_BG[newY * sizeX + newX] = pixelColorG;
-						_displayScreenB_BG[newY * sizeX + newX] = pixelColorB;
+						_displayScreenR_BG[newY * sizeX + newX] = pixelColorR;//(byte)((float)pixelColorR * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f);                                                      // + ((float)_displayScreenR_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
+						_displayScreenG_BG[newY * sizeX + newX] = pixelColorG; //(byte)((float)pixelColorG * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f); // + ((float)_displayScreenG_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
+						_displayScreenB_BG[newY * sizeX + newX] = pixelColorB; //(byte)((float)pixelColorB * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f); // + ((float)_displayScreenB_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
 						_priorityScreenX_BG[newY * sizeX + newX] = pixelColorPrio;
 						_displayScreenDEPTH_SHIFT_X[dy * sizeX + dx] = newX;
 						_displayScreenDEPTH_SHIFT_Y[dy * sizeX + dx] = newY;
+
 							
 					}
 				} /*
@@ -842,6 +838,7 @@ public:
 				}*/
 			}
 		}
+		// focusPoint = (float)_displayScreenDEPTH_IN[(mouseY) * sizeX + (mouseX)] / 127.000f;
 	}
 	void putPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control, bool bg) {
 

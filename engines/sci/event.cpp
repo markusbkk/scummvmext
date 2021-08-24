@@ -215,7 +215,7 @@ SciEvent EventManager::getScummVMEvent() {
 	} while (found && ev.type == Common::EVENT_MOUSEMOVE);
 
 	Common::Point mousePos = em->getMousePos();
-	g_sci->depthLookPos = mousePos;
+	g_sci->mouseLookPos = mousePos;
 	
 #if ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
@@ -227,7 +227,13 @@ SciEvent EventManager::getScummVMEvent() {
 		g_sci->_gfxCursor32->deviceMoved(mousePos);
 
 		Common::Point mousePosSci = mousePos;
+
+
 		mulru(mousePosSci, Ratio(gfxFrameout->getScriptWidth(), gfxFrameout->getScreenWidth()), Ratio(gfxFrameout->getScriptHeight(), gfxFrameout->getScreenHeight()));
+		if (g_sci->enhanced_DEPTH) {
+			mousePosSci.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePosSci.y * g_sci->_enhancementMultiplier) * g_sci->_gfxScreen->_displayWidth + (mousePosSci.x * g_sci->_enhancementMultiplier)] / g_sci->_enhancementMultiplier;
+			mousePosSci.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePosSci.y * g_sci->_enhancementMultiplier) * g_sci->_gfxScreen->_displayWidth + (mousePosSci.x * g_sci->_enhancementMultiplier)] / g_sci->_enhancementMultiplier;
+		}
 		noEvent.mousePosSci = input.mousePosSci = mousePosSci;
 
 		if (_hotRectanglesActive) {

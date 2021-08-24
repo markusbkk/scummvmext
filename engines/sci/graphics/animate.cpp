@@ -360,7 +360,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 	    reg_t curAddress = list->first;
 	    Node *curNode = _s->_segMan->lookupNode(curAddress);
 	    int16 listNr;
-
+	   
 	    // Clear lists
 	    _list.clear();
 	    _lastCastData.clear();
@@ -383,19 +383,15 @@ void GfxAnimate::LoadAllExtraPNG() {
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
 		    if (g_sci->enhanced_DEPTH) {
 			    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 		    } else {
-			    listEntry.orig_x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 			    listEntry.x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
 		    }
 		    if (g_sci->enhanced_DEPTH) {
 			    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
-			    listEntry.orig_y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
 			} else {
-			    listEntry.orig_y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
 			    listEntry.y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
 		    }
-
+		    
 		    listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		    listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
 		    if (getSciVersion() >= SCI_VERSION_1_1) {
@@ -719,6 +715,7 @@ void GfxAnimate::applyGlobalScaling(AnimateList::iterator entry, GfxView *view) 
 
 void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 	bool shouldSetNsRect = true;
+	
 	// Create rect according to coordinates and given cel
 	if (it->scaleSignal & kScaleSignalDoScaling) {
 		if (!g_sci->enhanced_DEPTH) {
@@ -834,8 +831,11 @@ void GfxAnimate::update() {
 			}
 		}
 	}
+	
 	// Draw always-update cels
 	for (it = _list.begin(); it != end; ++it) {
+
+
 		if (it->signal & kSignalNoUpdate) {
 			it->signal &= ~kSignalAlwaysUpdate;
 		}
@@ -844,6 +844,10 @@ void GfxAnimate::update() {
 			// draw corresponding cel
 			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 			it->showBitsFlag = true;
+			
+				
+
+				
 			
 			it->signal &= ~(kSignalStopUpdate | kSignalViewUpdated | kSignalNoUpdate | kSignalForceUpdate);
 			if (!(it->signal & kSignalIgnoreActor)) {
@@ -888,8 +892,6 @@ void GfxAnimate::update() {
 			
 			_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 
-			
-
 			it->showBitsFlag = true;
 
 			if (!(it->signal & kSignalIgnoreActor)) {
@@ -900,12 +902,30 @@ void GfxAnimate::update() {
 		}
 	}
 	
-	
+
 }
 
 void GfxAnimate::drawCels() {
+
+	int16 calcAvgPosX = 0;
+	int16 calcAvgPosY = 0;
+	int16 numberOfViews = 0;
+	AnimateList::iterator itxy;
+	const AnimateList::iterator endxy = _list.end();
+	for (itxy = _list.begin(); itxy != endxy; ++itxy) {
+		if (!(itxy->signal & kSignalNoUpdate)) {
+			calcAvgPosX += itxy->x;
+			calcAvgPosY += itxy->y;
+
+			numberOfViews++;
+		}
+	}
+	if (numberOfViews > 0) {
+		g_sci->viewLookPos.x = (int)((float)((float)calcAvgPosX / (float)numberOfViews));
+		g_sci->viewLookPos.y = (int)((float)((float)calcAvgPosY / (float)numberOfViews));
+	}
 	if (g_sci->enhanced_DEPTH) {
-		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->depthLookPos.x * g_sci->_enhancementMultiplier, g_sci->depthLookPos.y * g_sci->_enhancementMultiplier);
+		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->mouseLookPos.x * g_sci->_enhancementMultiplier, g_sci->mouseLookPos.y * g_sci->_enhancementMultiplier);
 	}
 	reg_t bitsHandle;
 	AnimateList::iterator it;
@@ -1009,8 +1029,7 @@ void GfxAnimate::drawCels() {
 	}
 	for (it = _list.begin(); it != end; ++it) {
 		
-			it->x = it->orig_x;
-			it->y = it->orig_y;
+
 		
 		if (!(it->signal & (kSignalNoUpdate | kSignalHidden | kSignalAlwaysUpdate))) {
 			// Save background
