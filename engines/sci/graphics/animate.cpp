@@ -822,7 +822,7 @@ void GfxAnimate::update() {
 
 	// Remove all no-update cels, if requested
 	
-	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim && !g_sci->enhanced_DEPTH) {
+	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
 		for (it = _list.reverse_begin(); it != end; --it) {
 			if (it->signal & kSignalNoUpdate) {
 				if (!(it->signal & kSignalRemoveView)) {
@@ -961,7 +961,7 @@ void GfxAnimate::drawCels() {
 
 	}
 	if (g_sci->enhanced_DEPTH) {
-		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->viewLookPos.x * g_sci->_enhancementMultiplier, g_sci->viewLookPos.y * g_sci->_enhancementMultiplier);
+		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->mouseLookPos.x + ((g_sci->viewLookPos.x - (g_sci->_gfxScreen->_scriptWidth / 2)) * 8.000f) * g_sci->_enhancementMultiplier, g_sci->mouseLookPos.y + ((g_sci->viewLookPos.y - (g_sci->_gfxScreen->_scriptHeight / 2)) * 8.000f) * g_sci->_enhancementMultiplier);
 	}
 	
 	reg_t bitsHandle;
@@ -1142,7 +1142,7 @@ void GfxAnimate::drawCels() {
 			if (it->signal & kSignalNoUpdate) {
 				_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
 			} else {
-				_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
+				_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
 			}
 			it->showBitsFlag = true;
 
