@@ -784,10 +784,10 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 					} else {
 						view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, (int16)clip((int)(g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier), 0, (int)(g_sci->_gfxScreen->_scriptWidth)), (int16)clip(g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier, 0, (int)(g_sci->_gfxScreen->_scriptHeight)), it->z, it->celRect);
 						view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, (int16)clip((int)(g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier), 0, (int)(g_sci->_gfxScreen->_scriptWidth)), (int16)clip(g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier, 0, (int)(g_sci->_gfxScreen->_scriptHeight)), it->z, it->bitsRect);
-						it->celRect.clip(_ports->_curPort->rect);
+						
 						it->bitsRect.clip(_ports->_curPort->rect);
 					}
-					debug("view x : %u", it->x);
+					
 				} else {
 					if (!it->viewEnhanced) {
 						view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
@@ -795,7 +795,7 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 					} else {
 						view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
 						view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
-						it->celRect.clip(_ports->_curPort->rect);
+						
 						it->bitsRect.clip(_ports->_curPort->rect);
 					}
 				}
@@ -936,12 +936,19 @@ void GfxAnimate::drawCels() {
 
 	if (numberOfViews > 0) {
 		Common::Point p;
-		if (g_sci->avgViewPos.size() > 30) {
-			g_sci->avgViewPos.erase(g_sci->avgViewPos.begin());
+		if (g_sci->avgViewPos.size() >= 29) {
+			for (int n = 29; n < g_sci->avgViewPos.size(); n++) {
+				g_sci->avgViewPos.erase(g_sci->avgViewPos.begin());
+			}
 		}
 		p.x = (int)clip(((float)((float)calcAvgPosX / (float)numberOfViews)), 0, g_sci->_gfxScreen->_scriptWidth);
 		p.y = (int)clip(((float)((float)calcAvgPosY / (float)numberOfViews)), 0, g_sci->_gfxScreen->_scriptHeight);
-		g_sci->avgViewPos.push_back(p);
+		
+		
+			for (int n = g_sci->avgViewPos.size(); n < 30; n++) {
+				g_sci->avgViewPos.push_back(p);
+			}
+		
 	}
 	if (g_sci->avgViewPos.size() > 0) {
 
