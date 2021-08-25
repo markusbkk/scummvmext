@@ -199,7 +199,7 @@ public:
 	bool depthInit = false;
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 0.500f;       // default 10
+	float moveAmp = 0.7500f;       // default 10
 	float focusPoint = 2.000f;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
 	int dispWidth = 320;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
