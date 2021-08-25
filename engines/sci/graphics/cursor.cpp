@@ -718,7 +718,7 @@ Common::Point GfxCursor::getPosition() {
 	}
 	if (_upscaledHires)
 		_screen->adjustBackUpscaledCoordinates(mousePos.y, mousePos.x);
-
+	
 	return mousePos;
 }
 

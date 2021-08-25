@@ -216,7 +216,18 @@ SciEvent EventManager::getScummVMEvent() {
 
 	Common::Point mousePos = em->getMousePos();
 	g_sci->mouseLookPos = mousePos;
-	
+	if (mousePos.x < 16 * g_sci->_enhancementMultiplier) {
+		mousePos.x = 0;
+	}
+	if (mousePos.x > g_sci->_gfxScreen->_displayWidth - 16 * g_sci->_enhancementMultiplier) {
+		mousePos.x = g_sci->_gfxScreen->_displayWidth;
+	}
+	if (mousePos.y > g_sci->_gfxScreen->_displayHeight - 16 * g_sci->_enhancementMultiplier) {
+		mousePos.y = g_sci->_gfxScreen->_displayHeight;
+	}
+	if (mousePos.y < 16 * g_sci->_enhancementMultiplier) {
+		mousePos.y = 0;
+	}
 #if ENABLE_SCI32
 	if (getSciVersion() >= SCI_VERSION_2) {
 		const GfxFrameout *gfxFrameout = g_sci->_gfxFrameout;

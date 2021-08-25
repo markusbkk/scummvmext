@@ -765,6 +765,17 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 					it->bitsRect.clip(_ports->_curPort->rect);
 				}
 			} else {
+				if (it->signal & kSignalNoUpdate) {
+					if (!it->viewEnhanced) {
+						view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+						view->getCelRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+					} else {
+						view->getCelRectEnhanced(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->celRect);
+						view->getCelRectEnhancedBits(it->viewpng, it->viewEnhanced, it->loopNo, it->celNo, it->x, it->y, it->z, it->bitsRect);
+						it->bitsRect.clip(_ports->_curPort->rect);
+					}
+				} else {
+				
 				if ((((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)) > 16 && (((int16)g_sci->_gfxScreen->getDepthShift(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, it->x * g_sci->_enhancementMultiplier, it->y * g_sci->_enhancementMultiplier) / g_sci->_enhancementMultiplier)) < g_sci->_gfxScreen->getScriptWidth() - 16) {
 
 					if (!it->viewEnhanced) {
@@ -786,6 +797,7 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 						it->celRect.clip(_ports->_curPort->rect);
 						it->bitsRect.clip(_ports->_curPort->rect);
 					}
+				}
 				}
 			}
 		}
