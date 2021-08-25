@@ -821,7 +821,7 @@ void GfxAnimate::update() {
 
 	// Remove all no-update cels, if requested
 	
-	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
+	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim && !g_sci->enhanced_DEPTH) {
 		for (it = _list.reverse_begin(); it != end; --it) {
 			if (it->signal & kSignalNoUpdate) {
 				if (!(it->signal & kSignalRemoveView)) {
@@ -925,20 +925,37 @@ void GfxAnimate::drawCels() {
 	AnimateList::iterator itxy;
 	const AnimateList::iterator endxy = _list.end();
 	for (itxy = _list.begin(); itxy != endxy; ++itxy) {
-		if (!(itxy->signal & kSignalNoUpdate)) {
+		if (!(itxy->signal & kSignalHidden) && !(itxy->signal & kSignalFrozen)) {
 			calcAvgPosX += itxy->x;
 			calcAvgPosY += itxy->y;
 
 			numberOfViews++;
 		}
 	}
+
 	if (numberOfViews > 0) {
-		g_sci->viewLookPos.x = (int)((float)((float)calcAvgPosX / (float)numberOfViews));
-		g_sci->viewLookPos.y = (int)((float)((float)calcAvgPosY / (float)numberOfViews));
+		Common::Point p;
+		if (g_sci->avgViewPos.size() > 30) {
+			g_sci->avgViewPos.erase(g_sci->avgViewPos.begin());
+		}
+		p.x = (int)clip(((float)((float)calcAvgPosX / (float)numberOfViews)), 0, g_sci->_gfxScreen->_scriptWidth);
+		p.y = (int)clip(((float)((float)calcAvgPosY / (float)numberOfViews)), 0, g_sci->_gfxScreen->_scriptHeight);
+		g_sci->avgViewPos.push_back(p);
+	}
+	if (g_sci->avgViewPos.size() > 0) {
+
+		for (std::list<Common::Point>::iterator itavp = g_sci->avgViewPos.begin(); itavp != g_sci->avgViewPos.end(); ++itavp) {
+			g_sci->viewLookPos.x += itavp->x;
+			g_sci->viewLookPos.y += itavp->y;
+		}
+		g_sci->viewLookPos.x /= g_sci->avgViewPos.size();
+		g_sci->viewLookPos.y /= g_sci->avgViewPos.size();
+
 	}
 	if (g_sci->enhanced_DEPTH) {
-		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->mouseLookPos.x * g_sci->_enhancementMultiplier, g_sci->mouseLookPos.y * g_sci->_enhancementMultiplier);
+		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->viewLookPos.x * g_sci->_enhancementMultiplier, g_sci->viewLookPos.y * g_sci->_enhancementMultiplier);
 	}
+	
 	reg_t bitsHandle;
 	AnimateList::iterator it;
 	const AnimateList::iterator end = _list.end();

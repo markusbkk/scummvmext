@@ -33,6 +33,7 @@
 #include "video/theora_decoder.h"
 #include <map>
 #include <string>
+#include <list>
 
 #ifndef WIN32
 #include <dirent.h>
@@ -245,6 +246,8 @@ public:
 	reg_t statusSaveBits;
 	Common::Point mouseLookPos;
 	Common::Point viewLookPos;
+	Common::Point viewLookPosPrevious;
+	std::list<Common::Point> avgViewPos;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

@@ -199,7 +199,7 @@ public:
 	bool depthInit = false;
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 2.5f;       // default 10
+	float moveAmp = 0.500f;       // default 10
 	float focusPoint = 2.000f;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
 	int dispWidth = 320;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
@@ -771,7 +771,7 @@ public:
 		int sizeY = _displayHeight;
 		int minX = sizeX;
 		int maxX = 0;
-		for (di = 0; di <= 7; di++) { // 255 was too slow in 2021
+		for (di = 0; di <= 5; di++) { // 255 was too slow in 2021
 			for (dy = 0; dy < sizeY; dy++) {
 				//print("y : "+ y + "\n");
 				bool drewPx = false;
@@ -784,10 +784,10 @@ public:
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
 					
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
-					if ((int)(greyColor / 37) == di) { // 255 was too slow in 2021
+					if ((int)(greyColor/51) == di) { // 255 was too slow in 2021
 						
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseX / (float)_displayWidth) - 0.5f)), (int)0, (int)(sizeX - 1));
-						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseY / (float)(_displayHeight)) - 0.5f)), (int)0, (int)(sizeY - 1));
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * g_sci->avgViewPos.size() * (float)-((float)((float)mouseX / (float)_displayWidth) - 0.5f)), (int)0, (int)(sizeX - 1));
+						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * g_sci->avgViewPos.size() * (float)-((float)((float)mouseY / (float)(_displayHeight)) - 0.5f)), (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;
 						}
