@@ -230,10 +230,7 @@ SciEvent EventManager::getScummVMEvent() {
 
 
 		mulru(mousePosSci, Ratio(gfxFrameout->getScriptWidth(), gfxFrameout->getScreenWidth()), Ratio(gfxFrameout->getScriptHeight(), gfxFrameout->getScreenHeight()));
-		if (g_sci->enhanced_DEPTH) {
-			mousePosSci.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePosSci.y * g_sci->_enhancementMultiplier) * g_sci->_gfxScreen->_displayWidth + (mousePosSci.x * g_sci->_enhancementMultiplier)] / g_sci->_enhancementMultiplier;
-			mousePosSci.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePosSci.y * g_sci->_enhancementMultiplier) * g_sci->_gfxScreen->_displayWidth + (mousePosSci.x * g_sci->_enhancementMultiplier)] / g_sci->_enhancementMultiplier;
-		}
+		
 		noEvent.mousePosSci = input.mousePosSci = mousePosSci;
 
 		if (_hotRectanglesActive) {

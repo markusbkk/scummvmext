@@ -196,6 +196,7 @@ public:
 
 	Graphics::PixelFormat _format;
 
+	bool depthInit = false;
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
 	float moveAmp = 1.0f;       // default 10
@@ -839,6 +840,7 @@ public:
 			}
 		}
 		// focusPoint = (float)_displayScreenDEPTH_IN[(mouseY) * sizeX + (mouseX)] / 127.000f;
+		depthInit = true;
 	}
 	void putPixelR(int16 x, int16 y, byte drawMask, byte r, byte a, byte priority, byte control, bool bg) {
 

@@ -712,7 +712,10 @@ void GfxCursor::setPosition(Common::Point pos) {
 
 Common::Point GfxCursor::getPosition() {
 	Common::Point mousePos = g_system->getEventManager()->getMousePos();
-
+	if (g_sci->enhanced_DEPTH) {
+		mousePos.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
+		mousePos.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
+	}
 	if (_upscaledHires)
 		_screen->adjustBackUpscaledCoordinates(mousePos.y, mousePos.x);
 
