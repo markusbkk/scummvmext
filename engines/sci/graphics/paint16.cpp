@@ -753,10 +753,11 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 		_screen->_picNotValid = 1;
 		debug("pic.%u-pic.%u", g_sci->prevPictureId, pictureId);
 		g_sci->scene_transition = true;
-		
+		g_sci->enhanced_bg_frame = 1;
+		g_sci->pictureId = pictureId;
 			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
-			//_transitions->setup(animationNr, animationBlackoutFlag);
-		
+			_transitions->setup(100, animationBlackoutFlag);
+			g_sci->prevPictureId = pictureId;
 	} else {
 		// We need to set it for SCI1EARLY+ (sierra sci also did so), otherwise we get at least the following issues:
 		//  LSL5 (english) - last wakeup (taj mahal flute dream)
@@ -767,10 +768,14 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 		if (getSciVersion() >= SCI_VERSION_1_EARLY)
 			_screen->_picNotValid = 1;
 		_ports->beginUpdate(_ports->_picWind);
+		g_sci->pictureId = pictureId;
 		drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
+		g_sci->prevPictureId = pictureId;
 		_ports->endUpdate(_ports->_picWind);
 	}
-	g_sci->prevPictureId = pictureId;
+
+	
+
 	_ports->setPort(oldPort);
 }
 

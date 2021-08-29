@@ -237,7 +237,10 @@ public:
 	int16 enhanced_bg_frame = 1;
 	bool play_enhanced_BG_anim = false;
 	bool scene_transition = false;
+	GuiResourceId pictureId = NULL;
 	GuiResourceId prevPictureId = NULL;
+	GuiResourceId prevPictureIdWork = NULL;
+	std::string prevPicName = "";
 	bool prevMirroredFlag;
 	bool prevAddToFlag;
 	int16 prevPaletteId;

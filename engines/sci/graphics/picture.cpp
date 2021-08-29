@@ -231,12 +231,13 @@ Graphics::Surface *loadPNGCLUTOverridePicture(Common::SeekableReadStream *s, Gfx
 	return srf;
 }
 bool fileIsInExtraDIRPicture(std::string fileName) {
-	
+	const char *f = fileName.c_str();
 	bool found = false;
 	std::list<std::string>::iterator it;
 	for (it = extraDIRList.begin(); it != extraDIRList.end(); ++it) {
-		std::string s = it->c_str();
-		if (s.compare(fileName) == 0) {
+		const char * s = it->c_str();
+
+		if (strcmp(s, f) == 0) {
 			found = true;
 		}
 	}
@@ -303,9 +304,13 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
 	}
-	std::string bgFileName = _resource->name().c_str();
+	Common::String bgFileName = _resource->name().c_str();
+	
 	if (g_sci->scene_transition) {
-		bgFileName = "pic.%u-%s", g_sci->prevPictureId, _resource->name().c_str();
+		
+		bgFileName = g_sci->prevPicName.c_str();
+		bgFileName += "-";
+		bgFileName += _resource->name().c_str();
 	}
 	if (videoCutsceneEnd == bgFileName.c_str()) {
 		playingVideoCutscenes = false;
@@ -373,20 +378,24 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		int retVal, buf_size = 32;
 		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
+		debug(fn.c_str());
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		char picnextstrbuffer[32];
 		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
 
+		if (!g_sci->scene_transition) {
 		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
 			//debug(nextAnim.c_str());
-			g_sci->backgroundIsVideo = false;
-			g_sci->enhanced_bg_frame = 1;
-			if (g_sci->play_enhanced_BG_anim) {
+			
+				g_sci->backgroundIsVideo = false;
+				g_sci->enhanced_bg_frame = 1;
 				g_sci->play_enhanced_BG_anim = false;
+				
+				fn = fnNoAnim;
 			}
-			fn = fnNoAnim;
-		} else {
+		}
+		{
 			if ((fileIsInExtraDIRPicture((bgFileName + ".ogg").c_str()))) {
 
 				if (g_sci->oggBackground != (bgFileName + ".ogg").c_str()) {
@@ -480,7 +489,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			} else {
 				g_sci->backgroundIsVideo = false;
-				if (!g_sci->scene_transition)
+				
 				g_sci->play_enhanced_BG_anim = false;
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
@@ -488,17 +497,32 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
-					g_sci->scene_transition = false;
+
 					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
 						g_sci->enhanced_bg_frame = 1;
 						g_sci->play_enhanced_BG_anim = true;
 					}
+					/*
+					char ststrbuffer[32];
+					int retValst, buf_size_st = 32;
+					retVal = snprintf(ststrbuffer, buf_size_st, "pic.%u", g_sci->prevPictureId);
+					Common::String st = ststrbuffer;
+					*/
+					g_sci->prevPicName = _resource->name().c_str();
+					//if ((strcmp(_resource->name().c_str(), st.c_str()) == 0))
+					{
+						g_sci->scene_transition = false;
+					}
+				
+					
 				}
 			}
 		}
 		if (g_sci->enhanced_bg_frame <= 1) {
-			if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
-				fn = fnNoAnim;
+			if (!g_sci->scene_transition) {
+				if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
+					fn = fnNoAnim;
+				}
 			}
 		}
 		bool preloaded = false;
@@ -592,7 +616,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								if (enhPrio) {
 									g_sci->enhanced_PRIORITY = true;
 									preloaded_p = true;
-									debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
+									debug("%s_p.png WAS ALREADY CACHED :)", fn);
 
 								}
 							}
@@ -644,7 +668,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						if (!file) {
 							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 						} else {
-							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+							debug("%s EXISTS and has been loaded!\n", fileName.c_str());
 							png = loadPNGPicture(file);
 							if (png) {
 								enh = (const byte *)png->getPixels();
@@ -1310,7 +1334,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						        if (g_sci->enhanced_DEPTH) {
 							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-							        if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
+							        if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
 								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -1431,7 +1455,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						        if (g_sci->enhanced_DEPTH) {
 							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-							        if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
+									if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
 								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -1554,6 +1578,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							
 						    if (g_sci->enhanced_DEPTH) {
 								_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
+								if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+									_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
+									_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
+									_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
+								}
 							}
 						}
 						x++;
@@ -1663,6 +1692,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							
 						    if (g_sci->enhanced_DEPTH) {
 								_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
+								if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+									_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
+									_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
+									_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
+								}
 							}
 
 						}
@@ -1702,9 +1736,13 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	surface = false;
 	g_sci->enhanced_PRIORITY = false;
 
-	std::string bgFileName = _resource->name().c_str();
+		Common::String bgFileName = _resource->name().c_str();
+
 	if (g_sci->scene_transition) {
-		bgFileName = "pic.%u-%s", g_sci->prevPictureId, _resource->name().c_str();
+
+		bgFileName = g_sci->prevPicName.c_str();
+		bgFileName += "-";
+		bgFileName += _resource->name().c_str();
 	}
 	if (videoCutsceneEnd == bgFileName.c_str()) {
 		playingVideoCutscenes = false;
@@ -1772,20 +1810,24 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		int retVal, buf_size = 32;
 		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
+		debug(fn.c_str());
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		char picnextstrbuffer[32];
 		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
 
-		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
-			//debug(nextAnim.c_str());
-			g_sci->backgroundIsVideo = false;
-			g_sci->enhanced_bg_frame = 1;
-			if (g_sci->play_enhanced_BG_anim) {
+		if (!g_sci->scene_transition) {
+			if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
+				//debug(nextAnim.c_str());
+
+				g_sci->backgroundIsVideo = false;
+				g_sci->enhanced_bg_frame = 1;
 				g_sci->play_enhanced_BG_anim = false;
+
+				fn = fnNoAnim;
 			}
-			fn = fnNoAnim;
-		} else {
+		}
+		{
 			if ((fileIsInExtraDIRPicture((bgFileName + ".ogg").c_str()))) {
 
 				if (g_sci->oggBackground != (bgFileName + ".ogg").c_str()) {
@@ -1878,25 +1920,38 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			} else {
 				g_sci->backgroundIsVideo = false;
-				if (!g_sci->scene_transition)
-					g_sci->play_enhanced_BG_anim = false;
+
+				g_sci->play_enhanced_BG_anim = false;
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
 					g_sci->enhanced_bg_frame++;
 					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
-					g_sci->scene_transition = false;
+
 					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
 						g_sci->enhanced_bg_frame = 1;
 						g_sci->play_enhanced_BG_anim = true;
+					}
+					/*
+					char ststrbuffer[32];
+					int retValst, buf_size_st = 32;
+					retVal = snprintf(ststrbuffer, buf_size_st, "pic.%u", g_sci->prevPictureId);
+					Common::String st = ststrbuffer;
+					*/
+					g_sci->prevPicName = _resource->name().c_str();
+					//if ((strcmp(_resource->name().c_str(), st.c_str()) == 0))
+					{
+						g_sci->scene_transition = false;
 					}
 				}
 			}
 		}
 		if (g_sci->enhanced_bg_frame <= 1) {
-			if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
-				fn = fnNoAnim;
+			if (!g_sci->scene_transition) {
+				if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
+					fn = fnNoAnim;
+				}
 			}
 		}
 		bool preloaded = false;
@@ -2563,7 +2618,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
+						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
 							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -2680,7 +2735,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16) {
+						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
 							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
