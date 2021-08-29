@@ -303,7 +303,11 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
 	}
-	if (videoCutsceneEnd == _resource->name().c_str()) {
+	std::string bgFileName = _resource->name().c_str();
+	if (g_sci->scene_transition) {
+		bgFileName = "pic.%u-%s", g_sci->prevPictureId, _resource->name().c_str();
+	}
+	if (videoCutsceneEnd == bgFileName.c_str()) {
 		playingVideoCutscenes = false;
 		wasPlayingVideoCutscenes = true;
 		videoCutsceneEnd = "-undefined-";
@@ -311,12 +315,12 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
-		Common::String dbg = "Cutscene ENDED on : " + _resource->name();
+		Common::String dbg = "Cutscene ENDED on : %s", bgFileName;
 		debug(dbg.c_str());
 	}
 	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
-		if (fileIsInExtraDIRPicture((_resource->name() + ".cts").c_str())) {
-			Common::String cfgfileName = _resource->name() + ".cts";
+		if (fileIsInExtraDIRPicture((bgFileName + ".cts").c_str())) {
+			Common::String cfgfileName = (bgFileName + ".cts").c_str();
 			debug(cfgfileName.c_str());
 			Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
 			if (cfg) {
@@ -332,13 +336,13 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						}
 					}
 				}
-				videoCutsceneStart = _resource->name().c_str();
+				videoCutsceneStart = bgFileName.c_str();
 
-				g_sci->oggBackground = _resource->name() + ".ogg";
+				g_sci->oggBackground = (bgFileName + ".cts.ogg").c_str();
 
 				g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
 
-				g_sci->_theoraDecoderCutscenes->loadFile(_resource->name() + ".ogg");
+				g_sci->_theoraDecoderCutscenes->loadFile((bgFileName + ".cts.ogg").c_str());
 				g_sci->_theoraDecoderCutscenes->start();
 				int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
 
@@ -352,14 +356,14 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					if (midiMusic != NULL)
 						midiMusic->setMasterVolume(0);
 				}
-				Common::String dbg = "Cutscene STARTED on : " + _resource->name();
+				Common::String dbg = "Cutscene STARTED on : %s", bgFileName;
 				debug(dbg.c_str());
 				dbg = "Cutscene set to end on : ";
 				dbg += videoCutsceneEnd.c_str();
 				debug(dbg.c_str());
 			}
 		} else {
-			debug(10, ("NO " + _resource->name() + ".cts").c_str());
+			debug(10, ("NO " + bgFileName + ".cts").c_str());
 		}
 	}
 	
@@ -367,12 +371,13 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 		char picstrbuffer[32];
 		int retVal, buf_size = 32;
-		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		char picnextstrbuffer[32];
-		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), (g_sci->enhanced_bg_frame + 1));
+		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
+
 		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
 			//debug(nextAnim.c_str());
 			g_sci->backgroundIsVideo = false;
@@ -382,14 +387,14 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 			}
 			fn = fnNoAnim;
 		} else {
-			if ((fileIsInExtraDIRPicture((_resource->name() + ".ogg").c_str()))) {
+			if ((fileIsInExtraDIRPicture((bgFileName + ".ogg").c_str()))) {
 
-				if (g_sci->oggBackground != (_resource->name() + ".ogg").c_str()) {
+				if (g_sci->oggBackground != (bgFileName + ".ogg").c_str()) {
 
-						Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+						Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
 						debug((fileName).c_str());
 						g_sci->_theoraDecoder = new Video::TheoraDecoder();
-						g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+					    g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
 						g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 						g_sci->_theoraDecoder->start();
 						int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
@@ -402,24 +407,25 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 						g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 						enh = (const byte *)g_sci->_theoraSurface->getPixels();
 						g_sci->play_enhanced_BG_anim = true;
-						g_sci->oggBackground = _resource->name() + ".ogg";
+					    g_sci->oggBackground = (bgFileName + ".ogg").c_str();
 					    fn = fnNoAnim;
 					
 				} else {
 
-					//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (_resource->name()).c_str());
+					//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (bgFileName).c_str());
 
 					if (g_sci->_theoraDecoder->getCurFrame() == -1) {
 						g_sci->_theoraDecoder->decodeNextFrame();
 					} else {
 						g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 						if (g_sci->_theoraSurface != nullptr) {
+							g_sci->scene_transition = false;
 							enh = (const byte *)g_sci->_theoraSurface->getPixels();
 						} else {
-							Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+							Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
 							debug((fileName).c_str());
 							g_sci->_theoraDecoder = new Video::TheoraDecoder();
-							g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+							g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
 							g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 							g_sci->_theoraDecoder->start();
 							int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
@@ -432,7 +438,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 							enh = (const byte *)g_sci->_theoraSurface->getPixels();
 							g_sci->play_enhanced_BG_anim = true;
-							g_sci->oggBackground = _resource->name() + ".ogg";
+							g_sci->oggBackground = (bgFileName + ".ogg").c_str();
 							fn = fnNoAnim;
 
 							g_sci->enhanced_bg_frame = 0;
@@ -442,10 +448,10 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							g_sci->backgroundIsVideo = true;
 							g_sci->enhanced_bg_frame++;
 						} else {
-							Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+							Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
 							debug((fileName).c_str());
 							g_sci->_theoraDecoder = new Video::TheoraDecoder();
-							g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+							g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
 							g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 							g_sci->_theoraDecoder->start();
 							int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
@@ -458,7 +464,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 							enh = (const byte *)g_sci->_theoraSurface->getPixels();
 							g_sci->play_enhanced_BG_anim = true;
-							g_sci->oggBackground = _resource->name() + ".ogg";
+							g_sci->oggBackground = (bgFileName + ".ogg").c_str();
 							fn = fnNoAnim;
 							
 							g_sci->enhanced_bg_frame = 0;
@@ -474,6 +480,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			} else {
 				g_sci->backgroundIsVideo = false;
+				if (!g_sci->scene_transition)
 				g_sci->play_enhanced_BG_anim = false;
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
@@ -481,6 +488,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
+					g_sci->scene_transition = false;
 					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
 						g_sci->enhanced_bg_frame = 1;
 						g_sci->play_enhanced_BG_anim = true;
@@ -1694,7 +1702,11 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	surface = false;
 	g_sci->enhanced_PRIORITY = false;
 
-	if (videoCutsceneEnd == _resource->name().c_str()) {
+	std::string bgFileName = _resource->name().c_str();
+	if (g_sci->scene_transition) {
+		bgFileName = "pic.%u-%s", g_sci->prevPictureId, _resource->name().c_str();
+	}
+	if (videoCutsceneEnd == bgFileName.c_str()) {
 		playingVideoCutscenes = false;
 		wasPlayingVideoCutscenes = true;
 		videoCutsceneEnd = "-undefined-";
@@ -1702,12 +1714,12 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
 		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
-		Common::String dbg = "Cutscene ENDED on : " + _resource->name();
+		Common::String dbg = "Cutscene ENDED on : %s", bgFileName;
 		debug(dbg.c_str());
 	}
 	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
-		if (fileIsInExtraDIRPicture((_resource->name() + ".cts").c_str())) {
-			Common::String cfgfileName = _resource->name() + ".cts";
+		if (fileIsInExtraDIRPicture((bgFileName + ".cts").c_str())) {
+			Common::String cfgfileName = (bgFileName + ".cts").c_str();
 			debug(cfgfileName.c_str());
 			Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
 			if (cfg) {
@@ -1723,13 +1735,13 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 						}
 					}
 				}
-				videoCutsceneStart = _resource->name().c_str();
+				videoCutsceneStart = bgFileName.c_str();
 
-				g_sci->oggBackground = _resource->name() + ".ogg";
+				g_sci->oggBackground = (bgFileName + ".cts.ogg").c_str();
 
 				g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
 
-				g_sci->_theoraDecoderCutscenes->loadFile(_resource->name() + ".ogg");
+				g_sci->_theoraDecoderCutscenes->loadFile((bgFileName + ".cts.ogg").c_str());
 				g_sci->_theoraDecoderCutscenes->start();
 				int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
 
@@ -1743,14 +1755,14 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					if (midiMusic != NULL)
 						midiMusic->setMasterVolume(0);
 				}
-				Common::String dbg = "Cutscene STARTED on : " + _resource->name();
+				Common::String dbg = "Cutscene STARTED on : %s", bgFileName;
 				debug(dbg.c_str());
 				dbg = "Cutscene set to end on : ";
 				dbg += videoCutsceneEnd.c_str();
 				debug(dbg.c_str());
 			}
 		} else {
-			debug(10, ("NO " + _resource->name() + ".cts").c_str());
+			debug(10, ("NO " + bgFileName + ".cts").c_str());
 		}
 	}
 
@@ -1758,12 +1770,13 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
 		char picstrbuffer[32];
 		int retVal, buf_size = 32;
-		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), g_sci->enhanced_bg_frame);
+		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), g_sci->enhanced_bg_frame);
 		Common::String fn = picstrbuffer;
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		char picnextstrbuffer[32];
-		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", _resource->name().c_str(), (g_sci->enhanced_bg_frame + 1));
+		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
+
 		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
 			//debug(nextAnim.c_str());
 			g_sci->backgroundIsVideo = false;
@@ -1773,14 +1786,14 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 			fn = fnNoAnim;
 		} else {
-			if ((fileIsInExtraDIRPicture((_resource->name() + ".ogg").c_str()))) {
+			if ((fileIsInExtraDIRPicture((bgFileName + ".ogg").c_str()))) {
 
-				if (g_sci->oggBackground != (_resource->name() + ".ogg").c_str()) {
+				if (g_sci->oggBackground != (bgFileName + ".ogg").c_str()) {
 
-					Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+					Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
 					debug((fileName).c_str());
 					g_sci->_theoraDecoder = new Video::TheoraDecoder();
-					g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+					g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
 					g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 					g_sci->_theoraDecoder->start();
 					int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
@@ -1793,24 +1806,25 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 					enh = (const byte *)g_sci->_theoraSurface->getPixels();
 					g_sci->play_enhanced_BG_anim = true;
-					g_sci->oggBackground = _resource->name() + ".ogg";
+					g_sci->oggBackground = (bgFileName + ".ogg").c_str();
 					fn = fnNoAnim;
 
 				} else {
 
-					//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (_resource->name()).c_str());
+					//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (bgFileName).c_str());
 
 					if (g_sci->_theoraDecoder->getCurFrame() == -1) {
 						g_sci->_theoraDecoder->decodeNextFrame();
 					} else {
 						g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 						if (g_sci->_theoraSurface != nullptr) {
+							g_sci->scene_transition = false;
 							enh = (const byte *)g_sci->_theoraSurface->getPixels();
 						} else {
-							Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+							Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
 							debug((fileName).c_str());
 							g_sci->_theoraDecoder = new Video::TheoraDecoder();
-							g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+							g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
 							g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 							g_sci->_theoraDecoder->start();
 							int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
@@ -1823,7 +1837,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 							enh = (const byte *)g_sci->_theoraSurface->getPixels();
 							g_sci->play_enhanced_BG_anim = true;
-							g_sci->oggBackground = _resource->name() + ".ogg";
+							g_sci->oggBackground = (bgFileName + ".ogg").c_str();
 							fn = fnNoAnim;
 
 							g_sci->enhanced_bg_frame = 0;
@@ -1833,10 +1847,10 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							g_sci->backgroundIsVideo = true;
 							g_sci->enhanced_bg_frame++;
 						} else {
-							Common::String fileName = (folder.getPath() + folder.getChild(_resource->name() + ".ogg").getName()).c_str();
+							Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
 							debug((fileName).c_str());
 							g_sci->_theoraDecoder = new Video::TheoraDecoder();
-							g_sci->_theoraDecoder->loadFile(_resource->name() + ".ogg");
+							g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
 							g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
 							g_sci->_theoraDecoder->start();
 							int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
@@ -1849,7 +1863,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
 							enh = (const byte *)g_sci->_theoraSurface->getPixels();
 							g_sci->play_enhanced_BG_anim = true;
-							g_sci->oggBackground = _resource->name() + ".ogg";
+							g_sci->oggBackground = (bgFileName + ".ogg").c_str();
 							fn = fnNoAnim;
 
 							g_sci->enhanced_bg_frame = 0;
@@ -1864,13 +1878,15 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				}
 			} else {
 				g_sci->backgroundIsVideo = false;
-				g_sci->play_enhanced_BG_anim = false;
+				if (!g_sci->scene_transition)
+					g_sci->play_enhanced_BG_anim = false;
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
 					g_sci->enhanced_bg_frame++;
 					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
+					g_sci->scene_transition = false;
 					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
 						g_sci->enhanced_bg_frame = 1;
 						g_sci->play_enhanced_BG_anim = true;

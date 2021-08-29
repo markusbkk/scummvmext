@@ -60,6 +60,8 @@ extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > font
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
 extern bool preLoadedPNGs;
 void GfxPaint16::init(GfxAnimate *animate, GfxText16 *text16) {
 	_animate = animate;
@@ -120,7 +122,24 @@ Graphics::Surface *loadCelPNGCLUTOverridePaint(Common::SeekableReadStream *s) {
 	return srf;
 }
 
+bool fileIsInExtraDIRPaint(std::string fileName) {
 
+	bool found = false;
+	std::list<std::string>::iterator it;
+	for (it = extraDIRList.begin(); it != extraDIRList.end(); ++it) {
+		std::string s = it->c_str();
+		if (s.compare(fileName) == 0) {
+			found = true;
+		}
+	}
+	if (found) {
+		//debug("FOUND : %s", fileName.c_str());
+		return true;
+	} else {
+
+		return false;
+	}
+}
 
 void GfxPaint16::drawPicture(GuiResourceId pictureId, bool mirroredFlag, bool addToFlag, GuiResourceId paletteId) {
 	GfxPicture *picture = new GfxPicture(_resMan, _coordAdjuster, _ports, _screen, _palette, pictureId, _EGAdrawingVisualize);
@@ -726,21 +745,18 @@ void GfxPaint16::bitsFree(reg_t memoryHandle) {
 void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, bool animationBlackoutFlag, bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 	Port *oldPort = _ports->setPort((Port *)_ports->_picWind);
 
-	g_sci->prevPictureId = pictureId;
+	
 	g_sci->prevMirroredFlag = mirroredFlag;
 	g_sci->prevAddToFlag = addToFlag;
 	g_sci->prevPaletteId = EGApaletteNo;
 	if (_ports->isFrontWindow(_ports->_picWind)) {
 		_screen->_picNotValid = 1;
-		debug("- TRANSITION %u -", animationNr);
-		if (animationNr != 10) {
+		debug("pic.%u-pic.%u", g_sci->prevPictureId, pictureId);
+		g_sci->scene_transition = true;
+		
 			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
-			_transitions->setup(animationNr, animationBlackoutFlag);
-		} else {
-			_transitions->fadeOut();
-			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
-			_transitions->fadeIn();
-		}
+			//_transitions->setup(animationNr, animationBlackoutFlag);
+		
 	} else {
 		// We need to set it for SCI1EARLY+ (sierra sci also did so), otherwise we get at least the following issues:
 		//  LSL5 (english) - last wakeup (taj mahal flute dream)
@@ -754,7 +770,7 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 		drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
 		_ports->endUpdate(_ports->_picWind);
 	}
-
+	g_sci->prevPictureId = pictureId;
 	_ports->setPort(oldPort);
 }
 

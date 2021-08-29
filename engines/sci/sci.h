@@ -236,6 +236,7 @@ public:
 	bool enhanced_DEPTH = false;
 	int16 enhanced_bg_frame = 1;
 	bool play_enhanced_BG_anim = false;
+	bool scene_transition = false;
 	GuiResourceId prevPictureId = NULL;
 	bool prevMirroredFlag;
 	bool prevAddToFlag;
