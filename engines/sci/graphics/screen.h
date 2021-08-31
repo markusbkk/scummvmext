@@ -186,7 +186,29 @@ public:
 	byte *_priorityScreenX;
 	byte *_priorityScreenX_BG;
 	byte *_priorityScreenX_BGtmp;
+	byte *_visualScreen;
+	byte *_controlScreen;
 
+	byte *_visualScreenR;
+	byte *_visualScreenG;
+	byte *_visualScreenB;
+
+	byte *_surfaceScreen;
+	/**
+	 * This screen is the one, where pixels are copied out of into the frame buffer.
+	 * It may be 640x400 for japanese SCI1 games. SCI0 games may be undithered in here.
+	 * Only read from this buffer for Save/ShowBits usage.
+	 */
+	byte *_displayScreen;
+	byte *_displayScreen_BG;
+	byte *_displayScreen_BGtmp;
+	// Display screen copies in r g & b format
+
+	byte *_displayScreenA;
+	byte *_enhancedMatte;
+	// Screens for RGB mode support
+	byte *_displayedScreen;
+	byte *_rgbScreen;
 	uint _pixels;
 	uint16 _scriptWidth;
 	uint16 _scriptHeight;
@@ -199,7 +221,7 @@ public:
 	bool depthInit = false;
 	// depth code from https://github.com/OMeyer973/Gif3DFromDepthMap_dev/blob/master/Gif3DFromDepthMapKinect/Gif3DFromDepthMapKinect.pde
 	//variables to set
-	float moveAmp = 2.5000f;       // default 10
+	float moveAmp = 1.000f;       // default 10
 	float focusPoint = 2.000f;   //default = 2; 0 = focus bg
 	float depthSmoothing = 4; //ammount of blur applied to the depthMap, can reduce artifacts but creates clipping
 	int dispWidth = 320;         //default 2; nb of frames beetween initial point & max amplitude (= 1/2 of total number of frames)
@@ -233,32 +255,8 @@ private:
 	bool _unditheringEnabled;
 	int16 _ditheredPicColors[DITHERED_BG_COLORS_SIZE];
 
-	// These screens have the real resolution of the game engine (320x200 for
-	// SCI0/SCI1/SCI11 games, 640x480 for SCI2 games). SCI0 games will be
-	// dithered in here at any time.
-	byte *_visualScreen;
-	byte *_controlScreen;
 
-	byte *_visualScreenR;
-	byte *_visualScreenG;
-	byte *_visualScreenB;
 
-	byte *_surfaceScreen;
-	/**
-	 * This screen is the one, where pixels are copied out of into the frame buffer.
-	 * It may be 640x400 for japanese SCI1 games. SCI0 games may be undithered in here.
-	 * Only read from this buffer for Save/ShowBits usage.
-	 */
-	byte *_displayScreen;
-	byte *_displayScreen_BG;
-	byte *_displayScreen_BGtmp;
-	// Display screen copies in r g & b format
-
-	byte *_displayScreenA;
-	byte *_enhancedMatte;
-	// Screens for RGB mode support
-	byte *_displayedScreen;
-	byte *_rgbScreen;
 
 	// For RGB per-view/pic palette mods
 	byte *_paletteMapScreen;
@@ -771,28 +769,33 @@ public:
 		int sizeY = _displayHeight;
 		int minX = sizeX;
 		int maxX = 0;
-		for (di = 0; di <= 5; di++) { // 255 was too slow in 2021
+		int minY = sizeY;
+		int maxY = 0;
+		for (di = 0; di <= 10; di++) { // 255 was too slow in 2021
 			for (dy = 0; dy < sizeY; dy++) {
 				//print("y : "+ y + "\n");
 				bool drewPx = false;
-				if (di == 0) {
-					minX = sizeX;
-					maxX = 0;
-				}
+
 				for (dx = 0; dx < sizeX; dx++) {
 					//print("x : "+ x + "\n");
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
-					
+
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
-					if ((int)(greyColor/51) == di) { // 255 was too slow in 2021
-						
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseX / (float)_displayWidth) - 0.5f)), (int)0, (int)(sizeX - 1));
-						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * moveAmp * (float)-((float)((float)mouseY / (float)(_displayHeight)) - 0.5f)), (int)0, (int)(sizeY - 1));
+					if ((int)(greyColor / 25.5f) == di) { // 255 was too slow in 2021
+
+						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.005f)), (int)0, (int)(sizeX - 1));
+						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.005f)), (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;
 						}
 						if (newX > maxX) {
 							maxX = newX;
+						}
+						if (newY < minY) {
+							minY = newY;
+						}
+						if (newY > maxY) {
+							maxY = newY;
 						}
 						pixelColor = _displayScreen_BGtmp[dy * sizeX + dx];
 						pixelColorR = _displayScreenR_BGtmp[dy * sizeX + dx];
@@ -811,34 +814,46 @@ public:
 							}
 						}*/
 						_displayScreen_BG[newY * sizeX + newX] = pixelColor;
-						_displayScreenR_BG[newY * sizeX + newX] = pixelColorR;//(byte)((float)pixelColorR * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f);                                                      // + ((float)_displayScreenR_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
+						_displayScreenR_BG[newY * sizeX + newX] = pixelColorR; //(byte)((float)pixelColorR * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f);                                                      // + ((float)_displayScreenR_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
 						_displayScreenG_BG[newY * sizeX + newX] = pixelColorG; //(byte)((float)pixelColorG * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f); // + ((float)_displayScreenG_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
 						_displayScreenB_BG[newY * sizeX + newX] = pixelColorB; //(byte)((float)pixelColorB * (float)((float)clip(greyColor + 128, 128, 255)) / 255.000f); // + ((float)_displayScreenB_BG[newY * sizeX + (newX - 1)] * (1.000f - (float)((float)greyColor / 255.000f)));
 						_priorityScreenX_BG[newY * sizeX + newX] = pixelColorPrio;
 						_displayScreenDEPTH_SHIFT_X[dy * sizeX + dx] = newX;
 						_displayScreenDEPTH_SHIFT_Y[dy * sizeX + dx] = newY;
-
-							
 					}
-				} /*
-				if (di == 25) {
-					for (int dmx = 0; dmx < sizeX; dmx++) {
-						if (dmx < minX) {
-							// fill left / right margins black.
-							_displayScreenR_BG[dy * sizeX + dmx] = 0;
-							_displayScreenG_BG[dy * sizeX + dmx] = 0;
-							_displayScreenB_BG[dy * sizeX + dmx] = 0;
-						}
-						if (dmx > maxX) {
-							// fill left / right margins black.
-							_displayScreenR_BG[dy * sizeX + dmx] = 0;
-							_displayScreenG_BG[dy * sizeX + dmx] = 0;
-							_displayScreenB_BG[dy * sizeX + dmx] = 0;
-						}
-					}
-				}*/
+				}
 			}
 		}
+			for (int dmy = 0; dmy < sizeY; dmy++) {
+				for (int dmx = 0; dmx < sizeX; dmx++) {
+					if (dmx < minX) {
+						// fill left / right margins black.
+						_displayScreenR_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenG_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenB_BG[dmy * sizeX + dmx] = 0;
+					}
+					if (dmx > maxX) {
+						// fill left / right margins black.
+						_displayScreenR_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenG_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenB_BG[dmy * sizeX + dmx] = 0;
+					}
+					if (dmy < minY) {
+						// fill left / right margins black.
+						_displayScreenR_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenG_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenB_BG[dmy * sizeX + dmx] = 0;
+					}
+					if (dmy > maxY) {
+						// fill left / right margins black.
+						_displayScreenR_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenG_BG[dmy * sizeX + dmx] = 0;
+						_displayScreenB_BG[dmy * sizeX + dmx] = 0;
+					}
+				}
+			
+			}
+		
 		// focusPoint = (float)_displayScreenDEPTH_IN[(mouseY) * sizeX + (mouseX)] / 127.000f;
 		depthInit = true;
 	}

@@ -821,26 +821,27 @@ void GfxAnimate::update() {
 	const AnimateList::iterator end = _list.end();
 
 	// Remove all no-update cels, if requested
-	
-	if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
-		for (it = _list.reverse_begin(); it != end; --it) {
-			if (it->signal & kSignalNoUpdate) {
-				if (!(it->signal & kSignalRemoveView)) {
-					bitsHandle = readSelector(_s->_segMan, it->object, SELECTOR(underBits));
-					if (_screen->_picNotValid != 1) {
-						_paint16->bitsRestore(bitsHandle);
-						it->showBitsFlag = true;
-					} else {
-						_paint16->bitsFree(bitsHandle);
+	if (!g_sci->enhanced_DEPTH) {
+		if (!g_sci->backgroundIsVideo && !g_sci->play_enhanced_BG_anim) {
+			for (it = _list.reverse_begin(); it != end; --it) {
+				if (it->signal & kSignalNoUpdate) {
+					if (!(it->signal & kSignalRemoveView)) {
+						bitsHandle = readSelector(_s->_segMan, it->object, SELECTOR(underBits));
+						if (_screen->_picNotValid != 1) {
+							_paint16->bitsRestore(bitsHandle);
+							it->showBitsFlag = true;
+						} else {
+							_paint16->bitsFree(bitsHandle);
+						}
+						writeSelectorValue(_s->_segMan, it->object, SELECTOR(underBits), 0);
 					}
-					writeSelectorValue(_s->_segMan, it->object, SELECTOR(underBits), 0);
+					it->signal &= ~kSignalForceUpdate;
+					if (it->signal & kSignalViewUpdated)
+						it->signal &= ~(kSignalViewUpdated | kSignalNoUpdate);
+				} else if (it->signal & kSignalStopUpdate) {
+					it->signal &= ~kSignalStopUpdate;
+					it->signal |= kSignalNoUpdate;
 				}
-				it->signal &= ~kSignalForceUpdate;
-				if (it->signal & kSignalViewUpdated)
-					it->signal &= ~(kSignalViewUpdated | kSignalNoUpdate);
-			} else if (it->signal & kSignalStopUpdate) {
-				it->signal &= ~kSignalStopUpdate;
-				it->signal |= kSignalNoUpdate;
 			}
 		}
 	}
@@ -926,7 +927,7 @@ void GfxAnimate::drawCels() {
 	AnimateList::iterator itxy;
 	const AnimateList::iterator endxy = _list.end();
 	for (itxy = _list.begin(); itxy != endxy; ++itxy) {
-		if (!(itxy->signal & kSignalHidden) && !(itxy->signal & kSignalFrozen)) {
+		if (!(itxy->signal & kSignalNoUpdate) && !(itxy->signal & kSignalHidden) && !(itxy->signal & kSignalFrozen)) {
 			calcAvgPosX += itxy->x;
 			calcAvgPosY += itxy->y;
 
@@ -958,10 +959,11 @@ void GfxAnimate::drawCels() {
 		}
 		g_sci->viewLookPos.x /= g_sci->avgViewPos.size();
 		g_sci->viewLookPos.y /= g_sci->avgViewPos.size();
-
+		g_sci->viewLookPos.x *= g_sci->_enhancementMultiplier;
+		g_sci->viewLookPos.y *= g_sci->_enhancementMultiplier;
 	}
 	if (g_sci->enhanced_DEPTH) {
-		g_sci->_gfxScreen->renderFrameDepthFirst(g_sci->mouseLookPos.x + ((g_sci->viewLookPos.x - (g_sci->_gfxScreen->_scriptWidth / 2)) * 8.000f) * g_sci->_enhancementMultiplier, g_sci->mouseLookPos.y + ((g_sci->viewLookPos.y - (g_sci->_gfxScreen->_scriptHeight / 2)) * 8.000f) * g_sci->_enhancementMultiplier);
+		g_sci->_gfxScreen->renderFrameDepthFirst((g_sci->mouseLookPos.x - (g_sci->_gfxScreen->_displayWidth / 2)) + ((g_sci->viewLookPos.x - (g_sci->_gfxScreen->_displayWidth / 2))*4.000f), (g_sci->mouseLookPos.y - (g_sci->_gfxScreen->_displayHeight / 2)) + ((g_sci->viewLookPos.y - (g_sci->_gfxScreen->_displayHeight / 2))*4.000f));
 	}
 	
 	reg_t bitsHandle;
@@ -1247,7 +1249,7 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 					writeSelectorValue(_s->_segMan, it->object, SELECTOR(lsBottom), it->bitsRect.bottom);
 				}
 				// may get used for debugging
-				//_paint16->frameRect(workerRect);
+				//_paint16->frameRect(workerRect); // should be //!
 				_paint16->bitsShow(workerRect);
 
 				if (it->signal & kSignalHidden)
@@ -1263,9 +1265,15 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 	}
 	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
 		
-		_screen->convertToRGB(_ports->_curPort->rect);
+		
 	}*/
+		//_screen->convertToRGB(_ports->_curPort->rect);
 		reAnimate(_ports->_curPort->rect);
+		// 2. Convert to RGB
+		//_screen->convertToRGB(_ports->_curPort->rect);
+
+		// 3. Copy to screen
+		//g_system->copyRectToScreen(_screen->_rgbScreen + ((_ports->_curPort->rect.top * _screen->_displayWidth) + _ports->_curPort->rect.left) * _screen->_format.bytesPerPixel, _screen->_displayWidth * _screen->_format.bytesPerPixel, _ports->_curPort->rect.left, _ports->_curPort->rect.top, _ports->_curPort->rect.width(), _ports->_curPort->rect.height());
 	}
 	
 }

@@ -1334,7 +1334,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						        if (g_sci->enhanced_DEPTH) {
 							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-							        if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+									
+							        if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
 								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -1455,7 +1456,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 
 						        if (g_sci->enhanced_DEPTH) {
 							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-									if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+									if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
 								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -1578,7 +1579,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							
 						    if (g_sci->enhanced_DEPTH) {
 								_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
-								if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+								if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
 									_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 									_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 									_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -1692,7 +1693,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 							
 						    if (g_sci->enhanced_DEPTH) {
 								_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
-								if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+								if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
 									_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 									_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 									_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -2618,7 +2619,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+						if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
 							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
@@ -2735,7 +2736,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 
 					if (g_sci->enhanced_DEPTH) {
 						_screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-						if (x < 16 || x > g_sci->_gfxScreen->getDisplayWidth() - 16 || y < 16 || y > g_sci->_gfxScreen->getDisplayHeight() - 16) {
+						if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
 							_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
 							_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
 							_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);

@@ -219,10 +219,10 @@ SciEvent EventManager::getScummVMEvent() {
 	if (mousePos.x < 16 * g_sci->_enhancementMultiplier) {
 		mousePos.x = 0;
 	}
-	if (mousePos.x > g_sci->_gfxScreen->_displayWidth - 16 * g_sci->_enhancementMultiplier) {
+	if (mousePos.x > g_sci->_gfxScreen->_displayWidth - (16 * g_sci->_enhancementMultiplier)) {
 		mousePos.x = g_sci->_gfxScreen->_displayWidth;
 	}
-	if (mousePos.y > g_sci->_gfxScreen->_displayHeight - 16 * g_sci->_enhancementMultiplier) {
+	if (mousePos.y > g_sci->_gfxScreen->_displayHeight - (16 * g_sci->_enhancementMultiplier)) {
 		mousePos.y = g_sci->_gfxScreen->_displayHeight;
 	}
 	if (mousePos.y < 16 * g_sci->_enhancementMultiplier) {

@@ -842,7 +842,7 @@ void GfxPaint16::kernelGraphRedrawBox(Common::Rect rect) {
 	_coordAdjuster->kernelGlobalToLocal(rect.left, rect.top);
 	_coordAdjuster->kernelGlobalToLocal(rect.right, rect.bottom);
 
-	_animate->reAnimate(rect);
+	//_animate->reAnimate(rect); // <- whole screen reAnimates
 
 	_ports->setPort(oldPort);
 }
