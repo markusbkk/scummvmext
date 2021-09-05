@@ -252,6 +252,9 @@ public:
 	Common::Point viewLookPos;
 	Common::Point viewLookPosPrevious;
 	std::list<Common::Point> avgViewPos;
+	int cachedFiles;
+	float cachedFilesPercent;
+	int totalFilesToCache;
 
 public:
 	bool checkKernelBreakpoint(const Common::String &name);

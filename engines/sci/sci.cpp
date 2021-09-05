@@ -115,6 +115,7 @@ float blackFade = 1.0;
 
 std::list<std::string> extraDIRList;
 std::list<std::string>::iterator extraDIRListit;
+
 std::string extraPath = "";
 
 Graphics::Surface *loadCelPNGSci(Common::SeekableReadStream *s) {
@@ -373,18 +374,50 @@ SciEngine::~SciEngine() {
 
 extern int showScummVMDialog(const Common::U32String &message, const Common::U32String &altButton = Common::U32String(), bool alignCenter = true);
 
+Graphics::Surface *loadCelPNGEngine(Common::SeekableReadStream *s) {
+	Image::PNGDecoder d;
+
+	if (!s)
+		return nullptr;
+	d.loadStream(*s);
+	delete s;
+
+	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+	return srf;
+}
+
 #ifdef WIN32
 void SciEngine::CreateDIRListing() {
-
+	g_sci->totalFilesToCache = 0;
+	Common::String loadname = "loading.0.percent.png";
+	Common::String fnload = Common::FSNode(ConfMan.get("extrapath")).getChild(loadname).getName();
+	Common::SeekableReadStream *fileload = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(fnload).getName());
+	if (fileload) {
+		Graphics::Surface *viewpngloadtmp = loadCelPNGEngine(fileload);
+		g_system->copyRectToScreen(viewpngloadtmp->getPixels(), viewpngloadtmp->w * 4, 0, 0, viewpngloadtmp->w, viewpngloadtmp->h);
+		g_system->updateScreen();
+	}
 	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
 	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
 		std::string f = it->path().filename().string();
+		if (strstr(f.c_str(), ".png") && (strstr(f.c_str(), "pic") || strstr(f.c_str(), "view")) && !strstr(f.c_str(), "_256") && !strstr(f.c_str(), "_256RP")) {
+			g_sci->totalFilesToCache++;
+		}
 		extraDIRList.push_back(f);
-		debug(f.c_str());
+		//debug(f.c_str());
 	}
 }
 #else
 void SciEngine::CreateDIRListing() {
+	g_sci->totalFilesToCache = 0;
+	Common::String loadname = "loading.0.percent.png";
+	Common::String fnload = Common::FSNode(ConfMan.get("extrapath")).getChild(loadname).getName();
+	Common::SeekableReadStream *fileload = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(fnload).getName());
+	if (fileload) {
+		Graphics::Surface *viewpngloadtmp = loadCelPNGEngine(fileload);
+		g_system->copyRectToScreen(viewpngloadtmp->getPixels(), viewpngloadtmp->w * 4, 0, 0, viewpngloadtmp->w, viewpngloadtmp->h);
+		g_system->updateScreen();
+	}
 	std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
 
 	DIR *dir;
@@ -406,7 +439,9 @@ void SciEngine::CreateDIRListing() {
 
 		//if (is_directory)
 		//continue;
-
+		if (strstr(file_name.c_str(), ".png") && (strstr(f.c_str(), "pic") || strstr(f.c_str(), "view")) && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+			g_sci->totalFilesToCache++;
+		}
 		std::string path = file_name;
 		extraDIRList.push_back(path);
 	}
@@ -958,6 +993,7 @@ void SciEngine::runGame() {
 	do {
 		_gamestate->_executionStackPosChanged = false;
 		run_vm(_gamestate);
+		g_sci->getEventManager()->updateScreen();
 		exitGame();
 
 		_guestAdditions->sciEngineRunGameHook();

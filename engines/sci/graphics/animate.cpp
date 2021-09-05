@@ -280,19 +280,86 @@ Graphics::Surface *loadCelPNGCLUTOverride(Common::SeekableReadStream *s) {
 	return srf;
 }
 void GfxAnimate::LoadAllExtraPNG() {
+	g_sci->cachedFiles = 0;
+	if (g_sci->totalFilesToCache > 0) {
 
 #ifdef WIN32
-	std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
-	for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
+		std::string path = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+		for (boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it) {
 
-		if ((it->path().filename().string().rfind("pic.", 0) == 0 || it->path().filename().string().rfind("view.", 0) == 0) && hazEnding(it->path().generic_string(), ".png")) {
+			if ((strstr(it->path().generic_string().c_str(), "pic.") || strstr(it->path().generic_string().c_str(), "view.")) && hazEnding(it->path().generic_string(), ".png")) {
 
-			Common::String cn = it->path().filename().string().c_str();
-			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
-			if (file) {
-				if (!strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP") && !strstr(it->path().generic_string().c_str(), "_o") && !strstr(it->path().generic_string().c_str(), "_p") && !strstr(it->path().generic_string().c_str(), "_s")) {
+				Common::String cn = it->path().filename().string().c_str();
+				Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(cn).getName());
+				if (file) {
+					if (!strstr(it->path().generic_string().c_str(), "_256") && !strstr(it->path().generic_string().c_str(), "_256RP")) {
 
+						Graphics::Surface *viewpngtmp = loadCelPNG(file);
+						if (viewpngtmp) {
+							const byte *viewenh = (const byte *)viewpngtmp->getPixels();
+							if (viewenh) {
+								std::pair<Graphics::Surface *, const byte *> tmp;
+								tmp.first = viewpngtmp;
+								tmp.second = viewenh;
+								viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
+								Common::String dbg = "CACHED : " + fn;
+								debug(dbg.c_str());
+								g_sci->cachedFiles++;
+								if ((uint)((float)((float)g_sci->cachedFiles / (float)g_sci->totalFilesToCache) * 100.00f) != (uint)g_sci->cachedFilesPercent) {
+
+									
+									char loadstrbuffer[32];
+									int retVal, buf_size = 32;
+									retVal = snprintf(loadstrbuffer, buf_size, "loading.%u.percent.png", (uint)g_sci->cachedFilesPercent);
+									Common::String loadname = loadstrbuffer;
+									Common::String fnload = Common::FSNode(ConfMan.get("extrapath")).getChild(loadname).getName();
+									Common::SeekableReadStream *fileload = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(fnload).getName());
+									if (fileload) {
+										//debug("Found : %s", loadname.c_str());
+										Graphics::Surface *viewpngloadtmp = loadCelPNG(fileload);
+										g_system->copyRectToScreen(viewpngloadtmp->getPixels(), viewpngloadtmp->w * 4, 0, 0, viewpngloadtmp->w, viewpngloadtmp->h);
+										g_system->updateScreen();
+									} else {
+										//debug("Didn't find : %s", loadname.c_str());
+									}
+									g_sci->cachedFilesPercent = ((float)((float)g_sci->cachedFiles / (float)g_sci->totalFilesToCache) * 100.00f);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+#else
+
+		std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
+
+		DIR *dir;
+		class dirent *ent;
+		//class stat st;
+
+		dir = opendir(directory.c_str());
+		while ((ent = readdir(dir)) != NULL) {
+			const std::string file_name = ent->d_name;
+			const std::string full_file_name = directory + "/" + file_name;
+
+			//if (file_name[0] == '.')
+			//continue;
+
+			//if (stat(full_file_name.c_str(), &st) == -1)
+			//continue;
+
+			//const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+			//if (is_directory)
+			//continue;
+
+			if (strstr(file_name.c_str(), ".png") && (strstr(file_name.c_str(), "pic") || strstr(file_name.c_str(), "view")) && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+				Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
+				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
+				if (file) {
 					Graphics::Surface *viewpngtmp = loadCelPNG(file);
 					if (viewpngtmp) {
 						const byte *viewenh = (const byte *)viewpngtmp->getPixels();
@@ -300,61 +367,36 @@ void GfxAnimate::LoadAllExtraPNG() {
 							std::pair<Graphics::Surface *, const byte *> tmp;
 							tmp.first = viewpngtmp;
 							tmp.second = viewenh;
-							viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
-							Common::String dbg = "CACHED : " + fn;
-							debug(dbg.c_str());
+							viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
+							debug(fn.c_str());
+							debug("LOADED FROM DISC");
+							g_sci->cachedFiles++;
+							if ((uint)((float)((float)g_sci->cachedFiles / (float)g_sci->totalFilesToCache) * 100.00f) != (uint)g_sci->cachedFilesPercent) {
+
+								char loadstrbuffer[32];
+								int retVal, buf_size = 32;
+								retVal = snprintf(loadstrbuffer, buf_size, "loading.%u.percent.png", (uint)g_sci->cachedFilesPercent);
+								Common::String loadname = loadstrbuffer;
+								Common::String fnload = Common::FSNode(ConfMan.get("extrapath")).getChild(loadname).getName();
+								Common::SeekableReadStream *fileload = SearchMan.createReadStreamForMember(Common::FSNode(ConfMan.get("extrapath")).getChild(fnload).getName());
+								if (fileload) {
+									//debug("Found : %s", loadname.c_str());
+									Graphics::Surface *viewpngloadtmp = loadCelPNG(fileload);
+									g_system->copyRectToScreen(viewpngloadtmp->getPixels(), viewpngloadtmp->w * 4, 0, 0, viewpngloadtmp->w, viewpngloadtmp->h);
+									g_system->updateScreen();
+								} else {
+									//debug("Didn't find : %s", loadname.c_str());
+								}
+								g_sci->cachedFilesPercent = ((float)((float)g_sci->cachedFiles / (float)g_sci->totalFilesToCache) * 100.00f);
+							}
 						}
 					}
 				}
 			}
 		}
-	}
-
-#else
-
-	std::string directory = Common::FSNode(ConfMan.get("extrapath")).getPath().c_str();
-
-	DIR *dir;
-	class dirent *ent;
-	//class stat st;
-
-	dir = opendir(directory.c_str());
-	while ((ent = readdir(dir)) != NULL) {
-		const std::string file_name = ent->d_name;
-		const std::string full_file_name = directory + "/" + file_name;
-
-		//if (file_name[0] == '.')
-		//continue;
-
-		//if (stat(full_file_name.c_str(), &st) == -1)
-		//continue;
-
-		//const bool is_directory = (st.st_mode & S_IFDIR) != 0;
-
-		//if (is_directory)
-		//continue;
-
-		if (file_name.rfind(".png", 0) == 0 && strstr(file_name.c_str(), "view") && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
-			Common::String fn = Common::FSNode(ConfMan.get("extrapath")).getChild(file_name.c_str()).getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fn);
-			if (file) {
-				Graphics::Surface *viewpngtmp = loadCelPNG(file);
-				if (viewpngtmp) {
-					const byte *viewenh = (const byte *)viewpngtmp->getPixels();
-					if (viewenh) {
-						std::pair<Graphics::Surface *, const byte *> tmp;
-						tmp.first = viewpngtmp;
-						tmp.second = viewenh;
-						viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(file_name.c_str(), tmp));
-						debug(fn.c_str());
-						debug("LOADED FROM DISC");
-					}
-				}
-			}
-		}
-	}
-	closedir(dir);
+		closedir(dir);
 #endif
+	}
 }
 	void GfxAnimate::makeSortedList(List *list) {
 	    reg_t curAddress = list->first;
@@ -991,7 +1033,8 @@ void GfxAnimate::drawCels() {
 
 				if (g_sci->play_enhanced_BG_anim) {
 					if (g_sci->prevPictureId != NULL) {
-						if (g_sci->_gfxPorts->_curPort->top == 10) {
+						//if (g_sci->_gfxPorts->_curPort->top == 10)
+						{
 							//g_sci->_gfxPorts->beginUpdate(g_sci->_gfxPorts->_picWind);
 							g_sci->_gfxPaint16->drawPicture(g_sci->prevPictureId, g_sci->prevMirroredFlag, true, (GuiResourceId)g_sci->prevPaletteId);
 							//Common::Rect _animDrawArea = Common::Rect(0, 0, g_sci->_gfxScreen->getScriptWidth(), g_sci->_gfxScreen->getScriptHeight());
@@ -1037,7 +1080,8 @@ void GfxAnimate::drawCels() {
 				}
 
 				if (g_sci->prevPictureId != NULL) {
-					if (g_sci->_gfxPorts->_curPort->top == 10) {
+					//if (g_sci->_gfxPorts->_curPort->top == 10)
+					{
 						if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoder->getTimeToNextFrame()) {
 
 							s->_screenUpdateTime = g_system->getMillis();
@@ -1059,8 +1103,6 @@ void GfxAnimate::drawCels() {
 								}
 							}
 						}
-					} else {
-						debug("%u", g_sci->_gfxPorts->_curPort->top);
 					}
 				}
 			}
@@ -1676,6 +1718,7 @@ void GfxAnimate::kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t 
 		disposeLastCast();
 		if (_screen->_picNotValid)
 			animateShowPic();
+
 		return;
 	}
 
@@ -1720,12 +1763,13 @@ void GfxAnimate::kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t 
 	//  screen at all
 
 
-	g_sci->getEventManager()->updateScreen();
+	
 
 	_ports->setPort(oldPort);
 
 	// Now trigger speed throttler
-	if (!playingVideoCutscenes) {
+	//if (!playingVideoCutscenes)
+	{
 		throttleSpeed();
 	}
 }

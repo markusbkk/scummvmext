@@ -448,13 +448,6 @@ void EventManager::updateScreen() {
 	// Update the screen here, since it's called very often.
 	// Throttle the screen update rate to 60fps.
 	EngineState *s = g_sci->getEngineState();
-	if (!playingVideoCutscenes && wasPlayingVideoCutscenes) {
-		wasPlayingVideoCutscenes = false;
-		if (midiMusic != NULL)
-			midiMusic->setMasterVolume(_masterVolumeMIDI);
-	}
-
-
 	 if (playingVideoCutscenes)
 	 {
 		if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoderCutscenes->getTimeToNextFrame() * 2) {
@@ -474,7 +467,7 @@ void EventManager::updateScreen() {
 				const Graphics::Surface *srf = g_sci->_theoraDecoderCutscenes->decodeNextFrame();
 				if (srf != nullptr) {
 					g_system->copyRectToScreen(srf->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
-					//g_system->updateScreen();
+					
 
 				} else {
 					playingVideoCutscenes = false;
@@ -483,7 +476,7 @@ void EventManager::updateScreen() {
 					g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
 				}
 			}
-			g_system->updateScreen();
+			
 			
 			// Throttle the checking of shouldQuit() to 60fps as well, since
 			// Engine::shouldQuit() invokes 2 virtual functions
@@ -492,7 +485,10 @@ void EventManager::updateScreen() {
 			// throttling at all.
 			if (g_engine->shouldQuit())
 				s->abortScriptProcessing = kAbortQuitGame;
+
+			g_system->updateScreen();
 		}
+		
 	 } else {
 		 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
 			 s->_screenUpdateTime = g_system->getMillis();
@@ -506,6 +502,11 @@ void EventManager::updateScreen() {
 			 if (g_engine->shouldQuit())
 				 s->abortScriptProcessing = kAbortQuitGame;
 		 }
+	 }
+	 if (!playingVideoCutscenes && wasPlayingVideoCutscenes) {
+		 wasPlayingVideoCutscenes = false;
+		 if (midiMusic != NULL)
+			 midiMusic->setMasterVolume(_masterVolumeMIDI);
 	 }
 }
 
