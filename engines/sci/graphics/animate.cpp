@@ -423,17 +423,7 @@ void GfxAnimate::LoadAllExtraPNG() {
 		    listEntry.signal = readSelectorValue(_s->_segMan, curObject, SELECTOR(signal));
 
 		    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
-		    if (g_sci->enhanced_DEPTH) {
-			    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));
-		    } else {
-			    listEntry.x = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(x)));
-		    }
-		    if (g_sci->enhanced_DEPTH) {
-			    listEntry.y = readSelectorValue(_s->_segMan, curObject, SELECTOR(y));
-			} else {
-			    listEntry.y = (int16)(readSelectorValue(_s->_segMan, curObject, SELECTOR(y)));
-		    }
-		    
+		    listEntry.x = readSelectorValue(_s->_segMan, curObject, SELECTOR(x));		    
 		    listEntry.z = readSelectorValue(_s->_segMan, curObject, SELECTOR(z));
 		    listEntry.priority = readSelectorValue(_s->_segMan, curObject, SELECTOR(priority));
 		    if (getSciVersion() >= SCI_VERSION_1_1) {

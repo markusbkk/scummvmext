@@ -167,10 +167,15 @@ public:
 	GfxScreenUpscaledMode _upscaledHires;
 	uint16 _width;
 	uint16 _height;
-	byte *_displayScreenR;
+	byte *_displayScreen;
+	byte *_displayScreen_BG;
+	byte *_displayScreen_BGtmp;
+	byte *_displayScreenA;
 	byte *_displayedScreenR;
-	byte *_displayScreenG;
 	byte *_displayedScreenG;
+	byte *_displayedScreenB;
+	byte *_displayScreenR;
+	byte *_displayScreenG;
 	byte *_displayScreenB;
 	byte *_displayScreenR_BGtmp;
 	byte *_displayScreenG_BGtmp;
@@ -178,14 +183,19 @@ public:
 	byte *_displayScreenR_BG;
 	byte *_displayScreenG_BG;
 	byte *_displayScreenB_BG;
-	byte *_displayedScreenB;
+	byte *_priorityScreenX;
+	byte *_priorityScreenX_BG;
+	byte *_priorityScreenX_BGtmp;
 	byte *_displayScreenDEPTH_IN;
 	byte *_displayScreenDEPTH_OUT;
 	int *_displayScreenDEPTH_SHIFT_X;
 	int *_displayScreenDEPTH_SHIFT_Y;
-	byte *_priorityScreenX;
-	byte *_priorityScreenX_BG;
-	byte *_priorityScreenX_BGtmp;
+	byte *_displayedScreen;
+	byte *_rgbScreen;
+	byte *_rgbScreen_LEye;
+	byte *_rgbScreen_REye;
+	byte *_paletteMapScreen;
+
 	byte *_visualScreen;
 	byte *_controlScreen;
 
@@ -199,16 +209,13 @@ public:
 	 * It may be 640x400 for japanese SCI1 games. SCI0 games may be undithered in here.
 	 * Only read from this buffer for Save/ShowBits usage.
 	 */
-	byte *_displayScreen;
-	byte *_displayScreen_BG;
-	byte *_displayScreen_BGtmp;
+
 	// Display screen copies in r g & b format
 
-	byte *_displayScreenA;
+
 	byte *_enhancedMatte;
 	// Screens for RGB mode support
-	byte *_displayedScreen;
-	byte *_rgbScreen;
+
 	uint _pixels;
 	uint16 _scriptWidth;
 	uint16 _scriptHeight;
@@ -259,7 +266,7 @@ private:
 
 
 	// For RGB per-view/pic palette mods
-	byte *_paletteMapScreen;
+
 	byte _curPaletteMapValue;
 	PaletteMod _paletteMods[256];
 	bool _paletteModsEnabled;
@@ -782,8 +789,11 @@ public:
 
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
 					if ((int)(greyColor / 25.5f) == di) { // 255 was too slow in 2021
-
-						newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.005f)), (int)0, (int)(sizeX - 1));
+						if (!g_sci->stereoRightEye) {
+							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.005f)), (int)0, (int)(sizeX - 1));
+						} else {
+							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth / 10.00f)) * 0.005f)), (int)0, (int)(sizeX - 1));
+						}
 						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.005f)), (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;

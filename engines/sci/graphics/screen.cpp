@@ -278,6 +278,8 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 			_displayedScreenG = (byte *)calloc(_displayPixels, 1);
 			_displayedScreenB = (byte *)calloc(_displayPixels, 1);
 			_rgbScreen = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+			_rgbScreen_LEye = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+			_rgbScreen_REye = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
 			_palette = new byte[3 * 256];
 
 			if (_paletteModsEnabled)
@@ -291,6 +293,8 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 			_displayedScreenB = 0;
 			_palette = 0;
 			_rgbScreen = 0;
+			_rgbScreen_LEye = 0;
+			_rgbScreen_REye = 0;
 			_paletteMapScreen = 0;
 		}
 		_backupScreen = 0;
@@ -325,6 +329,8 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 			_displayedScreenG = (byte *)calloc(_displayPixels, 1);
 			_displayedScreenB = (byte *)calloc(_displayPixels, 1);
 			_rgbScreen = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+			_rgbScreen_LEye = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
+			_rgbScreen_REye = (byte *)calloc(_format.bytesPerPixel * _displayPixels, 1);
 			_palette = new byte[3 * 256];
 
 			if (_paletteModsEnabled)
@@ -338,6 +344,8 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 			_displayedScreenB = 0;
 			_palette = 0;
 			_rgbScreen = 0;
+			_rgbScreen_LEye = 0;
+			_rgbScreen_REye = 0;
 			_paletteMapScreen = 0;
 		}
 		_backupScreen = 0;
@@ -378,6 +386,9 @@ GfxScreen::~GfxScreen() {
 	free(_displayedScreenG);
 	free(_displayedScreenB);
 	free(_rgbScreen);
+	free(_rgbScreen_LEye);
+	free(_rgbScreen_REye);
+
 	delete[] _palette;
 	delete[] _backupScreen;
 }
@@ -400,8 +411,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 				const byte *inB = _displayedScreenB + y * _displayWidth + rect.left;
 				const byte *inA = _displayScreenA + y * _displayWidth + rect.left;
 
-				byte *out = _rgbScreen + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
-
+				byte *out = _rgbScreen_LEye + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
+			    if (g_sci->stereoRightEye) {
+				    out = _rgbScreen_REye + (y * _displayWidth + rect.left) * _format.bytesPerPixel;
+				}
 				// TODO: Reduce code duplication here
 
 				if (_format.bytesPerPixel == 2) {
@@ -609,7 +622,8 @@ void GfxScreen::displayRectRGB(const Common::Rect &rect, int x, int y) {
 	targetRect.top = y;
 	targetRect.setHeight(rect.height());
 
-	// 1. Update _displayedScreen
+	
+		// 1. Update _displayedScreen
 	for (int i = 0; i < rect.height(); ++i) {
 		int offset = (rect.top + i) * _displayWidth + rect.left;
 		int targetOffset = (targetRect.top + i) * _displayWidth + targetRect.left;
@@ -617,14 +631,18 @@ void GfxScreen::displayRectRGB(const Common::Rect &rect, int x, int y) {
 		memcpy(_displayedScreenR + targetOffset, _activeScreenR + offset, rect.width());
 		memcpy(_displayedScreenG + targetOffset, _activeScreenG + offset, rect.width());
 		memcpy(_displayedScreenB + targetOffset, _activeScreenB + offset, rect.width());
-
 	}
 
 	// 2. Convert to RGB
 	convertToRGB(targetRect);
 
 	// 3. Copy to screen
-	g_system->copyRectToScreen(_rgbScreen + ((targetRect.top * _displayWidth) + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
+	if (!g_sci->stereoRightEye) {
+		g_system->copyRectToScreen(_rgbScreen_LEye + ((targetRect.top * _displayWidth) + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
+	} else {
+		g_system->copyRectToScreen(_rgbScreen_REye + ((targetRect.top * _displayWidth) + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
+
+	}
 }
 
 void GfxScreen::displayRect(const Common::Rect &rect, int x, int y) {
@@ -674,6 +692,8 @@ void GfxScreen::clearForRestoreGame() {
 		memset(_displayedScreenG, 0, _displayPixels);
 		memset(_displayedScreenB, 0, _displayPixels);
 		memset(_rgbScreen, 0, _format.bytesPerPixel*_displayPixels);
+		memset(_rgbScreen_LEye, 0, _format.bytesPerPixel * _displayPixels);
+		memset(_rgbScreen_REye, 0, _format.bytesPerPixel * _displayPixels);
 		if (_paletteMapScreen)
 			memset(_paletteMapScreen, 0, _displayPixels);
 	}
@@ -697,7 +717,11 @@ void GfxScreen::copyVideoFrameToScreen(const byte *buffer, int pitch, const Comm
 			memcpy(_displayedScreen + targetOffset, buffer + offset, rect.width());
 		}
 		convertToRGB(rect);
-		g_system->copyRectToScreen(_rgbScreen + (rect.top * _displayWidth + rect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, rect.left, rect.top, rect.width(), rect.height());
+		if (!g_sci->stereoRightEye) {
+			g_system->copyRectToScreen(_rgbScreen_LEye + (rect.top * _displayWidth + rect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, rect.left, rect.top, rect.width(), rect.height());
+		} else {
+			g_system->copyRectToScreen(_rgbScreen_REye + (rect.top * _displayWidth + rect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, rect.left, rect.top, rect.width(), rect.height());
+		}
 	}
 }
 
@@ -1525,7 +1549,11 @@ void GfxScreen::setPalette(const byte *buffer, uint start, uint num, bool update
 			// directly paint from _displayedScreen, not from _activeScreen
 			Common::Rect r(0, 0, _displayWidth, _displayHeight);
 			convertToRGB(r);
-			g_system->copyRectToScreen(_rgbScreen, _displayWidth * _format.bytesPerPixel, 0, 0, _displayWidth, _displayHeight);
+			if (!g_sci->stereoRightEye) {
+				g_system->copyRectToScreen(_rgbScreen_LEye, _displayWidth * _format.bytesPerPixel, 0, 0, _displayWidth, _displayHeight);
+			} else {
+				g_system->copyRectToScreen(_rgbScreen_REye, _displayWidth * _format.bytesPerPixel, 0, 0, _displayWidth, _displayHeight);
+			}
 		}
 		// CHECKME: Inside or outside the if (update)?
 		// (The !update case only happens inside transitions.)
@@ -1542,7 +1570,12 @@ void GfxScreen::bakCreateBackup() {
 		memcpy(_backupScreen, screen->getPixels(), _displayPixels);
 		g_system->unlockScreen();
 	} else {
-		memcpy(_backupScreen, _rgbScreen, _format.bytesPerPixel * _displayPixels);
+		if (!g_sci->stereoRightEye) {
+			memcpy(_backupScreen, _rgbScreen_LEye, _format.bytesPerPixel * _displayPixels);
+		} else {
+			memcpy(_backupScreen, _rgbScreen_REye, _format.bytesPerPixel * _displayPixels);
+		}
+			
 	}
 }
 

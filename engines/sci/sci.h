@@ -223,6 +223,8 @@ public:
 	bool checkSelectorBreakpoint(BreakpointType breakpointType, reg_t send_obj, int selector);
 	bool checkAddressBreakpoint(const reg_t &address);
 
+	bool stereoscopic = true;
+	bool stereoRightEye = false;
 	int _enhancementMultiplier;
 	int _enhancementMultiplierView;
 	const Graphics::Surface *_theoraSurface;

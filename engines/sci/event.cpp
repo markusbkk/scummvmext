@@ -459,25 +459,24 @@ void EventManager::updateScreen() {
 			}
 		}
 		if (g_system->getMillis() - s->_screenUpdateTime >= g_sci->_theoraDecoderCutscenes->getTimeToNextFrame()) {
-			
-			s->_screenUpdateTime = g_system->getMillis();
-			if (g_sci->_theoraDecoderCutscenes->getCurFrame() == -1) {
-				g_sci->_theoraDecoderCutscenes->decodeNextFrame();
-			} else {
-				const Graphics::Surface *srf = g_sci->_theoraDecoderCutscenes->decodeNextFrame();
-				if (srf != nullptr) {
-					g_system->copyRectToScreen(srf->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
-					
+			if (g_sci->_gfxScreen->_picNotValid == 0) {
 
+				s->_screenUpdateTime = g_system->getMillis();
+				if (g_sci->_theoraDecoderCutscenes->getCurFrame() == -1) {
+					g_sci->_theoraDecoderCutscenes->decodeNextFrame();
 				} else {
-					playingVideoCutscenes = false;
-					g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
-					g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
-					g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+					const Graphics::Surface *srf = g_sci->_theoraDecoderCutscenes->decodeNextFrame();
+					if (srf != nullptr) {
+						g_system->copyRectToScreen(srf->getPixels(), g_sci->_theoraDecoderCutscenes->getWidth() * 4, 0, 0, g_sci->_theoraDecoderCutscenes->getWidth(), g_sci->_theoraDecoderCutscenes->getHeight());
+
+					} else {
+						playingVideoCutscenes = false;
+						g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
+						g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
+						g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
+					}
 				}
 			}
-			
-			
 			// Throttle the checking of shouldQuit() to 60fps as well, since
 			// Engine::shouldQuit() invokes 2 virtual functions
 			// (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
@@ -492,8 +491,28 @@ void EventManager::updateScreen() {
 	 } else {
 		 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
 			 s->_screenUpdateTime = g_system->getMillis();
-
+			 
+			 for (int y = 0; y < g_sci->_gfxScreen->_displayHeight; y++) {
+				 byte *inL = g_sci->_gfxScreen->_rgbScreen_LEye + (y * g_sci->_gfxScreen->_displayWidth) * g_sci->_gfxScreen->_format.bytesPerPixel;
+				 byte *inR = g_sci->_gfxScreen->_rgbScreen_REye + (y * g_sci->_gfxScreen->_displayWidth) * g_sci->_gfxScreen->_format.bytesPerPixel;
+				 byte *out = g_sci->_gfxScreen->_rgbScreen + (y * g_sci->_gfxScreen->_displayWidth) * g_sci->_gfxScreen->_format.bytesPerPixel;
+				 for (int x = 0; x < g_sci->_gfxScreen->_displayWidth / 2; x++) {
+					 WRITE_UINT32(out, READ_UINT32(inL));
+					 inL += 8;
+					 out += 4;
+				 }
+				 for (int x = g_sci->_gfxScreen->_displayWidth / 2; x < g_sci->_gfxScreen->_displayWidth; x++) {
+					WRITE_UINT32(out, READ_UINT32(inR));
+					inR += 8;
+					out += 4;
+				 }
+				 
+				 
+			 }
+			g_system->copyRectToScreen(g_sci->_gfxScreen->_rgbScreen, g_sci->_gfxScreen->_displayWidth * 4, 0, 0, g_sci->_gfxScreen->_displayWidth, g_sci->_gfxScreen->_displayHeight);
+			 
 			 g_system->updateScreen();
+			 g_sci->stereoRightEye = !g_sci->stereoRightEye;
 			 // Throttle the checking of shouldQuit() to 60fps as well, since
 			 // Engine::shouldQuit() invokes 2 virtual functions
 			 // (EventManager::shouldQuit() and EventManager::shouldReturnToLauncher()),
