@@ -1477,37 +1477,76 @@ struct UpScaledAdjust {
 };
 
 void GfxScreen::adjustToUpscaledCoordinates(int16 &y, int16 &x) {
-	x = _upscaledWidthMapping[x];
+	if (!g_sci->stereoscopic) {
+		x = _upscaledWidthMapping[x];
+	} else {
+		x = _upscaledWidthMapping[x] / 2;
+	}
 	y = _upscaledHeightMapping[y];
 }
 
 void GfxScreen::adjustBackUpscaledCoordinates(int16 &y, int16 &x) {
-	switch (_upscaledHires) {
-	case GFX_SCREEN_UPSCALED_480x300:
-		x = (x * 4) / 6;
-		y = (y * 4) / 6;
-		break;
-	case GFX_SCREEN_UPSCALED_640x400:
-		x /= 2;
-		y /= 2;
-		x /= g_sci->_enhancementMultiplier;
-		y /= g_sci->_enhancementMultiplier;
-		break;
-	case GFX_SCREEN_UPSCALED_640x440:
-		x /= 2;
-		y = (y * 5) / 11;
-		break;
-	case GFX_SCREEN_UPSCALED_640x480:
-		x /= 2;
-		y = (y * 5) / 12;
-		break;
-	case GFX_SCREEN_UPSCALED_320x200_X_EGA:
-	case GFX_SCREEN_UPSCALED_320x200_X_VGA:
-		x /= g_sci->_enhancementMultiplier;
-		y /= g_sci->_enhancementMultiplier;
-		break;
-	default:
-		break;
+	if (!g_sci->stereoscopic) {
+		switch (_upscaledHires) {
+		case GFX_SCREEN_UPSCALED_480x300:
+			x = (x * 4) / 6;
+			y = (y * 4) / 6;
+			break;
+		case GFX_SCREEN_UPSCALED_640x400:
+			x /= 2;
+			y /= 2;
+			x /= g_sci->_enhancementMultiplier;
+			y /= g_sci->_enhancementMultiplier;
+			break;
+		case GFX_SCREEN_UPSCALED_640x440:
+			x /= 2;
+			y = (y * 5) / 11;
+			break;
+		case GFX_SCREEN_UPSCALED_640x480:
+			x /= 2;
+			y = (y * 5) / 12;
+			break;
+		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+		case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+			x /= g_sci->_enhancementMultiplier;
+			y /= g_sci->_enhancementMultiplier;
+			break;
+		default:
+			break;
+		}
+	} else {
+		switch (_upscaledHires) {
+		case GFX_SCREEN_UPSCALED_480x300:
+			x = (x * 4) / 6;
+			y = (y * 4) / 6;
+			x *= 2;
+			break;
+		case GFX_SCREEN_UPSCALED_640x400:
+			x /= 2;
+			y /= 2;
+			x /= g_sci->_enhancementMultiplier;
+			y /= g_sci->_enhancementMultiplier;
+			x *= 2;
+			break;
+		case GFX_SCREEN_UPSCALED_640x440:
+			x /= 2;
+			y = (y * 5) / 11;
+			x *= 2;
+			break;
+		case GFX_SCREEN_UPSCALED_640x480:
+			x /= 2;
+			y = (y * 5) / 12;
+			x *= 2;
+			break;
+		case GFX_SCREEN_UPSCALED_320x200_X_EGA:
+		case GFX_SCREEN_UPSCALED_320x200_X_VGA:
+			x /= g_sci->_enhancementMultiplier;
+			y /= g_sci->_enhancementMultiplier;
+			x *= 2;
+			break;
+		default:
+			break;
+		}
 	}
 }
 

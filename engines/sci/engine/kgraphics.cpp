@@ -1248,7 +1248,11 @@ reg_t kAnimate(EngineState *s, int argc, reg_t *argv) {
 	bool cycle = (argc > 1) ? ((argv[1].toUint16()) ? true : false) : false;
 	
 	g_sci->_gfxAnimate->kernelAnimate(castListReference, cycle, argc, argv);
-
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		g_sci->_gfxAnimate->kernelAnimate(castListReference, cycle, argc, argv);
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+	}
 	// WORKAROUND: At the end of Ecoquest 1, during the credits, the game
 	// doesn't call kGetEvent(), so no events are processed (e.g. window
 	// focusing, window moving etc). We poll events for that scene, to

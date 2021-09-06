@@ -792,7 +792,7 @@ public:
 						if (!g_sci->stereoRightEye) {
 							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.005f)), (int)0, (int)(sizeX - 1));
 						} else {
-							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth / 10.00f)) * 0.005f)), (int)0, (int)(sizeX - 1));
+							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth)) * 0.005f)), (int)0, (int)(sizeX - 1));
 						}
 						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.005f)), (int)0, (int)(sizeY - 1));
 						if (newX < minX) {

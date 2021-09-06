@@ -224,6 +224,7 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	bool stereoscopic = true;
+	int stereoSeparation = 30; // unused.
 	bool stereoRightEye = false;
 	int _enhancementMultiplier;
 	int _enhancementMultiplierView;
