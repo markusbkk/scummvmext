@@ -616,7 +616,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								if (enhPrio) {
 									g_sci->enhanced_PRIORITY = true;
 									preloaded_p = true;
-									debug("%s_p.png WAS ALREADY CACHED :)", fn);
+									debug("%s_p.png WAS ALREADY CACHED :)", fn.c_str());
 
 								}
 							}

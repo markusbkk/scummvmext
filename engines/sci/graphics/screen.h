@@ -1591,6 +1591,7 @@ public:
 							_displayScreenR[displayOffset] = r;
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
+							
 						} else {
 							if (!g_sci->enhanced_BG) {
 
@@ -1598,6 +1599,14 @@ public:
 								_displayScreenR_BG[displayOffset] = r;
 								_displayScreenG_BG[displayOffset] = g;
 								_displayScreenB_BG[displayOffset] = b;
+
+								if (g_sci->depth_rendering)
+									if (g_sci->enhanced_DEPTH) {
+										_displayScreen_BGtmp[displayOffset] = color;
+										_displayScreenR_BGtmp[displayOffset] = r;
+										_displayScreenR_BGtmp[displayOffset] = g;
+										_displayScreenR_BGtmp[displayOffset] = b;
+									}
 							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
@@ -1625,10 +1634,20 @@ public:
 							_displayScreenG[displayOffset] = g;
 							_displayScreenB[displayOffset] = b;
 						} else {
-							_displayScreen_BG[displayOffset] = color;
-							_displayScreenR_BG[displayOffset] = r;
-							_displayScreenG_BG[displayOffset] = g;
-							_displayScreenB_BG[displayOffset] = b;
+							if (!g_sci->enhanced_BG) {
+								_displayScreen_BG[displayOffset] = color;
+								_displayScreenR_BG[displayOffset] = r;
+								_displayScreenG_BG[displayOffset] = g;
+								_displayScreenB_BG[displayOffset] = b;
+
+								if (g_sci->depth_rendering)
+									if (g_sci->enhanced_DEPTH) {
+										_displayScreen_BGtmp[displayOffset] = color;
+										_displayScreenR_BGtmp[displayOffset] = r;
+										_displayScreenR_BGtmp[displayOffset] = g;
+										_displayScreenR_BGtmp[displayOffset] = b;
+									}
+							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
 							_enhancedMatte[displayOffset] = 0;
@@ -1661,6 +1680,14 @@ public:
 								_displayScreenR_BG[displayOffset] = r;
 								_displayScreenG_BG[displayOffset] = g;
 								_displayScreenB_BG[displayOffset] = b;
+
+								if (g_sci->depth_rendering)
+									if (g_sci->enhanced_DEPTH) {
+										_displayScreen_BGtmp[displayOffset] = color;
+										_displayScreenR_BGtmp[displayOffset] = r;
+										_displayScreenR_BGtmp[displayOffset] = g;
+										_displayScreenR_BGtmp[displayOffset] = b;
+									}
 							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
@@ -1734,6 +1761,14 @@ public:
 								_displayScreenR_BG[displayOffset] = r;
 								_displayScreenG_BG[displayOffset] = g;
 								_displayScreenB_BG[displayOffset] = b;
+
+								if (g_sci->depth_rendering)
+									if (g_sci->enhanced_DEPTH) {
+										_displayScreen_BGtmp[displayOffset] = color;
+										_displayScreenR_BGtmp[displayOffset] = r;
+										_displayScreenR_BGtmp[displayOffset] = g;
+										_displayScreenR_BGtmp[displayOffset] = b;
+									}
 							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
@@ -1768,6 +1803,14 @@ public:
 								_displayScreenR_BG[displayOffset] = r;
 								_displayScreenG_BG[displayOffset] = g;
 								_displayScreenB_BG[displayOffset] = b;
+
+								if (g_sci->depth_rendering)
+									if (g_sci->enhanced_DEPTH) {
+										_displayScreen_BGtmp[displayOffset] = color;
+										_displayScreenR_BGtmp[displayOffset] = r;
+										_displayScreenR_BGtmp[displayOffset] = g;
+										_displayScreenR_BGtmp[displayOffset] = b;
+									}
 							}
 						}	
 						if (g_sci->backgroundIsVideo == false) {
@@ -1801,6 +1844,14 @@ public:
 								_displayScreenR_BG[displayOffset] = r;
 								_displayScreenG_BG[displayOffset] = g;
 								_displayScreenB_BG[displayOffset] = b;
+
+								if (g_sci->depth_rendering)
+									if (g_sci->enhanced_DEPTH) {
+										_displayScreen_BGtmp[displayOffset] = color;
+										_displayScreenR_BGtmp[displayOffset] = r;
+										_displayScreenR_BGtmp[displayOffset] = g;
+										_displayScreenR_BGtmp[displayOffset] = b;
+									}
 							}
 						}
 						if (g_sci->backgroundIsVideo == false) {
@@ -1840,6 +1891,11 @@ public:
 			for (int16 curY = startY; curY < endY; curY++) {
 				_priorityScreenX[priorityOffset] = priority;
 				_priorityScreenX[priorityOffset + 1] = priority;
+				if (g_sci->depth_rendering)
+					if (g_sci->enhanced_DEPTH) {
+						_priorityScreenX_BGtmp[priorityOffset] = priority;
+						_priorityScreenX_BGtmp[priorityOffset + 1] = priority;
+					}
 				priorityOffset += _displayWidth;
 			}
 			break;
@@ -1852,6 +1908,11 @@ public:
 			for (int16 curY = startY; curY < endY; curY++) {
 				_priorityScreenX[priorityOffset] = priority;
 				_priorityScreenX[priorityOffset + 1] = priority;
+				if (g_sci->depth_rendering)
+					if (g_sci->enhanced_DEPTH) {
+						_priorityScreenX_BGtmp[priorityOffset] = priority;
+						_priorityScreenX_BGtmp[priorityOffset + 1] = priority;
+					}
 				priorityOffset += _displayWidth;
 			}
 			break;
@@ -1866,6 +1927,10 @@ public:
 							if (priorityOffset < _displayWidth * _displayHeight - 1) {
 								if (_displayScreenA[priorityOffset] != 0) {
 									_priorityScreenX[priorityOffset] = priority;
+									if (g_sci->depth_rendering)
+										if (g_sci->enhanced_DEPTH) {
+											_priorityScreenX_BGtmp[priorityOffset] = priority;
+										}
 								}
 							}
 						}
@@ -1883,6 +1948,10 @@ public:
 					priorityOffset = (((y * g_sci->_enhancementMultiplier) + yy) * _displayWidth) + (x * g_sci->_enhancementMultiplier) + xx;
 						_priorityScreenX[priorityOffset] = priority;
 					
+						if (g_sci->depth_rendering)
+							if (g_sci->enhanced_DEPTH) {
+							    _priorityScreenX_BGtmp[priorityOffset] = priority;
+							}					
 				}
 			}
 			break;

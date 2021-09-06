@@ -439,7 +439,7 @@ void SciEngine::CreateDIRListing() {
 
 		//if (is_directory)
 		//continue;
-		if (strstr(file_name.c_str(), ".png") && (strstr(f.c_str(), "pic") || strstr(f.c_str(), "view")) && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
+		if (strstr(file_name.c_str(), ".png") && (strstr(file_name.c_str(), "pic") || strstr(file_name.c_str(), "view")) && !strstr(file_name.c_str(), "_256") && !strstr(file_name.c_str(), "_256RP")) {
 			g_sci->totalFilesToCache++;
 		}
 		std::string path = file_name;
