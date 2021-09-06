@@ -273,7 +273,29 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			false
 		}
 	},
-	
+
+    // Stereoscopic Rendering
+    {
+        GAMEOPTION_STEREOSCOPIC,
+        {
+		 _s("Stereoscopic rendering"),
+         _s("Render Left/Right 'Side-by-Side'format"),
+         "stereoscopic_rendering",
+         false
+		}
+	},
+
+	// Depth Perspective (using _d.png's)
+    {
+        GAMEOPTION_DEPTH,
+        {
+		 _s("Use depth maps"),
+         _s("Use greyscale depth maps to create camera perspectice"),
+         "depth_rendering",
+         false
+		}
+	},
+
 	// SCI16 games: use custom per-resource palettes to improve visuals
 	{
 		GAMEOPTION_PALETTE_MODS,

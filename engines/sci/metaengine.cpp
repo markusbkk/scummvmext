@@ -82,6 +82,7 @@ static const GameIdStrToEnum s_gameIdStrToEnum[] = {
 	{ "islandbrain",     GID_ISLANDBRAIN,      false },
 	{ "jones",           GID_JONES,            false },
 	{ "kq1sci",          GID_KQ1,              false },
+    { "kq2sci_alpha",	 GID_KQ2,			   false },
 	{ "kq4sci",          GID_KQ4,              false },
 	{ "kq5",             GID_KQ5,              false },
 	{ "kq6",             GID_KQ6,              false },

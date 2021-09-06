@@ -435,7 +435,9 @@ public:
 				if (_format.bytesPerPixel == 2) {
 					_displayScreenA[displayOffset] = 0;
 					_displayScreen_BG[displayOffset] = c;
-					if (g_sci->enhanced_DEPTH)
+
+					if (g_sci->depth_rendering)
+						if (g_sci->enhanced_DEPTH)
 					_displayScreen_BGtmp[displayOffset] = c;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
@@ -448,7 +450,9 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 					_displayScreenA[displayOffset] = 0;
 					_displayScreen_BG[displayOffset] = c;
-					if (g_sci->enhanced_DEPTH)
+
+					if (g_sci->depth_rendering)
+						if (g_sci->enhanced_DEPTH)
 					_displayScreen_BGtmp[displayOffset] = c;
 					if (g_sci->backgroundIsVideo == false) {
 						_enhancedMatte[displayOffset] = 0;
@@ -558,6 +562,8 @@ public:
 						_enhancedMatte[displayOffset] = 255;
 					
 				}
+
+				if (g_sci->depth_rendering)
 				if (g_sci->enhanced_DEPTH) {
 						_displayScreenR_BGtmp[displayOffset] = _displayScreenR_BG[displayOffset];
 				}
@@ -591,6 +597,8 @@ public:
 					if (!bg)
 						_enhancedMatte[displayOffset] = 255;
 				}
+
+				if (g_sci->depth_rendering)
 				if (g_sci->enhanced_DEPTH) {
 					_displayScreenR_BGtmp[displayOffset] = _displayScreenR_BG[displayOffset];
 				}
@@ -622,6 +630,7 @@ public:
 					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 				}
 
+				if (g_sci->depth_rendering)
 				if (g_sci->enhanced_DEPTH) {
 					_displayScreenG_BGtmp[displayOffset] = _displayScreenG_BG[displayOffset];
 				}
@@ -641,6 +650,7 @@ public:
 					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 				}
 
+				if (g_sci->depth_rendering)
 				if (g_sci->enhanced_DEPTH) {
 					_displayScreenG_BGtmp[displayOffset] = _displayScreenG_BG[displayOffset];
 				}
@@ -672,6 +682,7 @@ public:
 					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
 
+				if (g_sci->depth_rendering)
 				if (g_sci->enhanced_DEPTH) {
 					_displayScreenB_BGtmp[displayOffset] = _displayScreenB_BG[displayOffset];
 				}
@@ -691,6 +702,7 @@ public:
 					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
 
+				if (g_sci->depth_rendering)
 				if (g_sci->enhanced_DEPTH) {
 					_displayScreenB_BGtmp[displayOffset] = _displayScreenB_BG[displayOffset];
 				}
@@ -1319,6 +1331,8 @@ public:
 			case GFX_SCREEN_UPSCALED_640x400: {
 				if (bg) {
 					_priorityScreenX_BG[((y) * (_width * 2)) + (x)] = priority;
+
+					if (g_sci->depth_rendering)
 					if (g_sci->enhanced_DEPTH) {
 						_priorityScreenX_BGtmp[((y) * (_width * 2)) + (x)] = priority;
 					}
@@ -1334,7 +1348,9 @@ public:
 			case GFX_SCREEN_UPSCALED_320x200_X_VGA: {
 				if (bg) {
 					_priorityScreenX_BG[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
-					if (g_sci->enhanced_DEPTH) {
+
+					if (g_sci->depth_rendering)
+						if (g_sci->enhanced_DEPTH) {
 						_priorityScreenX_BGtmp[(y * (_width * g_sci->_enhancementMultiplier)) + x] = priority;
 					}
 				} else {

@@ -492,7 +492,12 @@ Common::Error SciEngine::run() {
 		// for any game that does not have this option.
 		_forceHiresGraphics = ConfMan.getBool("enable_high_resolution_graphics");
 	}
-
+	if (Common::checkGameGUIOption(GAMEOPTION_STEREOSCOPIC, ConfMan.get("guioptions"))) {
+		stereoscopic = ConfMan.getBool("stereoscopic_rendering");
+	}
+	if (Common::checkGameGUIOption(GAMEOPTION_DEPTH, ConfMan.get("guioptions"))) {
+		depth_rendering = ConfMan.getBool("depth_rendering");
+	}
 	if (getSciVersion() < SCI_VERSION_2) {
 		// Initialize the game screen
 		_gfxScreen = new GfxScreen(_resMan);

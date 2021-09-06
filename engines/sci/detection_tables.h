@@ -22,15 +22,15 @@
 
 namespace Sci {
 
-#define GUIO_STD16 GUIO4(GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_HIRES GUIO5(GUIO_NOASPECT, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_UNDITHER GUIO5(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_PALETTEMODS GUIO6(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_PALETTE_MODS)
-#define GUIO_STD16_SPEECH GUIO4(GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_SPEECH_GM GUIO5(GUIO_MIDIGM, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_MAC GUIO3(GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_MAC_UNDITHER GUIO4(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING)
-#define GUIO_STD16_MAC_PALETTEMODS GUIO5(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_PALETTE_MODS)
+#define GUIO_STD16 GUIO6(GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_HIRES GUIO7(GUIO_NOASPECT, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_UNDITHER GUIO7(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_PALETTEMODS GUIO8(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_PALETTE_MODS, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_SPEECH GUIO6(GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_SPEECH_GM GUIO7(GUIO_MIDIGM, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_MAC GUIO5(GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_MAC_UNDITHER GUIO6(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
+#define GUIO_STD16_MAC_PALETTEMODS GUIO7(GAMEOPTION_EGA_UNDITHER, GAMEOPTION_PREFER_DIGITAL_SFX, GAMEOPTION_MIDI_MODE, GAMEOPTION_RGB_RENDERING, GAMEOPTION_PALETTE_MODS, GAMEOPTION_STEREOSCOPIC, GAMEOPTION_DEPTH)
 
 #define FANMADE_L(name, resMapMd5, resMapSize, resMd5, resSize, resVol, lang) \
 	{"sci-fanmade", name, { \
@@ -800,15 +800,23 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_SPEECH	},
 
 #define GUIO_GK1_FLOPPY GUIO2(GUIO_NOSPEECH, \
-                              GAMEOPTION_ORIGINAL_SAVELOAD)
+                              GAMEOPTION_ORIGINAL_SAVELOAD,			\
+							  GAMEOPTION_STEREOSCOPIC,			\
+						      GAMEOPTION_DEPTH)
 #define GUIO_GK1_CD_DOS GUIO4(GUIO_LINKSPEECHTOSFX, \
                               GAMEOPTION_ORIGINAL_SAVELOAD, \
                               GAMEOPTION_HIGH_RESOLUTION_GRAPHICS, \
-                              GAMEOPTION_HQ_VIDEO)
+                              GAMEOPTION_HQ_VIDEO,                 \
+	                          GAMEOPTION_STEREOSCOPIC,             \
+	                          GAMEOPTION_DEPTH)
 #define GUIO_GK1_CD_WIN GUIO3(GUIO_LINKSPEECHTOSFX, \
                               GAMEOPTION_ORIGINAL_SAVELOAD, \
-                              GAMEOPTION_HQ_VIDEO)
-#define GUIO_GK1_MAC    GUIO1(GUIO_NOSPEECH)
+                              GAMEOPTION_HQ_VIDEO,          \
+	                          GAMEOPTION_STEREOSCOPIC,      \
+	                          GAMEOPTION_DEPTH)
+#define GUIO_GK1_MAC GUIO1(GUIO_NOSPEECH,           \
+	                       GAMEOPTION_STEREOSCOPIC, \
+	                       GAMEOPTION_DEPTH)
 
 	// Gabriel Knight - English DOS Floppy
 	// SCI interpreter version 2.000.000
@@ -930,13 +938,17 @@ static const struct ADGameDescription SciGameDescriptions[] = {
                             GUIO_NOMIDI, \
                             GUIO_NOLAUNCHLOAD, \
                             GUIO_NOASPECT, \
-                            GAMEOPTION_HQ_VIDEO)
+                            GAMEOPTION_HQ_VIDEO,     \
+	                        GAMEOPTION_STEREOSCOPIC, \
+	                        GAMEOPTION_DEPTH)
 #define GUIO_GK2      GUIO6(GUIO_LINKSPEECHTOSFX, \
                             GUIO_NOMIDI, \
                             GUIO_NOASPECT, \
                             GAMEOPTION_ORIGINAL_SAVELOAD, \
                             GAMEOPTION_ENABLE_BLACK_LINED_VIDEO, \
-                            GAMEOPTION_HQ_VIDEO)
+                            GAMEOPTION_HQ_VIDEO,                 \
+							GAMEOPTION_STEREOSCOPIC,             \
+							GAMEOPTION_DEPTH)
 #define GUIO_GK2_MAC  GUIO_GK2
 
 	// Gabriel Knight 2 - English Windows Non-Interactive Demo
@@ -1291,7 +1303,9 @@ static const struct ADGameDescription SciGameDescriptions[] = {
                           GUIO_NOLAUNCHLOAD, \
                           GUIO_LINKMUSICTOSFX, \
                           GUIO_LINKSPEECHTOSFX, \
-                          GUIO_NOASPECT)
+                          GUIO_NOASPECT,           \
+	                      GAMEOPTION_STEREOSCOPIC, \
+	                      GAMEOPTION_DEPTH)
 
 // versions with bridge or poker have save/load screens
 #define GUIO_HOYLE5_SAVELOAD GUIO6(GUIO_NOMIDI, \
@@ -1299,7 +1313,9 @@ static const struct ADGameDescription SciGameDescriptions[] = {
                                    GUIO_LINKMUSICTOSFX, \
                                    GUIO_LINKSPEECHTOSFX, \
                                    GUIO_NOASPECT, \
-                                   GAMEOPTION_ORIGINAL_SAVELOAD )
+                                   GAMEOPTION_ORIGINAL_SAVELOAD, \
+	                               GAMEOPTION_STEREOSCOPIC,      \
+	                               GAMEOPTION_DEPTH)
 
 	// Hoyle 5 (Hoyle Classic Games) - Windows demo
 	{"hoyle5", "Demo", {
@@ -1380,18 +1396,24 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 #define GUIO_JONES_FLOPPY GUIO4(GUIO_NOSPEECH,             \
 							GAMEOPTION_PREFER_DIGITAL_SFX, \
 		                    GAMEOPTION_MIDI_MODE,          \
-	                        GAMEOPTION_RGB_RENDERING)
+	                        GAMEOPTION_RGB_RENDERING,      \
+	                        GAMEOPTION_STEREOSCOPIC,       \
+	                        GAMEOPTION_DEPTH)
 
 #define GUIO_JONES_CD GUIO4(GAMEOPTION_JONES_CDAUDIO,      \
 							GAMEOPTION_PREFER_DIGITAL_SFX, \
 		                    GAMEOPTION_MIDI_MODE,          \
-	                        GAMEOPTION_RGB_RENDERING)
+	                        GAMEOPTION_RGB_RENDERING,      \
+	                        GAMEOPTION_STEREOSCOPIC,       \
+	                        GAMEOPTION_DEPTH)
 
 #define GUIO_JONES_CD_WINDOWS GUIO5(GUIO_MIDIGM,                   \
 									GAMEOPTION_JONES_CDAUDIO,      \
 									GAMEOPTION_PREFER_DIGITAL_SFX, \
 									GAMEOPTION_MIDI_MODE,          \
-									GAMEOPTION_RGB_RENDERING)
+									GAMEOPTION_RGB_RENDERING,      \
+	                                GAMEOPTION_STEREOSCOPIC,       \
+	                                GAMEOPTION_DEPTH)
 
 	// Jones in the Fast Lane EGA - English DOS
 	// SCI interpreter version 1.000.172 (not 100% sure FIXME)
@@ -1519,6 +1541,12 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.007", 0, "fed9e0072ffd511d248674e60dee2099", 330472},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16	},
+
+	// King's Quest 2 SCI Remake - English DOS (by Brandon Blume)
+	{"kq2sci_alpha", "SCI", {
+		{"kq2sci.ext", 0, "7fe9399a0bec84ca5727309778d27f07", 5790},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER},
 
 	// King's Quest 4 - English Amiga (from www.back2roots.org)
 	// Executable scanning reports "1.002.032"
@@ -1974,13 +2002,17 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 	                      GAMEOPTION_PREFER_DIGITAL_SFX,       \
 	                      GAMEOPTION_ORIGINAL_SAVELOAD,        \
 	                      GAMEOPTION_MIDI_MODE,                \
-	                      GAMEOPTION_RGB_RENDERING)
+	                      GAMEOPTION_RGB_RENDERING,            \
+	                      GAMEOPTION_STEREOSCOPIC,             \
+	                      GAMEOPTION_DEPTH)
 
 #define GUIO_KQ6_CD GUIO5(GAMEOPTION_HIGH_RESOLUTION_GRAPHICS, \
 						  GAMEOPTION_PREFER_DIGITAL_SFX,       \
 						  GAMEOPTION_ORIGINAL_SAVELOAD,        \
 						  GAMEOPTION_MIDI_MODE,                \
-						  GAMEOPTION_RGB_RENDERING)
+						  GAMEOPTION_RGB_RENDERING,            \
+	                      GAMEOPTION_STEREOSCOPIC,             \
+	                      GAMEOPTION_DEPTH)
 
 #define GUIO_KQ6_CD_WINDOWS GUIO7(GUIO_NOASPECT,                       \
 								  GAMEOPTION_KQ6_WINDOWS_CURSORS,      \
@@ -1988,7 +2020,9 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 						          GAMEOPTION_PREFER_DIGITAL_SFX,       \
 								  GAMEOPTION_ORIGINAL_SAVELOAD,        \
 								  GAMEOPTION_MIDI_MODE,                \
-								  GAMEOPTION_RGB_RENDERING)
+								  GAMEOPTION_RGB_RENDERING,            \
+	                              GAMEOPTION_STEREOSCOPIC,             \
+	                              GAMEOPTION_DEPTH)
 
 	// King's Quest 6 - English DOS Playable CD "Sneak Peaks" Demo (first island fully playable)
 	//  (supplied by KQ5 G5 in bug report #6824)
@@ -3101,9 +3135,13 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 #define GUIO_LSL6HIRES GUIO3(GUIO_NOASPECT, \
                              GUIO_LINKSPEECHTOSFX, \
-                             GAMEOPTION_ORIGINAL_SAVELOAD)
+                             GAMEOPTION_ORIGINAL_SAVELOAD, \
+	                         GAMEOPTION_STEREOSCOPIC,      \
+	                         GAMEOPTION_DEPTH)
 #define GUIO_LSL6HIRES_MAC GUIO2(GUIO_NOASPECT, \
-                                 GUIO_LINKSPEECHTOSFX)
+                                 GUIO_LINKSPEECHTOSFX,    \
+	                             GAMEOPTION_STEREOSCOPIC, \
+	                             GAMEOPTION_DEPTH)
 
 	// Larry 6 - English/German DOS CD - HIRES
 	// SCI interpreter version 2.100.002
@@ -3505,7 +3543,9 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 #define GUIO_MOTHERGOOSEHIRES GUIO4(GUIO_NOSUBTITLES, \
                                     GUIO_NOASPECT, \
                                     GUIO_LINKSPEECHTOSFX, \
-                                    GUIO_NOLAUNCHLOAD)
+                                    GUIO_NOLAUNCHLOAD,       \
+	                                GAMEOPTION_STEREOSCOPIC, \
+	                                GAMEOPTION_DEPTH)
 
 	// Mixed-Up Mother Goose Deluxe - EN/ES Windows CD (supplied by markcoolio in bug report #2723810)
 	// Executable scanning reports "2.100.002"
@@ -3548,7 +3588,9 @@ static const struct ADGameDescription SciGameDescriptions[] = {
                                        GUIO_NOLAUNCHLOAD, \
                                        GUIO_LINKSPEECHTOSFX, \
                                        GAMEOPTION_ENABLE_BLACK_LINED_VIDEO, \
-                                       GAMEOPTION_HQ_VIDEO)
+                                       GAMEOPTION_HQ_VIDEO,                 \
+	                                   GAMEOPTION_STEREOSCOPIC,             \
+	                                   GAMEOPTION_DEPTH)
 #define GUIO_PHANTASMAGORIA      GUIO_PHANTASMAGORIA_DEMO
 #define GUIO_PHANTASMAGORIA_MAC  GUIO_PHANTASMAGORIA_DEMO
 
@@ -5122,18 +5164,22 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_UNSTABLE, GUIO_STD16_PALETTEMODS	},
 
-#define GUIO_SQ4_CD GUIO5(GAMEOPTION_SQ4_SILVER_CURSORS,	\
+#define GUIO_SQ4_CD GUIO7(GAMEOPTION_SQ4_SILVER_CURSORS,	\
                           GAMEOPTION_PREFER_DIGITAL_SFX,	\
                           GAMEOPTION_ORIGINAL_SAVELOAD,		\
                           GAMEOPTION_MIDI_MODE,				\
-                          GAMEOPTION_RGB_RENDERING)
+                          GAMEOPTION_RGB_RENDERING,			\
+						  GAMEOPTION_STEREOSCOPIC,			\
+						  GAMEOPTION_DEPTH)
 
-#define GUIO_SQ4_CD_WINDOWS GUIO6(GUIO_MIDIGM,				\
+#define GUIO_SQ4_CD_WINDOWS GUIO8(GUIO_MIDIGM,				\
                           GAMEOPTION_SQ4_SILVER_CURSORS,	\
 	                      GAMEOPTION_PREFER_DIGITAL_SFX,	\
 	                      GAMEOPTION_ORIGINAL_SAVELOAD,		\
 	                      GAMEOPTION_MIDI_MODE,				\
-	                      GAMEOPTION_RGB_RENDERING)
+	                      GAMEOPTION_RGB_RENDERING,			\
+						  GAMEOPTION_STEREOSCOPIC,			\
+						  GAMEOPTION_DEPTH)
 
 	// Space Quest 4 - English Amiga
 	// Executable scanning reports "1.004.024"

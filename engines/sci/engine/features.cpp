@@ -810,7 +810,7 @@ bool GameFeatures::useEarlyGetLongestTextCalculations() const {
 	// SCI01: confirmed KQ1 and QFG1 Japanese,
 	// fixed in SQ3 and LSL3 multilingual PC
 	case SCI_VERSION_01:
-		return (g_sci->getGameId() == GID_KQ1 || g_sci->getGameId() == GID_QFG1);
+		return (g_sci->getGameId() == GID_KQ1 || g_sci->getGameId() == GID_KQ2 || g_sci->getGameId() == GID_QFG1);
 
 	// QFG2, confirmed 1.000 and 1.105 (first and last versions)
 	case SCI_VERSION_1_EGA_ONLY:

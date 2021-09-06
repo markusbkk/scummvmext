@@ -223,7 +223,8 @@ public:
 	bool checkSelectorBreakpoint(BreakpointType breakpointType, reg_t send_obj, int selector);
 	bool checkAddressBreakpoint(const reg_t &address);
 
-	bool stereoscopic = true;
+	bool stereoscopic = false;
+	bool depth_rendering = false;
 	int stereoSeparation = 30; // unused.
 	bool stereoRightEye = false;
 	int _enhancementMultiplier;
