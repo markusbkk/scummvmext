@@ -665,16 +665,17 @@ void GfxCursor::setPosition(Common::Point pos) {
 	// position only when showing the cursor.
 	if (!_isVisible)
 		return;
-
+	if (g_sci->stereoscopic)
+	if (pos.x > _screen->getScriptWidth() / 2) {
+		pos.x -= _screen->getScriptWidth() / 2;
+	}
 	if (!_upscaledHires) {
 		g_system->warpMouse(pos.x, pos.y);
 	} else {
 		_screen->adjustToUpscaledCoordinates(pos.y, pos.x);
 		g_system->warpMouse(pos.x, pos.y);
 	}
-	if (pos.x > _screen->getScriptWidth() / 2) {
-		pos.x -= _screen->getScriptWidth() / 2;
-	}
+	
 	// WORKAROUNDS for games with windows that are hidden when the mouse cursor
 	// is moved outside them - also check setPositionWorkarounds above.
 	//
@@ -721,8 +722,8 @@ Common::Point GfxCursor::getPosition() {
 			mousePos.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
 			mousePos.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
 		} else {
-			mousePos.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)] / 2;
-			mousePos.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
+			mousePos.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x / 2)];
+			mousePos.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x / 2)];
 		}
 	}
 	if (g_sci->stereoscopic) {
@@ -825,9 +826,6 @@ void GfxCursor::kernelResetMoveZone() {
 
 void GfxCursor::kernelSetMoveZone(Common::Rect zone) {
 	_moveZone = zone;
-	if (g_sci->stereoscopic) {
-		_moveZone.right = zone.right / 2;
-	}
 	_moveZoneActive = true;
 }
 
@@ -876,6 +874,7 @@ void GfxCursor::kernelSetZoomZone(byte multiplier, Common::Rect zone, GuiResourc
 
 void GfxCursor::kernelSetPos(Common::Point pos) {
 	_coordAdjuster->setCursorPos(pos);
+	if (g_sci->stereoscopic)
 	if (pos.x > _screen->getScriptWidth() / 2) {
 		pos.x -= _screen->getScriptWidth() / 2;
 	}

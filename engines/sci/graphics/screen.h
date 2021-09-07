@@ -239,7 +239,7 @@ public:
 	int frameId = 0;
 	bool goingRight = true;
 	bool rendering = true;
-	int nbLayers = 25;
+	int nbLayers = 10;
 	int greyColor, disp;
 	int f, di, dx, dy, newX, newY, dxx, maxDifX, shakeX, shakeY;
 	byte pixelColor, pixelColorR, pixelColorG, pixelColorB, pixelColorPrio;
@@ -840,19 +840,19 @@ public:
 					greyColor = (int)_displayScreenDEPTH_IN[dy * sizeX + dx];
 
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
-					if ((int)(greyColor / 25.5f) == di) { // 255 was too slow in 2021
+					if ((int)(greyColor / 25.5f) >= di) { // 255 was too slow in 2021
 						if (g_sci->stereoscopic) {
 							if (!g_sci->stereoRightEye) {
 								
-								newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.0025f)) + shakeX, (int)0, (int)(sizeX - 1));
+								newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.001f)) + shakeX, (int)0, (int)(sizeX - 1));
 							} else {
-								newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth * 2)) * 0.0025f)) + shakeX, (int)0, (int)(sizeX - 1));
+								newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth * 2)) * 0.001f)) + shakeX, (int)0, (int)(sizeX - 1));
 							}
 						} else {
 							
-							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.0025f)) + shakeX, (int)0, (int)(sizeX - 1));
+							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.0005f)) + shakeX, (int)0, (int)(sizeX - 1));
 						}
-						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.0025f)) + shakeY, (int)0, (int)(sizeY - 1));
+						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.0005f)) + shakeY, (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;
 						}
