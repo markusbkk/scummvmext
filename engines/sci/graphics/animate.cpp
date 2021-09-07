@@ -1343,7 +1343,13 @@ void GfxAnimate::restoreAndDelete(int argc, reg_t *argv) {
 
 		if (it->signal & kSignalDisposeMe) {
 			// Call .delete_ method of that object
-			invokeSelector(_s, it->object, SELECTOR(delete_), argc, argv, 0);
+			if (g_sci->stereoscopic) {
+				if (g_sci->stereoRightEye) {
+					invokeSelector(_s, it->object, SELECTOR(delete_), argc, argv, 0);
+				}
+			} else {
+				invokeSelector(_s, it->object, SELECTOR(delete_), argc, argv, 0);
+			}
 		}
 	}
 }
@@ -1734,9 +1740,17 @@ void GfxAnimate::kernelAnimate(reg_t listReference, bool cycle, int argc, reg_t 
 	}
 
 	Port *oldPort = _ports->setPort((Port *)_ports->_picWind);
-	disposeLastCast();
-
-	makeSortedList(list);
+	if (g_sci->stereoscopic) {
+		if (!g_sci->stereoRightEye) {
+			makeSortedList(list);			
+		} else {
+			disposeLastCast();
+		}
+	} else {
+		disposeLastCast();
+		makeSortedList(list);
+	}
+	
 	fill(old_picNotValid);
 
 	if (old_picNotValid) {

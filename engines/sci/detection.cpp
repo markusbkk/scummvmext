@@ -59,6 +59,7 @@ static const PlainGameDescriptor s_sciGameTitles[] = {
 	// === SCI01 games ========================================================
 	{"qfg2",            "Quest for Glory II: Trial by Fire"},
 	{"kq1sci",          "King's Quest I: Quest for the Crown"},	// Note: There was also an AGI version of this
+    // {"kq2sci",				"King's Quest II: Romancing the Throne"}, // Note: There was also an AGI version of this
 	// === SCI1 games =========================================================
 	{"castlebrain",     "Castle of Dr. Brain"},
 	{"christmas1990",   "Christmas Card 1990: The Seasoned Professional"},

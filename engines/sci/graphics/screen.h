@@ -22,7 +22,7 @@
 
 #ifndef SCI_GRAPHICS_SCREEN_H
 #define SCI_GRAPHICS_SCREEN_H
-
+#include <time.h>
 #include "sci/sci.h"
 #include "sci/graphics/helpers.h"
 #include "sci/graphics/view.h"
@@ -241,7 +241,7 @@ public:
 	bool rendering = true;
 	int nbLayers = 25;
 	int greyColor, disp;
-	int f, di, dx, dy, newX, newY, dxx, maxDifX;
+	int f, di, dx, dy, newX, newY, dxx, maxDifX, shakeX, shakeY;
 	byte pixelColor, pixelColorR, pixelColorG, pixelColorB, pixelColorPrio;
 
 private:
@@ -781,7 +781,47 @@ public:
 	int clip(int n, int lower, int upper) {
 		return std::max(lower, std::min(n, upper));
 	}
+	int random(int min, int max) //range : [min, max]
+	{
+		static bool first = true;
+		if (first) {
+			srand(time(NULL)); //seeding for the first time only!
+			first = false;
+		}
+		return min + rand() % ((max + 1) - min);
+	}
+
 	void renderFrameDepthFirst(int mouseX, int mouseY) {
+		if (g_sci->shakeyCam) {
+			if (g_sci->stereoscopic) {
+				if (!g_sci->stereoRightEye) {
+					if (random(0, 5) == 4) {
+						shakeX = random(0, 2) - 1;
+					}
+					if (random(0, 5) == 4) {
+						shakeY = random(0, 2) - 1;
+					}
+					if (random(0, 5) == 3) {
+						shakeX = random(0, 2) - 1;
+						shakeY = random(0, 2) - 1;
+					}
+				}
+			} else {
+				if (random(0, 5) == 4) {
+					shakeX = random(0, 2) - 1;
+				}
+				if (random(0, 5) == 4) {
+					shakeY = random(0, 2) - 1;
+				}
+				if (random(0, 5) == 3) {
+					shakeX = random(0, 2) - 1;
+					shakeY = random(0, 2) - 1;
+				}
+			}
+		} else {
+			shakeX = 0;
+			shakeY = 0;
+		}
 		//debug("%u", mouseX);
 		dispWidth = _displayWidth / 2;
 		int sizeX = _displayWidth;
@@ -801,12 +841,18 @@ public:
 
 					//print("grey : " + (int)greyColor + " i : " + i +"\n");
 					if ((int)(greyColor / 25.5f) == di) { // 255 was too slow in 2021
-						if (!g_sci->stereoRightEye) {
-							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.005f)), (int)0, (int)(sizeX - 1));
+						if (g_sci->stereoscopic) {
+							if (!g_sci->stereoRightEye) {
+								
+								newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.0025f)) + shakeX, (int)0, (int)(sizeX - 1));
+							} else {
+								newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth * 2)) * 0.0025f)) + shakeX, (int)0, (int)(sizeX - 1));
+							}
 						} else {
-							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * ((mouseX + (_displayWidth)) * 0.005f)), (int)0, (int)(sizeX - 1));
+							
+							newX = clip((int)(dx + (greyColor / nbLayers - focusPoint) * (mouseX * 0.0025f)) + shakeX, (int)0, (int)(sizeX - 1));
 						}
-						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.005f)), (int)0, (int)(sizeY - 1));
+						newY = clip((int)(dy + (greyColor / nbLayers - focusPoint) * (mouseY * 0.0025f)) + shakeY, (int)0, (int)(sizeY - 1));
 						if (newX < minX) {
 							minX = newX;
 						}

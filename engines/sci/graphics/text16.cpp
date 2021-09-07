@@ -547,6 +547,13 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 			}
 			// CharStd
 			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+			if (g_sci->stereoscopic) {
+				g_sci->stereoRightEye = !g_sci->stereoRightEye;
+
+					_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+					g_sci->stereoRightEye = !g_sci->stereoRightEye;
+				
+			}
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}

@@ -227,6 +227,7 @@ public:
 	bool depth_rendering = false;
 	int stereoSeparation = 30; // unused.
 	bool stereoRightEye = false;
+	bool shakeyCam = false;
 	int _enhancementMultiplier;
 	int _enhancementMultiplierView;
 	const Graphics::Surface *_theoraSurface;

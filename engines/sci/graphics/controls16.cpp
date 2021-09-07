@@ -346,6 +346,13 @@ void GfxControls16::kernelDrawText(Common::Rect rect, reg_t obj, const char *tex
 		_paint16->eraseRect(rect);
 		rect.grow(-1);
 		_text16->Box(text, languageSplitter, false, rect, alignment, fontId);
+		if (g_sci->stereoscopic) {
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+			
+				_text16->Box(text, languageSplitter, false, rect, alignment, fontId);
+				g_sci->stereoRightEye = !g_sci->stereoRightEye;
+			
+		}
 		if (style & SCI_CONTROLS_STYLE_SELECTED) {
 			_paint16->frameRect(rect);
 		}

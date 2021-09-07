@@ -274,6 +274,13 @@ reg_t kGraphDrawLine(EngineState *s, int argc, reg_t *argv) {
 	int16 control = (argc > 6) ? argv[6].toSint16() : -1;
 
 	g_sci->_gfxPaint16->kernelGraphDrawLine(getGraphPoint(argv), getGraphPoint(argv + 2), color, priority, control);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		if (g_sci->stereoRightEye) {
+			g_sci->_gfxPaint16->kernelGraphDrawLine(getGraphPoint(argv), getGraphPoint(argv + 2), color, priority, control);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		}
+	}
 	return s->r_acc;
 }
 
@@ -286,18 +293,39 @@ reg_t kGraphSaveBox(EngineState *s, int argc, reg_t *argv) {
 reg_t kGraphRestoreBox(EngineState *s, int argc, reg_t *argv) {
 	// This may be called with a memoryhandle from SAVE_BOX or SAVE_UPSCALEDHIRES_BOX
 	g_sci->_gfxPaint16->kernelGraphRestoreBox(argv[0]);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		if (g_sci->stereoRightEye) {
+			g_sci->_gfxPaint16->kernelGraphRestoreBox(argv[0]);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		}
+	}
 	return s->r_acc;
 }
 
 reg_t kGraphFillBoxBackground(EngineState *s, int argc, reg_t *argv) {
 	Common::Rect rect = getGraphRect(argv);
 	g_sci->_gfxPaint16->kernelGraphFillBoxBackground(rect);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		if (g_sci->stereoRightEye) {
+			g_sci->_gfxPaint16->kernelGraphFillBoxBackground(rect);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		}
+	}
 	return s->r_acc;
 }
 
 reg_t kGraphFillBoxForeground(EngineState *s, int argc, reg_t *argv) {
 	Common::Rect rect = getGraphRect(argv);
 	g_sci->_gfxPaint16->kernelGraphFillBoxForeground(rect);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		if (g_sci->stereoRightEye) {
+			g_sci->_gfxPaint16->kernelGraphFillBoxForeground(rect);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		}
+	}
 	return s->r_acc;
 }
 
@@ -309,6 +337,13 @@ reg_t kGraphFillBoxAny(EngineState *s, int argc, reg_t *argv) {
 	int16 control = argv[7].toSint16(); // sierra did the same
 
 	g_sci->_gfxPaint16->kernelGraphFillBox(rect, colorMask, color, priority, control);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		
+			g_sci->_gfxPaint16->kernelGraphFillBox(rect, colorMask, color, priority, control);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		
+	}
 	return s->r_acc;
 }
 
@@ -318,6 +353,13 @@ reg_t kGraphUpdateBox(EngineState *s, int argc, reg_t *argv) {
 	// argc == 6 on upscaled hires
 	bool hiresMode = (argc > 5) ? true : false;
 	g_sci->_gfxPaint16->kernelGraphUpdateBox(rect, hiresMode);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		
+			g_sci->_gfxPaint16->kernelGraphUpdateBox(rect, hiresMode);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		
+	}
 	return s->r_acc;
 }
 
@@ -1082,8 +1124,14 @@ reg_t kDrawControl(EngineState *s, int argc, reg_t *argv) {
 		// For the SCI32 version of this, check kListAt().
 		s->_chosenQfGImportItem = readSelectorValue(s->_segMan, controlObject, SELECTOR(mark));
 	}
-
 	_k_GenericDrawControl(s, controlObject, false);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		if (g_sci->stereoRightEye) {
+			_k_GenericDrawControl(s, controlObject, false);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		}
+	}
 	return s->r_acc;
 }
 
@@ -1208,7 +1256,13 @@ reg_t kDrawCel(EngineState *s, int argc, reg_t *argv) {
 	}
 
 	g_sci->_gfxPaint16->kernelDrawCel(viewId, loopNo, celNo, 0, x, y, priority, paletteNo, scaleX, scaleY, hiresMode, upscaledHiresHandle);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
 
+			g_sci->_gfxPaint16->kernelDrawCel(viewId, loopNo, celNo, 0, x, y, priority, paletteNo, scaleX, scaleY, hiresMode, upscaledHiresHandle);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		
+	}
 	return s->r_acc;
 }
 
