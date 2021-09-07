@@ -979,6 +979,7 @@ reg_t GfxPaint16::kernelDisplay(const char *text, uint16 languageSplitter, int a
 	}
 
 	_text16->Box(text, languageSplitter, false, rect, alignment, -1);
+	
 	if (_screen->_picNotValid == 0 && bRedraw)
 		bitsShow(rect);
 	// restoring port and cursor pos

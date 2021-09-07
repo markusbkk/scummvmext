@@ -1094,7 +1094,9 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	Common::String sttmp = text;
 	if (sttmp.contains("Score") || sttmp.contains("Quest"))
 		statusText = text;
+
 	_paint16->fillRect(_ports->_menuBarRect, 1, colorBack);
+
 	_ports->penColor(colorPen);
 	if (!g_sci->isLanguageRTL()) {
 		_ports->moveTo(0, 1);
@@ -1107,8 +1109,8 @@ void GfxMenu::kernelDrawStatus(const char *text, int16 colorPen, int16 colorBack
 	
 	_text16->DrawStatus(statusText);
 
-
 	_paint16->bitsShow(_ports->_menuBarRect);
+
 	_ports->setPort(oldPort);
 	// Also draw the line under the status bar. Normally, this is never drawn,
 	// but we need it to be drawn because Dr. Brain 1 Mac draws over it when

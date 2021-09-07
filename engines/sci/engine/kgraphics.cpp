@@ -276,10 +276,10 @@ reg_t kGraphDrawLine(EngineState *s, int argc, reg_t *argv) {
 	g_sci->_gfxPaint16->kernelGraphDrawLine(getGraphPoint(argv), getGraphPoint(argv + 2), color, priority, control);
 	if (g_sci->stereoscopic) {
 		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		if (g_sci->stereoRightEye) {
+		
 			g_sci->_gfxPaint16->kernelGraphDrawLine(getGraphPoint(argv), getGraphPoint(argv + 2), color, priority, control);
 			g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		}
+		
 	}
 	return s->r_acc;
 }
@@ -1342,7 +1342,11 @@ reg_t kDisplay(EngineState *s, int argc, reg_t *argv) {
 
 	uint16 languageSplitter = 0;
 	Common::String splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter);
-
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		g_sci->_gfxPaint16->kernelDisplay(splitText.c_str(), languageSplitter, argc, argv);
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+	}
 	return g_sci->_gfxPaint16->kernelDisplay(splitText.c_str(), languageSplitter, argc, argv);
 }
 

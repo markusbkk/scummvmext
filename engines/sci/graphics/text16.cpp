@@ -547,13 +547,7 @@ void GfxText16::Draw(const char *text, int16 from, int16 len, GuiResourceId orgF
 			}
 			// CharStd
 			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
-			if (g_sci->stereoscopic) {
-				g_sci->stereoRightEye = !g_sci->stereoRightEye;
 
-					_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
-					g_sci->stereoRightEye = !g_sci->stereoRightEye;
-				
-			}
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}
@@ -567,6 +561,11 @@ void GfxText16::Show(const char *text, int16 from, int16 len, GuiResourceId orgF
 	rect.bottom = rect.top + _ports->getPointSize();
 	rect.left = _ports->_curPort->curLeft;
 	Draw(text, from, len, orgFontId, orgPenColor);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		Draw(text, from, len, orgFontId, orgPenColor);
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+	}
 	rect.right = _ports->_curPort->curLeft;
 	_paint16->bitsShow(rect);
 }
@@ -799,6 +798,11 @@ void GfxText16::DrawString(const Common::String &textOrig) {
 		text = Common::convertBiDiString(textOrig, g_sci->getLanguage());
 
 	Draw(text.c_str(), 0, text.size(), previousFontId, previousPenColor);
+	if (g_sci->stereoscopic) {
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		Draw(text.c_str(), 0, text.size(), previousFontId, previousPenColor);
+		g_sci->stereoRightEye = !g_sci->stereoRightEye;
+	}
 	SetFont(previousFontId);
 	_ports->penColor(previousPenColor);
 }
@@ -834,6 +838,12 @@ void GfxText16::DrawStatus(const Common::String &strOrig) {
 		default:
 			charWidth = _font->getCharWidth(curChar);
 			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+			if (g_sci->stereoscopic) {
+				g_sci->stereoRightEye = !g_sci->stereoRightEye;
+
+			_font->draw(curChar, _ports->_curPort->top + _ports->_curPort->curTop, _ports->_curPort->left + _ports->_curPort->curLeft, _ports->_curPort->penClr, _ports->_curPort->greyedOutput);
+				g_sci->stereoRightEye = !g_sci->stereoRightEye;
+			}
 			_ports->_curPort->curLeft += charWidth;
 		}
 	}
