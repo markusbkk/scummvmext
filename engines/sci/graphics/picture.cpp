@@ -1537,12 +1537,11 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	}
 	if (g_sci->scene_transition) {	
 		bgFileName = g_sci->prevPicName.c_str();
-		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
-				bgFileName += "-";
-				bgFileName += _resource->name().c_str();
-				if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye)
-					bgFileName += ".reye";
-		}
+		bgFileName += "-";
+		bgFileName += _resource->name().c_str();
+		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye)
+			bgFileName += ".reye";
+		
 	}
 	if (videoCutsceneEnd == bgFileName.c_str()) {
 		playingVideoCutscenes = false;
@@ -1625,7 +1624,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				//debug(nextAnim.c_str());
 
 				g_sci->backgroundIsVideo = false;
-				g_sci->enhanced_bg_frame = 1;
+				g_sci->enhanced_bg_frame = 0;
 				g_sci->play_enhanced_BG_anim = false;
 
 				fn = fnNoAnim;

@@ -671,25 +671,25 @@ reg_t kDrawPic(EngineState *s, int argc, reg_t *argv) {
 	}
 	if (argc >= 4)
 		EGApaletteNo = argv[3].toUint16();
-	if (!g_sci->stereoscopic) {
+	if (!g_sci->stereoscopic || g_sci->depth_rendering) {
 		g_sci->_gfxPaint16->kernelDrawPicture(pictureId, animationNr, animationBlackoutFlag, mirroredFlag, addToFlag, EGApaletteNo);
 
 	} else {
-		if (!g_sci->stereo_pair_rendering) {
+		
 
 			g_sci->stereoRightEye = false;
 
 			g_sci->_gfxPaint16->kernelDrawPicture(pictureId, animationNr, animationBlackoutFlag, mirroredFlag, addToFlag, EGApaletteNo);
 
-			//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+			g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
 
 			g_sci->stereoRightEye = true;
 
 			g_sci->_gfxPaint16->kernelDrawPicture(pictureId, animationNr, animationBlackoutFlag, mirroredFlag, addToFlag, EGApaletteNo);
 
-			//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+			g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
 			g_sci->stereoRightEye = false;
-		}
+		
 	}
 
 	return s->r_acc;
