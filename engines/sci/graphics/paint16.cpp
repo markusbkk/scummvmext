@@ -151,7 +151,10 @@ void GfxPaint16::drawPicture(GuiResourceId pictureId, bool mirroredFlag, bool ad
 	if (!addToFlag)
 		clearScreen(_screen->getColorWhite());
 
-	picture->draw(mirroredFlag, addToFlag, paletteId);
+	
+	
+	picture->draw(mirroredFlag, addToFlag, paletteId); //g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+	
 	delete picture;
 
 	// We make a call to SciPalette here, for increasing sys timestamp and also loading targetpalette, if palvary active
@@ -756,6 +759,7 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 		g_sci->enhanced_bg_frame = 1;
 		g_sci->pictureId = pictureId;
 			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
+
 			_transitions->setup(100, animationBlackoutFlag);
 			g_sci->prevPictureId = pictureId;
 	} else {
@@ -770,6 +774,7 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 		_ports->beginUpdate(_ports->_picWind);
 		g_sci->pictureId = pictureId;
 		drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
+		
 		g_sci->prevPictureId = pictureId;
 		_ports->endUpdate(_ports->_picWind);
 	}

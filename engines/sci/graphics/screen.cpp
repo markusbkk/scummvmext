@@ -194,6 +194,9 @@ GfxScreen::GfxScreen(ResourceManager *resMan) : _resMan(resMan) {
 	_displayScreenR_BG = (byte *)calloc(_displayPixels, 1);
 	_displayScreenG_BG = (byte *)calloc(_displayPixels, 1);
 	_displayScreenB_BG = (byte *)calloc(_displayPixels, 1);
+	_displayScreenR_BG_R_EYE = (byte *)calloc(_displayPixels, 1);
+	_displayScreenG_BG_R_EYE = (byte *)calloc(_displayPixels, 1);
+	_displayScreenB_BG_R_EYE = (byte *)calloc(_displayPixels, 1);
 	_displayScreenR_BGtmp = (byte *)calloc(_displayPixels, 1);
 	_displayScreenG_BGtmp = (byte *)calloc(_displayPixels, 1);
 	_displayScreenB_BGtmp = (byte *)calloc(_displayPixels, 1);
@@ -373,6 +376,9 @@ GfxScreen::~GfxScreen() {
 	free(_displayScreenR_BG);
 	free(_displayScreenG_BG);
 	free(_displayScreenB_BG);
+	free(_displayScreenR_BG_R_EYE);
+	free(_displayScreenG_BG_R_EYE);
+	free(_displayScreenB_BG_R_EYE);
 	free(_displayScreenR_BGtmp);
 	free(_displayScreenG_BGtmp);
 	free(_displayScreenB_BGtmp);
@@ -405,6 +411,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 				const byte *inR_BG = _displayScreenR_BG + y * _displayWidth + rect.left;
 				const byte *inG_BG = _displayScreenG_BG + y * _displayWidth + rect.left;
 				const byte *inB_BG = _displayScreenB_BG + y * _displayWidth + rect.left;
+			    const byte *inR_BG_R_EYE = _displayScreenR_BG_R_EYE + y * _displayWidth + rect.left;
+			    const byte *inG_BG_R_EYE = _displayScreenG_BG_R_EYE + y * _displayWidth + rect.left;
+			    const byte *inB_BG_R_EYE = _displayScreenB_BG_R_EYE + y * _displayWidth + rect.left;
 				const byte *inP = _displayScreen + y * _displayWidth + rect.left;
 				const byte *inR = _displayedScreenR + y * _displayWidth + rect.left;
 				const byte *inG = _displayedScreenG + y * _displayWidth + rect.left;
@@ -431,7 +440,11 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-
+							    if (g_sci->stereoRightEye) {
+								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								}
 								if (!*mod) {
 									r += _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - (*inA))) + (*inR * ((0.003921568627451) * (*inA)));
 									g += _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - (*inA))) + (*inG * ((0.003921568627451) * (*inA)));
@@ -467,6 +480,9 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							inR_BG += 1;
 							inG_BG += 1;
 							inB_BG += 1;
+						    inR_BG_R_EYE += 1;
+						    inG_BG_R_EYE += 1;
+						    inB_BG_R_EYE += 1;
 							inP += 1;
 							inR += 1;
 							inG += 1;
@@ -486,7 +502,11 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-
+							    if (g_sci->stereoRightEye) {
+								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+							    }
 								r += _palette[3 * i + 0] * ((0.003921568627451) * (255.0000 - (*inA))) + (*inR * ((0.003921568627451) * (*inA)));
 								g += _palette[3 * i + 1] * ((0.003921568627451) * (255.0000 - (*inA))) + (*inG * ((0.003921568627451) * (*inA)));
 								b += _palette[3 * i + 2] * ((0.003921568627451) * (255.0000 - (*inA))) + (*inB * ((0.003921568627451) * (*inA)));
@@ -506,7 +526,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							inP_BG += 1;
 							inR_BG += 1;
 							inG_BG += 1;
-							inB_BG += 1;
+						    inB_BG += 1;
+						    inR_BG_R_EYE += 1;
+						    inG_BG_R_EYE += 1;
+						    inB_BG_R_EYE += 1;
 							inP += 1;
 							inR += 1;
 							inG += 1;
@@ -531,7 +554,11 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-
+							    if (g_sci->stereoRightEye) {
+								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+							    }
 								r += (*inR * ((0.003921568627451) * (*inA)));
 								g += (*inG * ((0.003921568627451) * (*inA)));
 								b += (*inB * ((0.003921568627451) * (*inA)));
@@ -558,7 +585,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							inP_BG += 1;
 							inR_BG += 1;
 							inG_BG += 1;
-							inB_BG += 1;
+						    inB_BG += 1;
+						    inR_BG_R_EYE += 1;
+						    inG_BG_R_EYE += 1;
+						    inB_BG_R_EYE += 1;
 							inP += 1;
 							inR += 1;
 							inG += 1;
@@ -577,7 +607,11 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-
+							    if (g_sci->stereoRightEye) {
+								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
+							    }
 								r += (*inR * ((0.003921568627451) * (*inA)));
 								g += (*inG * ((0.003921568627451) * (*inA)));
 								b += (*inB * ((0.003921568627451) * (*inA)));
@@ -596,7 +630,10 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 							inP_BG += 1;
 							inR_BG += 1;
 							inG_BG += 1;
-							inB_BG += 1;
+						    inB_BG += 1;
+						    inR_BG_R_EYE += 1;
+						    inG_BG_R_EYE += 1;
+						    inB_BG_R_EYE += 1;
 							inP += 1;
 							inR += 1;
 							inG += 1;
@@ -641,7 +678,6 @@ void GfxScreen::displayRectRGB(const Common::Rect &rect, int x, int y) {
 		g_system->copyRectToScreen(_rgbScreen_LEye + ((targetRect.top * _displayWidth) + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
 	} else {
 		g_system->copyRectToScreen(_rgbScreen_REye + ((targetRect.top * _displayWidth) + targetRect.left) * _format.bytesPerPixel, _displayWidth * _format.bytesPerPixel, targetRect.left, targetRect.top, targetRect.width(), targetRect.height());
-
 	}
 }
 
@@ -676,6 +712,9 @@ void GfxScreen::clearForRestoreGame() {
 	memset(_displayScreenR_BG, 0, _displayPixels);
 	memset(_displayScreenG_BG, 0, _displayPixels);
 	memset(_displayScreenB_BG, 0, _displayPixels);
+	memset(_displayScreenR_BG_R_EYE, 0, _displayPixels);
+	memset(_displayScreenG_BG_R_EYE, 0, _displayPixels);
+	memset(_displayScreenB_BG_R_EYE, 0, _displayPixels);
 	memset(_displayScreenR_BGtmp, 0, _displayPixels);
 	memset(_displayScreenG_BGtmp, 0, _displayPixels);
 	memset(_displayScreenB_BGtmp, 0, _displayPixels);
@@ -978,6 +1017,9 @@ void GfxScreen::putHangulChar(Graphics::FontKorean *commonFont, int16 x, int16 y
 		commonFont->drawChar(_displayScreenR_BG + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, r, 0, -1, -1);
 		commonFont->drawChar(_displayScreenG_BG + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, g, 0, -1, -1);
 		commonFont->drawChar(_displayScreenB_BG + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, b, 0, -1, -1);
+		commonFont->drawChar(_displayScreenR_BG_R_EYE + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, r, 0, -1, -1);
+		commonFont->drawChar(_displayScreenG_BG_R_EYE + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, g, 0, -1, -1);
+		commonFont->drawChar(_displayScreenB_BG_R_EYE + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, b, 0, -1, -1);
 		commonFont->drawChar(_displayScreenR + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, r, 0, -1, -1);
 		commonFont->drawChar(_displayScreenG + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, g, 0, -1, -1);
 		commonFont->drawChar(_displayScreenB + ((y * _displayWidth * 2) * g_sci->_enhancementMultiplier) + (x * 2 * g_sci->_enhancementMultiplier), chr, _displayWidth, 1, b, 0, -1, -1);
@@ -1033,6 +1075,9 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 			byteCount += pixels; // _displayScreenR_BG
 			byteCount += pixels; // _displayScreenG_BG
 			byteCount += pixels; // _displayScreenB_BG
+			byteCount += pixels; // _displayScreenR_BG_R_EYE
+			byteCount += pixels; // _displayScreenG_BG_R_EYE
+			byteCount += pixels; // _displayScreenB_BG_R_EYE
 			byteCount += pixels; // _displayScreenR_BGtmp
 			byteCount += pixels; // _displayScreenG_BGtmp
 			byteCount += pixels; // _displayScreenB_BGtmp
@@ -1053,6 +1098,9 @@ int GfxScreen::bitsGetDataSize(Common::Rect rect, byte mask) {
 			byteCount += rectHeight * rectWidth; // _displayScreenR_BG (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenG_BG (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenB_BG (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreenR_BG_R_EYE (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreenG_BG_R_EYE (upscaled hires)
+			byteCount += rectHeight * rectWidth; // _displayScreenB_BG_R_EYE (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenR_BGtmp (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenG_BGtmp (upscaled hires)
 			byteCount += rectHeight * rectWidth; // _displayScreenB_BGtmp (upscaled hires)
@@ -1110,6 +1158,9 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		bitsSaveDisplayScreen(rect, _displayScreenR_BG, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenG_BG, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenB_BG, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreenR_BG_R_EYE, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreenG_BG_R_EYE, memoryPtr);
+		bitsSaveDisplayScreen(rect, _displayScreenB_BG_R_EYE, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenR_BGtmp, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenG_BGtmp, memoryPtr);
 		bitsSaveDisplayScreen(rect, _displayScreenB_BGtmp, memoryPtr);
@@ -1139,6 +1190,9 @@ void GfxScreen::bitsSave(Common::Rect rect, byte mask, byte *memoryPtr) {
 		bitsSaveScreen(rect, _displayScreenR_BG, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenG_BG, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenB_BG, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreenR_BG_R_EYE, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreenG_BG_R_EYE, _displayWidth, memoryPtr);
+		bitsSaveScreen(rect, _displayScreenB_BG_R_EYE, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenR_BGtmp, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenG_BGtmp, _displayWidth, memoryPtr);
 		bitsSaveScreen(rect, _displayScreenB_BGtmp, _displayWidth, memoryPtr);
@@ -1207,6 +1261,9 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR_BG);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG_BG);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB_BG);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR_BG_R_EYE);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG_BG_R_EYE);
+		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB_BG_R_EYE);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenR_BGtmp);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenG_BGtmp);
 		bitsRestoreDisplayScreen(rect, memoryPtr, _displayScreenB_BGtmp);
@@ -1236,6 +1293,9 @@ void GfxScreen::bitsRestore(const byte *memoryPtr) {
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenR_BG, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenG_BG, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenB_BG, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreenR_BG_R_EYE, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreenG_BG_R_EYE, _displayWidth);
+		bitsRestoreScreen(rect, memoryPtr, _displayScreenB_BG_R_EYE, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenR_BGtmp, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenG_BGtmp, _displayWidth);
 		bitsRestoreScreen(rect, memoryPtr, _displayScreenB_BGtmp, _displayWidth);

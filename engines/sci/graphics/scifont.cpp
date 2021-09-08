@@ -351,7 +351,7 @@ Graphics::Surface *loadFontPNG(Common::SeekableReadStream *s) {
 	return srf;
 }
 
-void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput) {
+ void GfxFontFromResource::draw(uint16 chr, int16 top, int16 left, byte color, bool greyedOutput) {
 	if (chr >= _numChars) {
 		// SSCI silently ignores attempts to draw characters that do not exist
 		// in the font; for now, emit warnings if this happens, to learn if

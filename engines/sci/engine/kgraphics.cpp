@@ -295,10 +295,10 @@ reg_t kGraphRestoreBox(EngineState *s, int argc, reg_t *argv) {
 	g_sci->_gfxPaint16->kernelGraphRestoreBox(argv[0]);
 	if (g_sci->stereoscopic) {
 		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		if (g_sci->stereoRightEye) {
+
 			g_sci->_gfxPaint16->kernelGraphRestoreBox(argv[0]);
 			g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		}
+		
 	}
 	return s->r_acc;
 }
@@ -308,10 +308,10 @@ reg_t kGraphFillBoxBackground(EngineState *s, int argc, reg_t *argv) {
 	g_sci->_gfxPaint16->kernelGraphFillBoxBackground(rect);
 	if (g_sci->stereoscopic) {
 		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		if (g_sci->stereoRightEye) {
+
 			g_sci->_gfxPaint16->kernelGraphFillBoxBackground(rect);
 			g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		}
+		
 	}
 	return s->r_acc;
 }
@@ -321,10 +321,10 @@ reg_t kGraphFillBoxForeground(EngineState *s, int argc, reg_t *argv) {
 	g_sci->_gfxPaint16->kernelGraphFillBoxForeground(rect);
 	if (g_sci->stereoscopic) {
 		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		if (g_sci->stereoRightEye) {
+
 			g_sci->_gfxPaint16->kernelGraphFillBoxForeground(rect);
 			g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		}
+		
 	}
 	return s->r_acc;
 }
@@ -671,7 +671,7 @@ reg_t kDrawPic(EngineState *s, int argc, reg_t *argv) {
 	}
 	if (argc >= 4)
 		EGApaletteNo = argv[3].toUint16();
-
+	g_sci->stereoRightEye = false;
 	g_sci->_gfxPaint16->kernelDrawPicture(pictureId, animationNr, animationBlackoutFlag, mirroredFlag, addToFlag, EGApaletteNo);
 
 	return s->r_acc;
@@ -1127,10 +1127,10 @@ reg_t kDrawControl(EngineState *s, int argc, reg_t *argv) {
 	_k_GenericDrawControl(s, controlObject, false);
 	if (g_sci->stereoscopic) {
 		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		if (g_sci->stereoRightEye) {
+
 			_k_GenericDrawControl(s, controlObject, false);
 			g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		}
+		
 	}
 	return s->r_acc;
 }
@@ -1342,11 +1342,7 @@ reg_t kDisplay(EngineState *s, int argc, reg_t *argv) {
 
 	uint16 languageSplitter = 0;
 	Common::String splitText = g_sci->strSplitLanguage(text.c_str(), &languageSplitter);
-	if (g_sci->stereoscopic) {
-		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-		g_sci->_gfxPaint16->kernelDisplay(splitText.c_str(), languageSplitter, argc, argv);
-		g_sci->stereoRightEye = !g_sci->stereoRightEye;
-	}
+	
 	return g_sci->_gfxPaint16->kernelDisplay(splitText.c_str(), languageSplitter, argc, argv);
 }
 

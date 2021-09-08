@@ -124,8 +124,23 @@ void GfxPicture::draw(bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 		// VGA, EGA or Amiga vector data
 		_resourceType = SCI_PICTURE_TYPE_REGULAR;
 		debug(10, "%s\n", _resource->name().c_str());
-		drawVectorData(*_resource);
-		drawEnhancedBackground(*_resource);
+		if (!g_sci->stereo_pair_rendering) {
+			drawVectorData(*_resource);
+			drawEnhancedBackground(*_resource);
+		} else {
+			g_sci->stereoRightEye = false;
+			drawVectorData(*_resource);
+			drawEnhancedBackground(*_resource);
+			g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+			if (g_sci->stereoscopic) {
+				g_sci->stereoRightEye = true;
+				drawVectorData(*_resource);
+				drawEnhancedBackground(*_resource);
+				g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+				g_sci->stereoRightEye = false;
+			}
+		}
+		
 	}
 }
 
@@ -304,750 +319,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		// No compression (some SCI32 pictures)
 		memcpy(celBitmap->getUnsafeDataAt(0, pixelCount), rlePtr.getUnsafeDataAt(0, pixelCount), pixelCount);
 	}
-	Common::String bgFileName = _resource->name().c_str();
 	
-	if (g_sci->scene_transition) {
-		
-		bgFileName = g_sci->prevPicName.c_str();
-		bgFileName += "-";
-		bgFileName += _resource->name().c_str();
-	}
-	if (videoCutsceneEnd == bgFileName.c_str()) {
-		playingVideoCutscenes = false;
-		wasPlayingVideoCutscenes = true;
-		videoCutsceneEnd = "-undefined-";
-		videoCutsceneStart = "-undefined-";
-		g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, false);
-		g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, false);
-		g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, false);
-		Common::String dbg = "Cutscene ENDED on : %s", bgFileName;
-		debug(dbg.c_str());
-	}
-	if (!extraDIRList.empty() && !wasPlayingVideoCutscenes) {
-		if (fileIsInExtraDIRPicture((bgFileName + ".cts").c_str())) {
-			Common::String cfgfileName = (bgFileName + ".cts").c_str();
-			debug(cfgfileName.c_str());
-			Common::SeekableReadStream *cfg = SearchMan.createReadStreamForMember(cfgfileName);
-			if (cfg) {
-				Common::String line, texttmp;
-				cutscene_mute_midi = false;
-				while (!cfg->eos()) {
-					texttmp = cfg->readLine();
-					if (texttmp.firstChar() != '#') {
-						if (texttmp.contains("mute_midi")) {
-							cutscene_mute_midi = true;
-						} else {
-							videoCutsceneEnd = texttmp.c_str();
-						}
-					}
-				}
-				videoCutsceneStart = bgFileName.c_str();
-
-				g_sci->oggBackground = (bgFileName + ".cts.ogg").c_str();
-
-				g_sci->_theoraDecoderCutscenes = new Video::TheoraDecoder();
-
-				g_sci->_theoraDecoderCutscenes->loadFile((bgFileName + ".cts.ogg").c_str());
-				g_sci->_theoraDecoderCutscenes->start();
-				int16 frameTime = g_sci->_theoraDecoderCutscenes->getTimeToNextFrame();
-
-				playingVideoCutscenes = true;
-				wasPlayingVideoCutscenes = true;
-				g_system->getMixer()->muteSoundType(Audio::Mixer::kMusicSoundType, true);
-				g_system->getMixer()->muteSoundType(Audio::Mixer::kSFXSoundType, true);
-				g_system->getMixer()->muteSoundType(Audio::Mixer::kSpeechSoundType, true);
-
-				if (cutscene_mute_midi) {
-					if (midiMusic != NULL)
-						midiMusic->setMasterVolume(0);
-				}
-				Common::String dbg = "Cutscene STARTED on : %s", bgFileName;
-				debug(dbg.c_str());
-				dbg = "Cutscene set to end on : ";
-				dbg += videoCutsceneEnd.c_str();
-				debug(dbg.c_str());
-			}
-		} else {
-			debug(10, ("NO " + bgFileName + ".cts").c_str());
-		}
-	}
-	
-	if (ConfMan.hasKey("extrapath")) {
-		Common::FSNode folder = Common::FSNode(ConfMan.get("extrapath"));
-		char picstrbuffer[32];
-		int retVal, buf_size = 32;
-		retVal = snprintf(picstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), g_sci->enhanced_bg_frame);
-		Common::String fn = picstrbuffer;
-		debug(fn.c_str());
-		Common::String fnNoAnim = ("%s", _resource->name().c_str());
-		char picnextstrbuffer[32];
-		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), (g_sci->enhanced_bg_frame + 1));
-		Common::String nextAnim = picnextstrbuffer;
-
-		if (!g_sci->scene_transition) {
-		if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
-			//debug(nextAnim.c_str());
-			
-				g_sci->backgroundIsVideo = false;
-				g_sci->enhanced_bg_frame = 1;
-				g_sci->play_enhanced_BG_anim = false;
-				
-				fn = fnNoAnim;
-			}
-		}
-		{
-			
-			if ((fileIsInExtraDIRPicture((bgFileName + ".ogg").c_str()))) {
-				if (g_sci->enhanced_gfx_enabled) {
-					if (g_sci->oggBackground != (bgFileName + ".ogg").c_str()) {
-
-						Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
-						debug((fileName).c_str());
-						g_sci->_theoraDecoder = new Video::TheoraDecoder();
-						g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
-						g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
-						g_sci->_theoraDecoder->start();
-						int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
-						/* while (!g_sci->_theoraDecoder->isPlaying()) {
-							debug(("WAITING TO PLAY : " + fileName).c_str());
-							g_system->delayMillis(20);
-						}*/
-						debug("Background Video %s EXISTS and has been loaded!\n", fileName.c_str());
-						g_sci->backgroundIsVideo = true;
-						g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
-						enh = (const byte *)g_sci->_theoraSurface->getPixels();
-						g_sci->play_enhanced_BG_anim = true;
-						g_sci->oggBackground = (bgFileName + ".ogg").c_str();
-						fn = fnNoAnim;
-
-					} else {
-
-						//debug("%s.ogg FOUND = PLAYING BACKGROUND ANIMATION!", (bgFileName).c_str());
-
-						if (g_sci->_theoraDecoder->getCurFrame() == -1) {
-							g_sci->_theoraDecoder->decodeNextFrame();
-						} else {
-							g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
-							if (g_sci->_theoraSurface != nullptr) {
-								g_sci->scene_transition = false;
-								enh = (const byte *)g_sci->_theoraSurface->getPixels();
-							} else {
-								Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
-								debug((fileName).c_str());
-								g_sci->_theoraDecoder = new Video::TheoraDecoder();
-								g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
-								g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
-								g_sci->_theoraDecoder->start();
-								int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
-								/* while (!g_sci->_theoraDecoder->isPlaying()) {
-							debug(("WAITING TO PLAY : " + fileName).c_str());
-							g_system->delayMillis(20);
-						}*/
-								debug("Background Video %s EXISTS and has been loaded!\n", fileName.c_str());
-								g_sci->backgroundIsVideo = true;
-								g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
-								enh = (const byte *)g_sci->_theoraSurface->getPixels();
-								g_sci->play_enhanced_BG_anim = true;
-								g_sci->oggBackground = (bgFileName + ".ogg").c_str();
-								fn = fnNoAnim;
-
-								g_sci->enhanced_bg_frame = 0;
-							}
-							if (enh) {
-								g_sci->play_enhanced_BG_anim = true;
-								g_sci->backgroundIsVideo = true;
-								g_sci->enhanced_bg_frame++;
-							} else {
-								Common::String fileName = (folder.getPath() + folder.getChild((bgFileName + ".ogg").c_str()).getName()).c_str();
-								debug((fileName).c_str());
-								g_sci->_theoraDecoder = new Video::TheoraDecoder();
-								g_sci->_theoraDecoder->loadFile((bgFileName + ".ogg").c_str());
-								g_sci->_theoraDecoder->setEndFrame(g_sci->_theoraDecoder->getFrameCount() - 5);
-								g_sci->_theoraDecoder->start();
-								int16 frameTime = g_sci->_theoraDecoder->getTimeToNextFrame();
-								/* while (!g_sci->_theoraDecoder->isPlaying()) {
-							debug(("WAITING TO PLAY : " + fileName).c_str());
-							g_system->delayMillis(20);
-						}*/
-								debug("Background Video %s EXISTS and has been loaded!\n", fileName.c_str());
-								g_sci->backgroundIsVideo = true;
-								g_sci->_theoraSurface = g_sci->_theoraDecoder->decodeNextFrame();
-								enh = (const byte *)g_sci->_theoraSurface->getPixels();
-								g_sci->play_enhanced_BG_anim = true;
-								g_sci->oggBackground = (bgFileName + ".ogg").c_str();
-								fn = fnNoAnim;
-
-								g_sci->enhanced_bg_frame = 0;
-								if (enh) {
-									g_sci->play_enhanced_BG_anim = true;
-									g_sci->backgroundIsVideo = true;
-									g_sci->enhanced_bg_frame++;
-								}
-							}
-						}
-						fn = fnNoAnim;
-					}
-				}
-			} else {
-				g_sci->backgroundIsVideo = false;
-				
-				g_sci->play_enhanced_BG_anim = false;
-				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
-					//debug(nextAnim.c_str());
-					if (g_sci->enhanced_gfx_enabled)
-					g_sci->enhanced_bg_frame++;
-					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
-					g_sci->play_enhanced_BG_anim = true;
-				} else {
-
-					if (fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
-						g_sci->enhanced_bg_frame = 1;
-						g_sci->play_enhanced_BG_anim = true;
-					}
-					/*
-					char ststrbuffer[32];
-					int retValst, buf_size_st = 32;
-					retVal = snprintf(ststrbuffer, buf_size_st, "pic.%u", g_sci->prevPictureId);
-					Common::String st = ststrbuffer;
-					*/
-					g_sci->prevPicName = _resource->name().c_str();
-					//if ((strcmp(_resource->name().c_str(), st.c_str()) == 0))
-					{
-						g_sci->scene_transition = false;
-					}
-				
-					
-				}
-			}
-		}
-		if (g_sci->enhanced_bg_frame <= 1) {
-			if (!g_sci->scene_transition) {
-				if (!fileIsInExtraDIRPicture((fnNoAnim + ".1.png").c_str())) {
-					fn = fnNoAnim;
-				}
-			}
-		}
-		bool preloaded = false;
-		bool preloaded_256 = false;
-		bool preloaded_256RP = false;
-		bool preloaded_o = false;
-		bool preloaded_p = false;
-		bool preloaded_s = false;
-		bool preloaded_d = false;
-
-		//if (fileIsInExtraDIRPicture((fn + ".png").c_str()))
-		{
-
-			Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
-			Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-			if (viewsMap.size() > 0)
-				for (viewsMapit = viewsMap.begin();
-				     viewsMapit != viewsMap.end(); ++viewsMapit) {
-					if (g_sci->enhanced_gfx_enabled) {
-						if (!g_sci->backgroundIsVideo) {
-
-							if (strcmp(viewsMapit->first.c_str(), (fn + ".png").c_str()) == 0) {
-
-								std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-								//debug("RELOADED FROM RAM");
-								png = tmp.first;
-								if (png) {
-									enh = (const byte *)png->getPixels();
-									if (enh) {
-										preloaded = true;
-										debug((fn + ".png WAS ALREADY CACHED :)").c_str());
-										pixelCountX = png->w * png->h * 4;
-										g_sci->enhanced_BG = true;
-									}
-								}
-							} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
-
-								std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-								pngPal = tmp.first;
-								if (pngPal) {
-									enhPal = (const byte *)pngPal->getPixels();
-									if (enhPal) {
-										preloaded_256 = true;
-										debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
-										pixelCountX = png->w * png->h * 4;
-										g_sci->enhanced_BG = false;
-										g_sci->paletted_enhanced_BG = true;
-									}
-								}
-							} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256RP.png").c_str()) == 0) {
-
-								std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-								pngPal = tmp.first;
-								if (pngPal) {
-									enhPal = (const byte *)pngPal->getPixels();
-									if (enhPal) {
-										preloaded_256RP = true;
-										debug((fn + "_256RP.png WAS ALREADY CACHED :)").c_str());
-										pixelCountX = png->w * png->h * 4;
-
-										g_sci->enhanced_BG = false;
-										g_sci->paletted_enhanced_BG = true;
-									}
-								}
-							}
-							if (strcmp(viewsMapit->first.c_str(), (fn + "_o.png").c_str()) == 0) {
-
-								std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-								pngOverlay = tmp.first;
-								if (pngOverlay) {
-									enhOverlay = (const byte *)pngOverlay->getPixels();
-									if (enhOverlay) {
-										overlay = true;
-										preloaded_o = true;
-										debug((fn + "_o.png WAS ALREADY CACHED :)").c_str());
-										pixelCountX = png->w * png->h * 4;
-									}
-								}
-							}
-						}
-						if (strcmp(viewsMapit->first.c_str(), (fn + "_p.png").c_str()) == 0) {
-
-							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-							pngPrio = tmp.first;
-							if (pngPrio) {
-								enhPrio = (const byte *)pngPrio->getPixels();
-								if (enhPrio) {
-									g_sci->enhanced_PRIORITY = true;
-									preloaded_p = true;
-									debug("%s_p.png WAS ALREADY CACHED :)", fn.c_str());
-
-								}
-							}
-						}
-						if (strcmp(viewsMapit->first.c_str(), (fn + "_s.png").c_str()) == 0) {
-
-							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-							pngSurface = tmp.first;
-							if (pngSurface) {
-								enhSurface = (const byte *)pngSurface->getPixels();
-								if (enhSurface) {
-									pixelCountX = pngSurface->w * pngSurface->h * 4;
-									surface = true;
-									preloaded_s = true;
-									debug((fn + "_s.png WAS ALREADY CACHED :)").c_str());
-									
-								}
-							}
-						}
-						if (strcmp(viewsMapit->first.c_str(), (fn + "_d.png").c_str()) == 0) {
-
-							std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
-
-							//debug("RELOADED FROM RAM");
-							pngDepth = tmp.first;
-							if (pngDepth) {
-								enhDepth = (const byte *)pngDepth->getPixels();
-								if (enhDepth) {
-									preloaded_d = true;
-									debug((fn + "_d.png WAS ALREADY CACHED :)").c_str());
-									g_sci->enhanced_DEPTH = true;
-								}
-							}
-						}
-					}
-				}
-		}
-		
-		if (!g_sci->backgroundIsVideo) {
-			if (!preloaded) {
-				if (g_sci->enhanced_gfx_enabled) {
-				if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fn + ".png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-						} else {
-							debug("%s EXISTS and has been loaded!\n", fileName.c_str());
-							png = loadPNGPicture(file);
-							if (png) {
-								enh = (const byte *)png->getPixels();
-								if (enh) {
-									pixelCountX = png->w * png->h * 4;
-									g_sci->enhanced_BG = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = png;
-									tmp.second = enh;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
-								}
-							}
-						}
-					}
-				} else if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + ".png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fnNoAnim + ".png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-							png = loadPNGPicture(file);
-							if (png) {
-								enh = (const byte *)png->getPixels();
-								if (enh) {
-									pixelCountX = png->w * png->h * 4;
-									g_sci->enhanced_BG = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = png;
-									tmp.second = enh;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >(fn.c_str(), tmp));
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (!preloaded_256) {
-				if (fileIsInExtraDIRPicture((fn + "_256.png").c_str())) {
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256.png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fn + "_256.png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-							pngPal = loadPNGCLUTPicture(file, _screen);
-							if (pngPal) {
-								enhPal = (const byte *)pngPal->getPixels();
-								if (enhPal) {
-									pixelCountX = pngPal->w * pngPal->h * 4;
-
-									g_sci->enhanced_BG = false;
-									g_sci->paletted_enhanced_BG = true;
-									g_sci->_gfxPalette16->overridePalette = false;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngPal;
-									tmp.second = enhPal;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				} else if (fileIsInExtraDIRPicture((fnNoAnim + "_256.png").c_str())) {
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_256.png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fnNoAnim + "_256.png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-							pngPal = loadPNGCLUTPicture(file, _screen);
-							if (pngPal) {
-								enhPal = (const byte *)pngPal->getPixels();
-								if (enhPal) {
-									pixelCountX = pngPal->w * pngPal->h * 4;
-									g_sci->enhanced_BG = false;
-									g_sci->paletted_enhanced_BG = true;
-									g_sci->_gfxPalette16->overridePalette = false;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngPal;
-									tmp.second = enhPal;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				}
-			}
-			if (!preloaded_256RP) {
-				if (fileIsInExtraDIRPicture((fn + "_256RP.png").c_str())) {
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_256RP.png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fn + "_256RP.png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-							pngPal = loadPNGCLUTOverridePicture(file, _screen);
-							if (pngPal) {
-								enhPal = (const byte *)pngPal->getPixels();
-								if (enhPal) {
-									pixelCountX = pngPal->w * pngPal->h * 4;
-									g_sci->enhanced_BG = false;
-									g_sci->paletted_enhanced_BG = true;
-									g_sci->_gfxPalette16->overridePalette = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngPal;
-									tmp.second = enhPal;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256RP.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				} else if (fileIsInExtraDIRPicture((fnNoAnim + "_256RP.png").c_str())) {
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_256RP.png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fnNoAnim + "_256RP.png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Bitmap %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-							pngPal = loadPNGCLUTOverridePicture(file, _screen);
-							if (pngPal) {
-								enhPal = (const byte *)pngPal->getPixels();
-								if (enhPal) {
-									pixelCountX = pngPal->w * pngPal->h * 4;
-									g_sci->enhanced_BG = false;
-									g_sci->paletted_enhanced_BG = true;
-									g_sci->_gfxPalette16->overridePalette = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngPal;
-									tmp.second = enhPal;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_256RP.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				}
-				}
-			}
-		}
-		if (g_sci->enhanced_gfx_enabled) {
-			if (!preloaded_o) {
-				if (fileIsInExtraDIRPicture((fn + "_o.png").c_str())) {
-
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fn + "_o.png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Overlay %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-							pngOverlay = loadPNGPicture(file);
-							if (pngOverlay) {
-								enhOverlay = (const byte *)pngOverlay->getPixels();
-								if (enhOverlay) {
-									pixelCountX = pngOverlay->w * pngOverlay->h * 4;
-									overlay = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngOverlay;
-									tmp.second = enhOverlay;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				} else if (fileIsInExtraDIRPicture((fnNoAnim + "_o.png").c_str())) {
-
-					Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_o.png").getName();
-					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-					if (!file) {
-						fileName = folder.getChild(fnNoAnim + "_o.png").getName();
-						file = SearchMan.createReadStreamForMember(fileName);
-						if (!file) {
-							debug(10, "Enhanced Overlay %s error", fileName.c_str());
-						} else {
-							debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-							pngOverlay = loadPNGPicture(file);
-							if (pngOverlay) {
-								enhOverlay = (const byte *)pngOverlay->getPixels();
-								if (enhOverlay) {
-									pixelCountX = pngOverlay->w * pngOverlay->h * 4;
-									overlay = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngOverlay;
-									tmp.second = enhOverlay;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-			if (!preloaded_p) {
-				if (fileIsInExtraDIRPicture((fn + "_p.png").c_str())) {
-					Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fn + "_p.png").getName();
-					Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
-
-					if (!filePrio) {
-						fileNamePrio = folder.getChild(fn + "_p.png").getName();
-						filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
-						if (!filePrio) {
-							debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
-						} else {
-							debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
-							pngPrio = loadPNGPicture(filePrio);
-							if (pngPrio) {
-								enhPrio = (const byte *)pngPrio->getPixels();
-								if (enhPrio) {
-									
-									g_sci->enhanced_PRIORITY = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngPrio;
-									tmp.second = enhPrio;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_p.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				} else if (fileIsInExtraDIRPicture((fnNoAnim + "_p.png").c_str())) {
-					Common::String fileNamePrio = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_p.png").getName();
-					Common::SeekableReadStream *filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
-
-					if (!filePrio) {
-						fileNamePrio = folder.getChild(fnNoAnim + "_p.png").getName();
-						filePrio = SearchMan.createReadStreamForMember(fileNamePrio);
-						if (!filePrio) {
-							debug(10, "Enhanced Priority Bitmap %s error", fileNamePrio.c_str());
-						} else {
-							debug(10, "Enhanced Priority Bitmap %s EXISTS and has been loaded!\n", fileNamePrio.c_str());
-							pngPrio = loadPNGPicture(filePrio);
-							if (pngPrio) {
-								enhPrio = (const byte *)pngPrio->getPixels();
-								if (enhPrio) {
-									
-									g_sci->enhanced_PRIORITY = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngPrio;
-									tmp.second = enhPrio;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_p.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				}
-			}
-			if (!preloaded_s) {
-				if (fileIsInExtraDIRPicture((fn + "_s.png").c_str())) {
-					Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fn + "_s.png").getName();
-					Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
-
-					if (!fileSurf) {
-						fileNameSurf = folder.getChild(fn + "_s.png").getName();
-						fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
-						if (!fileSurf) {
-							debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
-						} else {
-							debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
-							pngSurface = loadPNGPicture(fileSurf);
-							if (pngSurface) {
-								enhSurface = (const byte *)pngSurface->getPixels();
-								if (enhSurface) {
-									
-									surface = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngSurface;
-									tmp.second = enhSurface;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_s.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				} else if (fileIsInExtraDIRPicture((fnNoAnim + "_s.png").c_str())) {
-					Common::String fileNameSurf = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_s.png").getName();
-					Common::SeekableReadStream *fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
-
-					if (!fileSurf) {
-						fileNameSurf = folder.getChild(fnNoAnim + "_s.png").getName();
-						fileSurf = SearchMan.createReadStreamForMember(fileNameSurf);
-						if (!fileSurf) {
-							debug(10, "Enhanced Surface Bitmap %s error", fileNameSurf.c_str());
-						} else {
-							debug(10, "Enhanced Surface Bitmap %s EXISTS and has been loaded!\n", fileNameSurf.c_str());
-							pngSurface = loadPNGPicture(fileSurf);
-							if (pngSurface) {
-								enhSurface = (const byte *)pngSurface->getPixels();
-								if (enhSurface) {
-									
-									surface = true;
-									std::pair<Graphics::Surface *, const byte *> tmp;
-									tmp.first = pngSurface;
-									tmp.second = enhSurface;
-									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_s.png").c_str(), tmp));
-								}
-							}
-						}
-					}
-				}
-			}
-		    if (!preloaded_d) {
-			    if (fileIsInExtraDIRPicture((fn + "_d.png").c_str())) {
-				    Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_d.png").getName();
-				    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-				    if (!file) {
-					    fileName = folder.getChild(fn + "_d.png").getName();
-					    file = SearchMan.createReadStreamForMember(fileName);
-					    if (!file) {
-						    debug(10, "Enhanced Depth Bitmap %s error", fileName.c_str());
-					    } else {
-						    debug(10, "Enhanced Depth Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						    pngDepth = loadPNGPicture(file);
-						    if (pngDepth) {
-							    enhDepth = (const byte *)pngDepth->getPixels();
-							    if (enhDepth) {
-								    g_sci->enhanced_DEPTH = true;
-								    std::pair<Graphics::Surface *, const byte *> tmp;
-								    tmp.first = pngDepth;
-								    tmp.second = enhDepth;
-								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_d").c_str(), tmp));
-							    }
-						    }
-					    }
-				    }
-			    } else if (fileIsInExtraDIRPicture((fnNoAnim + "_d.png").c_str())) {
-				    Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_d.png").getName();
-				    Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-				    if (!file) {
-					    fileName = folder.getChild(fnNoAnim + "_d.png").getName();
-					    file = SearchMan.createReadStreamForMember(fileName);
-					    if (!file) {
-						    debug(10, "Enhanced Depth Bitmap %s error", fileName.c_str());
-					    } else {
-						    debug(10, "Enhanced Depth Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
-						    pngDepth = loadPNGPicture(file);
-						    if (pngDepth) {
-							    enhDepth = (const byte *)pngDepth->getPixels();
-							    if (enhDepth) {
-								    g_sci->enhanced_DEPTH = true;
-								    std::pair<Graphics::Surface *, const byte *> tmp;
-								    tmp.first = pngDepth;
-								    tmp.second = enhDepth;
-								    viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_d").c_str(), tmp));
-							    }
-						    }
-					    }
-				    }
-			    }
-		    }
-		
-	}
 	
 
 	Common::Rect displayArea = _coordAdjuster->pictureGetDisplayArea();
@@ -1182,551 +454,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				}
 			}
 		}
-		if (g_sci->enhanced_BG || overlay || g_sci->paletted_enhanced_BG || g_sci->enhanced_PRIORITY || surface || g_sci->enhanced_DEPTH || g_sci->backgroundIsVideo) {
-			y = (displayArea.top * g_sci->_enhancementMultiplier) + drawY;
-			if (g_sci->_gfxScreen->_upscaledHires != GFX_SCREEN_UPSCALED_640x400) {
-				lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier) + y), displayArea.bottom * g_sci->_enhancementMultiplier);
-			} else {
-				lastY = MIN<int16>(((height * g_sci->_enhancementMultiplier * 2) + y), displayArea.bottom * g_sci->_enhancementMultiplier * 2);
-			}
-			leftX = (displayArea.left + drawX) * g_sci->_enhancementMultiplier;
-			rightX = MIN<int16>((displayWidth * g_sci->_enhancementMultiplier + leftX), (displayArea.right * g_sci->_enhancementMultiplier));
-
-			sourcePixelSkipPerRow = 0;
-			if (width * g_sci->_enhancementMultiplier > rightX - leftX)
-				sourcePixelSkipPerRow = (width * g_sci->_enhancementMultiplier) - (rightX - leftX);
-			if (g_sci->enhanced_BG) {
-				enh += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-				enh += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-			}
-			if (overlay) {
-				enhOverlay += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-				enhOverlay += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-			}
-			if (g_sci->paletted_enhanced_BG) {
-				enhPal += (skipCelBitmapPixels * g_sci->_enhancementMultiplier);
-				enhPal += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier);
-			}
-			if (surface) {
-				enhSurface += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-				enhSurface += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-			}
-			if (g_sci->enhanced_PRIORITY) {
-				enhPrio += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-				enhPrio += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-			}
-			if (g_sci->depth_rendering)
-			if (g_sci->enhanced_DEPTH) {
-				enhDepth += (skipCelBitmapPixels * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-				enhDepth += (skipCelBitmapLines * width * g_sci->_enhancementMultiplier) * g_system->getScreenFormat().bpp();
-			}
-			// Change clearcolor to white, if we dont add to an existing picture. That way we will paint everything on screen
-			// but white and that won't matter because the screen is supposed to be already white. It seems that most (if not all)
-			// SCI1.1 games use color 0 as transparency and SCI1 games use color 255 as transparency. Sierra SCI seems to paint
-			// the whole data to screen and wont skip over transparent pixels. So this will actually make it work like Sierra.
-			if (!_addToFlag)
-				clearColor = _screen->getColorWhite();
-
-			drawMask = priority > 15 ? GFX_SCREEN_MASK_VISUAL : GFX_SCREEN_MASK_VISUAL | GFX_SCREEN_MASK_PRIORITY;
-
-			if ((!isEGA) || (priority < 16)) {
-				// VGA + EGA, EGA only checks priority, when given priority is below 16
-				if (!_mirroredFlag) {
-					// Draw bitmap to screen
-					x = leftX;
-					int offsetPal = 0;
-					int offset = 0;
-					while (y < lastY) {
-
-						
-
-							//if (priority >= _screen->getPriorityX(x, y))
-							{
-								if (g_sci->paletted_enhanced_BG) {
-									_screen->putPixelPaletted_BG(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
-								}
-							    if (g_sci->enhanced_BG && !g_sci->paletted_enhanced_BG) {
-									if (enh[offset + 3] != 0) {
-										_screen->putPixelR_BG(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
-									    _screen->putPixelG_BG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									    _screen->putPixelB_BG(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-									}
-								}
-							    if (g_sci->backgroundIsVideo && g_sci->_theoraSurface != nullptr) {
-								    if (enh && offset < g_sci->_theoraSurface->w * g_sci->_theoraSurface->h * 4)
-									    if (enh[offset + 3] != 0) {
-										    _screen->putPixelR_BG(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
-										    _screen->putPixelG_BG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-										    _screen->putPixelB_BG(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-									    }
-							    }
-								if (overlay) {
-									
-										_screen->putPixelR_BG(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
-										_screen->putPixelG_BG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
-								        _screen->putPixelB_BG(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-									
-								}
-							}
-							
-								if (g_sci->enhanced_PRIORITY) {
-									if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
-									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 1, 0);
-									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 2, 0);
-									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 3, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 4, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 5, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 6, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 7, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-										_screen->putPixelXEtc(true, x, y, drawMask, 8, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 9, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 10, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 11, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-										_screen->putPixelXEtc(true, x, y, drawMask, 12, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 13, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 80)
-										_screen->putPixelXEtc(true, x, y, drawMask, 14, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 15, 0);
-								}
-							    if (surface) {
-								    if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 0);
-								    else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 1);
-								    else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 2);
-								    else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 3);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 4);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 5);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 6);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 7);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									    _screen->putPixelSurface(x, y, drawMask, 8);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 9);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 10);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 11);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									    _screen->putPixelSurface(x, y, drawMask, 12);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 13);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 80)
-									    _screen->putPixelSurface(x, y, drawMask, 14);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 15);
-							    } else {
-								    _screen->putPixelSurface(x, y, drawMask, 0);
-							    }
-
-						        if (g_sci->depth_rendering)
-						        if (g_sci->enhanced_DEPTH) {
-							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-									
-							        if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
-								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
-								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
-								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
-							        }
-						        }
-							
-						
-						x++;
-
-						if (x >= rightX) {
-							offsetPal += sourcePixelSkipPerRow;
-							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
-							x = leftX;
-							y++;
-						}
-						offsetPal += 1;
-						offset += 4;
-					}
-				} else {
-					// Draw bitmap to screen (mirrored)
-					x = rightX - 1;
-					int offsetPal = 0;
-					int offset = 0;
-					while (y < lastY) {
-
-						
-
-							//if (priority >= _screen->getPriorityX(x, y))
-							{
-								if (g_sci->paletted_enhanced_BG) {
-									_screen->putPixelPaletted_BG(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
-								}
-							    if (g_sci->enhanced_BG && !g_sci->paletted_enhanced_BG) {
-									if (enh[offset + 3] != 0) {
-									    _screen->putPixelR_BG(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
-									    _screen->putPixelG_BG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									    _screen->putPixelB_BG(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-									}
-								}
-								if (overlay) {
-									
-										_screen->putPixelR_BG(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
-										_screen->putPixelG_BG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
-								        _screen->putPixelB_BG(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-									
-								}
-							}
-								if (g_sci->enhanced_PRIORITY) {
-									if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
-									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 1, 0);
-									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 2, 0);
-									else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 3, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 4, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 5, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 6, 0);
-									else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-										_screen->putPixelXEtc(true, x, y, drawMask, 7, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-										_screen->putPixelXEtc(true, x, y, drawMask, 8, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 9, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 0)
-										_screen->putPixelXEtc(true, x, y, drawMask, 10, 0);
-									else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 11, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-										_screen->putPixelXEtc(true, x, y, drawMask, 12, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 13, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 80)
-										_screen->putPixelXEtc(true, x, y, drawMask, 14, 0);
-									else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-										_screen->putPixelXEtc(true, x, y, drawMask, 15, 0);
-								}
-							    if (surface) {
-								    if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 0);
-								    else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 1);
-								    else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 2);
-								    else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 3);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 4);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 5);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 6);
-								    else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									    _screen->putPixelSurface(x, y, drawMask, 7);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									    _screen->putPixelSurface(x, y, drawMask, 8);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 9);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 0)
-									    _screen->putPixelSurface(x, y, drawMask, 10);
-								    else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 11);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									    _screen->putPixelSurface(x, y, drawMask, 12);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 13);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 80)
-									    _screen->putPixelSurface(x, y, drawMask, 14);
-								    else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									    _screen->putPixelSurface(x, y, drawMask, 15);
-							    } else {
-								    _screen->putPixelSurface(x, y, drawMask, 0);
-							    }
-
-						        if (g_sci->depth_rendering)
-						        if (g_sci->enhanced_DEPTH) {
-							        _screen->putPixel_DEPTH(x, y, enhDepth[offset + 1]);
-									if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
-								        _screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
-								        _screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
-								        _screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
-							        }
-						        }
-						
-						if (x == leftX) {
-							offsetPal += sourcePixelSkipPerRow;
-							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
-							x = rightX;
-							y++;
-						}
-						offsetPal -= 1;
-						offset -= 4;
-						x--;
-					}
-				}
-			} else {
-				// EGA, when priority is above 15
-				//  we don't check priority and also won't set priority at all
-				//  fixes picture 48 of kq5 (island overview). Bug #5182
-				if (!_mirroredFlag) {
-					// EGA+priority>15: Draw bitmap to screen
-					x = leftX;
-					int offsetPal = 0;
-					int offset = 0;
-					while (y < lastY) {
-
-						//if (curByte != clearColor)
-
-					 {
-							if (g_sci->paletted_enhanced_BG) {
-								_screen->putPixelPaletted_BG(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
-							}
-							 if (g_sci->enhanced_BG && !g_sci->paletted_enhanced_BG) {
-								if (enh[offset + 3] != 0) {
-									_screen->putPixelR_BG(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
-									_screen->putPixelG_BG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									_screen->putPixelB_BG(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-								}
-							}
-							if (overlay) {
-								
-									_screen->putPixelR_BG(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
-									_screen->putPixelG_BG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
-								    _screen->putPixelB_BG(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-								
-							}
-							
-							if (g_sci->enhanced_PRIORITY) {
-								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
-								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 1, 0);
-								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 2, 0);
-								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 3, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 4, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 5, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 6, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 7, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-									_screen->putPixelXEtc(true, x, y, drawMask, 8, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 9, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 10, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 11, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-									_screen->putPixelXEtc(true, x, y, drawMask, 12, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 13, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 80)
-									_screen->putPixelXEtc(true, x, y, drawMask, 14, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 15, 0);
-							}
-							if (surface) {
-								if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 0);
-								else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 1);
-								else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 2);
-								else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 3);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 4);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 5);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 6);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 7);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									_screen->putPixelSurface(x, y, drawMask, 8);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 9);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 10);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 11);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									_screen->putPixelSurface(x, y, drawMask, 12);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 13);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 80)
-									_screen->putPixelSurface(x, y, drawMask, 14);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 15);
-							} else {
-								_screen->putPixelSurface(x, y, drawMask, 0);
-							}
-
-							if (g_sci->depth_rendering)
-						    if (g_sci->enhanced_DEPTH) {
-								_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
-								if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
-									_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
-									_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
-									_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
-								}
-							}
-						}
-						x++;
-						if (x >= rightX) {
-							offsetPal += sourcePixelSkipPerRow;
-							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
-							x = leftX;
-							y++;
-						}
-						offsetPal += 1;
-						offset += 4;
-					}
-				} else {
-					// EGA+priority>15: Draw bitmap to screen (mirrored)
-					x = rightX - 1;
-					int offsetPal = 0;
-					int offset = 0;
-					while (y < lastY) {
-						{
-							if (g_sci->paletted_enhanced_BG) {
-								_screen->putPixelPaletted_BG(x, y, drawMask, enhPal[offsetPal], priority, 0, true);
-							}
-							if (g_sci->enhanced_BG && !g_sci->paletted_enhanced_BG) {
-								if (enh[offset + 3] != 0) {
-									_screen->putPixelR_BG(x, y, drawMask, enh[offset], enh[offset + 3], priority, 0, true);
-									_screen->putPixelG_BG(x, y, drawMask, enh[offset + 1], enh[offset + 3], priority, 0);
-									_screen->putPixelB_BG(x, y, drawMask, enh[offset + 2], enh[offset + 3], priority, 0);
-								}
-							}
-							if (overlay) {
-								
-									_screen->putPixelR_BG(x, y, drawMask, enhOverlay[offset], enhOverlay[offset + 3], priority, 0, true);
-									_screen->putPixelG_BG(x, y, drawMask, enhOverlay[offset + 1], enhOverlay[offset + 3], priority, 0);
-								    _screen->putPixelB_BG(x, y, drawMask, enhOverlay[offset + 2], enhOverlay[offset + 3], priority, 0);
-								
-							}
-							if (g_sci->enhanced_PRIORITY) {
-								if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 0, 0);
-								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 1, 0);
-								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 2, 0);
-								else if (enhPrio[offset] == 0 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 3, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 4, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 0 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 5, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 6, 0);
-								else if (enhPrio[offset] == 160 && enhPrio[offset + 1] == 160 && enhPrio[offset + 2] == 160)
-									_screen->putPixelXEtc(true, x, y, drawMask, 7, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-									_screen->putPixelXEtc(true, x, y, drawMask, 8, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 9, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 0)
-									_screen->putPixelXEtc(true, x, y, drawMask, 10, 0);
-								else if (enhPrio[offset] == 80 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 11, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 80)
-									_screen->putPixelXEtc(true, x, y, drawMask, 12, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 80 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 13, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 80)
-									_screen->putPixelXEtc(true, x, y, drawMask, 14, 0);
-								else if (enhPrio[offset] == 255 && enhPrio[offset + 1] == 255 && enhPrio[offset + 2] == 255)
-									_screen->putPixelXEtc(true, x, y, drawMask, 15, 0);
-							}
-							if (surface) {
-								if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 0);
-								else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 1);
-								else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 2);
-								else if (enhSurface[offset] == 0 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 3);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 4);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 0 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 5);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 6);
-								else if (enhSurface[offset] == 160 && enhSurface[offset + 1] == 160 && enhSurface[offset + 2] == 160)
-									_screen->putPixelSurface(x, y, drawMask, 7);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									_screen->putPixelSurface(x, y, drawMask, 8);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 9);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 0)
-									_screen->putPixelSurface(x, y, drawMask, 10);
-								else if (enhSurface[offset] == 80 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 11);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 80)
-									_screen->putPixelSurface(x, y, drawMask, 12);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 80 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 13);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 80)
-									_screen->putPixelSurface(x, y, drawMask, 14);
-								else if (enhSurface[offset] == 255 && enhSurface[offset + 1] == 255 && enhSurface[offset + 2] == 255)
-									_screen->putPixelSurface(x, y, drawMask, 15);
-							} else {
-								_screen->putPixelSurface(x, y, drawMask, 0);
-							}
-
-							if (g_sci->depth_rendering)
-						    if (g_sci->enhanced_DEPTH) {
-								_screen->putPixel_DEPTH(x, y, enh[offset + 1]);
-								if (x < 8 * g_sci->_enhancementMultiplier || x > g_sci->_gfxScreen->getDisplayWidth() - (8 * g_sci->_enhancementMultiplier) || y < 16 * g_sci->_enhancementMultiplier || y > g_sci->_gfxScreen->getDisplayHeight() - (8 * g_sci->_enhancementMultiplier)) {
-									_screen->putPixelR_BG(x, y, drawMask, 0, 255, priority, 0, true);
-									_screen->putPixelG_BG(x, y, drawMask, 0, 255, priority, 0);
-									_screen->putPixelB_BG(x, y, drawMask, 0, 255, priority, 0);
-								}
-							}
-
-						}
-						if (x == leftX) {
-							offsetPal += sourcePixelSkipPerRow;
-							offset += sourcePixelSkipPerRow * g_system->getScreenFormat().bpp();
-							x = rightX;
-							y++;
-						}
-						offsetPal -= 1;
-						offset -= 4;
-
-						x--;
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -1750,12 +477,18 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 	g_sci->enhanced_PRIORITY = false;
 
 		Common::String bgFileName = _resource->name().c_str();
-
-	if (g_sci->scene_transition) {
-
+	if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
+		if (fileIsInExtraDIRPicture((bgFileName + ".reye.png").c_str()))
+			bgFileName += ".reye";
+	}
+	if (g_sci->scene_transition) {	
 		bgFileName = g_sci->prevPicName.c_str();
-		bgFileName += "-";
-		bgFileName += _resource->name().c_str();
+		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
+				bgFileName += "-";
+				bgFileName += _resource->name().c_str();
+				if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye)
+					bgFileName += ".reye";
+		}
 	}
 	if (videoCutsceneEnd == bgFileName.c_str()) {
 		playingVideoCutscenes = false;
@@ -1825,6 +558,10 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		Common::String fn = picstrbuffer;
 		debug(fn.c_str());
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
+		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
+			if (fileIsInExtraDIRPicture((fnNoAnim + ".reye.png").c_str()))
+				fnNoAnim += ".reye";
+		}
 		char picnextstrbuffer[32];
 		retVal = snprintf(picnextstrbuffer, buf_size, "%s.%u", bgFileName.c_str(), (g_sci->enhanced_bg_frame + 1));
 		Common::String nextAnim = picnextstrbuffer;
@@ -1841,6 +578,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		{
+
 			if ((fileIsInExtraDIRPicture((bgFileName + ".ogg").c_str()))) {
 				if (g_sci->enhanced_gfx_enabled) {
 					if (g_sci->oggBackground != (bgFileName + ".ogg").c_str()) {
@@ -1939,7 +677,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
 					if (g_sci->enhanced_gfx_enabled)
-					g_sci->enhanced_bg_frame++;
+						g_sci->enhanced_bg_frame++;
 					//debug("%s.png FOUND = PLAYING BACKGROUND ANIMATION!", nextAnim);
 					g_sci->play_enhanced_BG_anim = true;
 				} else {
@@ -1954,6 +692,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 					retVal = snprintf(ststrbuffer, buf_size_st, "pic.%u", g_sci->prevPictureId);
 					Common::String st = ststrbuffer;
 					*/
+					if (!g_sci->stereoRightEye && !g_sci->scene_transition)
 					g_sci->prevPicName = _resource->name().c_str();
 					//if ((strcmp(_resource->name().c_str(), st.c_str()) == 0))
 					{
@@ -2014,7 +753,6 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 										preloaded_256 = true;
 										debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
 										pixelCountX = png->w * png->h * 4;
-
 										g_sci->enhanced_BG = false;
 										g_sci->paletted_enhanced_BG = true;
 									}
@@ -2036,7 +774,6 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 									}
 								}
 							}
-
 							if (strcmp(viewsMapit->first.c_str(), (fn + "_o.png").c_str()) == 0) {
 
 								std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
@@ -2063,7 +800,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 								if (enhPrio) {
 									g_sci->enhanced_PRIORITY = true;
 									preloaded_p = true;
-									debug((fn + "_p.png WAS ALREADY CACHED :)").c_str());
+									debug("%s_p.png WAS ALREADY CACHED :)", fn.c_str());
 								}
 							}
 						}
@@ -2102,8 +839,8 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		}
 
 		if (!g_sci->backgroundIsVideo) {
-			if (g_sci->enhanced_gfx_enabled) {
-				if (!preloaded) {
+			if (!preloaded) {
+				if (g_sci->enhanced_gfx_enabled) {
 					if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
 						Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
@@ -2114,7 +851,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 							if (!file) {
 								debug(10, "Enhanced Bitmap %s error", fileName.c_str());
 							} else {
-								debug(10, "Enhanced Bitmap %s EXISTS and has been loaded!\n", fileName.c_str());
+								debug("%s EXISTS and has been loaded!\n", fileName.c_str());
 								png = loadPNGPicture(file);
 								if (png) {
 									enh = (const byte *)png->getPixels();
@@ -2174,6 +911,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 									enhPal = (const byte *)pngPal->getPixels();
 									if (enhPal) {
 										pixelCountX = pngPal->w * pngPal->h * 4;
+
 										g_sci->enhanced_BG = false;
 										g_sci->paletted_enhanced_BG = true;
 										g_sci->_gfxPalette16->overridePalette = false;
@@ -2274,60 +1012,60 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 			}
 		}
 		if (g_sci->enhanced_gfx_enabled) {
-		if (!preloaded_o) {
-			if (fileIsInExtraDIRPicture((fn + "_o.png").c_str())) {
+			if (!preloaded_o) {
+				if (fileIsInExtraDIRPicture((fn + "_o.png").c_str())) {
 
-				Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
-				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+					Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + "_o.png").getName();
+					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
-				if (!file) {
-					fileName = folder.getChild(fn + "_o.png").getName();
-					file = SearchMan.createReadStreamForMember(fileName);
 					if (!file) {
-						debug(10, "Enhanced Overlay %s error", fileName.c_str());
-					} else {
-						debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngOverlay = loadPNGPicture(file);
-						if (pngOverlay) {
-							enhOverlay = (const byte *)pngOverlay->getPixels();
-							if (enhOverlay) {
-								pixelCountX = pngOverlay->w * pngOverlay->h * 4;
-								overlay = true;
-								std::pair<Graphics::Surface *, const byte *> tmp;
-								tmp.first = pngOverlay;
-								tmp.second = enhOverlay;
-								viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
+						fileName = folder.getChild(fn + "_o.png").getName();
+						file = SearchMan.createReadStreamForMember(fileName);
+						if (!file) {
+							debug(10, "Enhanced Overlay %s error", fileName.c_str());
+						} else {
+							debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
+							pngOverlay = loadPNGPicture(file);
+							if (pngOverlay) {
+								enhOverlay = (const byte *)pngOverlay->getPixels();
+								if (enhOverlay) {
+									pixelCountX = pngOverlay->w * pngOverlay->h * 4;
+									overlay = true;
+									std::pair<Graphics::Surface *, const byte *> tmp;
+									tmp.first = pngOverlay;
+									tmp.second = enhOverlay;
+									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
+								}
+							}
+						}
+					}
+				} else if (fileIsInExtraDIRPicture((fnNoAnim + "_o.png").c_str())) {
+
+					Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_o.png").getName();
+					Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
+
+					if (!file) {
+						fileName = folder.getChild(fnNoAnim + "_o.png").getName();
+						file = SearchMan.createReadStreamForMember(fileName);
+						if (!file) {
+							debug(10, "Enhanced Overlay %s error", fileName.c_str());
+						} else {
+							debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
+							pngOverlay = loadPNGPicture(file);
+							if (pngOverlay) {
+								enhOverlay = (const byte *)pngOverlay->getPixels();
+								if (enhOverlay) {
+									pixelCountX = pngOverlay->w * pngOverlay->h * 4;
+									overlay = true;
+									std::pair<Graphics::Surface *, const byte *> tmp;
+									tmp.first = pngOverlay;
+									tmp.second = enhOverlay;
+									viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
+								}
 							}
 						}
 					}
 				}
-			} else if (fileIsInExtraDIRPicture((fnNoAnim + "_o.png").c_str())) {
-
-				Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + "_o.png").getName();
-				Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
-
-				if (!file) {
-					fileName = folder.getChild(fnNoAnim + "_o.png").getName();
-					file = SearchMan.createReadStreamForMember(fileName);
-					if (!file) {
-						debug(10, "Enhanced Overlay %s error", fileName.c_str());
-					} else {
-						debug(10, "Enhanced Overlay %s EXISTS and has been loaded!\n", fileName.c_str());
-						pngOverlay = loadPNGPicture(file);
-						if (pngOverlay) {
-							enhOverlay = (const byte *)pngOverlay->getPixels();
-							if (enhOverlay) {
-								pixelCountX = pngOverlay->w * pngOverlay->h * 4;
-								overlay = true;
-								std::pair<Graphics::Surface *, const byte *> tmp;
-								tmp.first = pngOverlay;
-								tmp.second = enhOverlay;
-								viewsMap.insert(std::pair<std::string, std::pair<Graphics::Surface *, const byte *> >((fn + "_o.png").c_str(), tmp));
-							}
-						}
-					}
-				}
-			}
 			}
 		}
 		if (!preloaded_p) {
@@ -3171,6 +1909,11 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 						_priority = pic_priority; // set global priority so the cel gets drawn using current priority as well
 					}
 					drawCelData(data, curPos, curPos + 8, 0, x, y, 0, 0, false);
+					if (g_sci->stereoscopic) {
+						g_sci->stereoRightEye = !g_sci->stereoRightEye;
+						drawCelData(data, curPos, curPos + 8, 0, x, y, 0, 0, false);
+						g_sci->stereoRightEye = !g_sci->stereoRightEye;
+					}
 					curPos += size;
 					break;
 				case PIC_OPX_VGA_PRIORITY_TABLE_EQDIST:

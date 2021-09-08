@@ -753,7 +753,7 @@ void GfxAnimate::setNsRect(GfxView *view, AnimateList::iterator it) {
 	
 	// Create rect according to coordinates and given cel
 	if (it->scaleSignal & kScaleSignalDoScaling) {
-		if (!g_sci->enhanced_DEPTH || !g_sci->depth_rendering) {
+		if ((!g_sci->enhanced_DEPTH && !g_sci->depth_rendering) || (!g_sci->enhanced_DEPTH && !g_sci->stereo_pair_rendering)) {
 			if (!it->viewEnhanced) {
 				view->getCelScaledRect(it->loopNo, it->celNo, it->x, it->y, it->z, it->scaleX, it->scaleY, it->celRect);
 			} else {
@@ -1312,6 +1312,7 @@ void GfxAnimate::updateScreen(byte oldPicNotValid) {
 		
 	}*/
 		//_screen->convertToRGB(_ports->_curPort->rect);
+		
 		reAnimate(_ports->_curPort->rect);
 		// 2. Convert to RGB
 		//_screen->convertToRGB(_ports->_curPort->rect);
