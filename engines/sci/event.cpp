@@ -532,7 +532,7 @@ void EventManager::updateScreen() {
 			 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 60) {
 				 s->_screenUpdateTime = g_system->getMillis();
 
-				 g_system->copyRectToScreen(g_sci->_gfxScreen->_rgbScreen, g_sci->_gfxScreen->_displayWidth * 4, 0, 0, g_sci->_gfxScreen->_displayWidth, g_sci->_gfxScreen->_displayHeight);
+				 //g_system->copyRectToScreen(g_sci->_gfxScreen->_rgbScreen, g_sci->_gfxScreen->_displayWidth * 4, 0, 0, g_sci->_gfxScreen->_displayWidth, g_sci->_gfxScreen->_displayHeight);
 				 g_system->updateScreen();
 
 				 //g_sci->stereoRightEye = !g_sci->stereoRightEye;
