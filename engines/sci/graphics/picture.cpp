@@ -131,12 +131,12 @@ void GfxPicture::draw(bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 			g_sci->stereoRightEye = false;
 			drawVectorData(*_resource);
 			drawEnhancedBackground(*_resource);
-			g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+			//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
 			if (g_sci->stereoscopic) {
 				g_sci->stereoRightEye = true;
 				drawVectorData(*_resource);
 				drawEnhancedBackground(*_resource);
-				g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+				//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
 				g_sci->stereoRightEye = false;
 			}
 		}

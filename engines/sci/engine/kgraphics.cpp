@@ -671,7 +671,7 @@ reg_t kDrawPic(EngineState *s, int argc, reg_t *argv) {
 	}
 	if (argc >= 4)
 		EGApaletteNo = argv[3].toUint16();
-	g_sci->stereoRightEye = false;
+	
 	g_sci->_gfxPaint16->kernelDrawPicture(pictureId, animationNr, animationBlackoutFlag, mirroredFlag, addToFlag, EGApaletteNo);
 
 	return s->r_acc;

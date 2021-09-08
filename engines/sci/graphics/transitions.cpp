@@ -278,6 +278,7 @@ void GfxTransitions::doTransition(int16 number, bool blackoutFlag) {
 		setNewScreen(blackoutFlag);
 	}
 	// Just to make sure that the current frame is shown in case we skipped the last update-call b/c of timing
+	if (!g_sci->stereo_pair_rendering)
 	updateScreen();
 	debugC(kDebugLevelGraphics, "Transition took %d milliseconds", g_system->getMillis() - _transitionStartTime);
 }
