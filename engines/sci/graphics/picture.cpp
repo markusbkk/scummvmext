@@ -118,43 +118,45 @@ void GfxPicture::draw(bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 	switch (headerSize) {
 	case 0x26: // SCI 1.1 VGA picture
 		_resourceType = SCI_PICTURE_TYPE_SCI11;
-		if (!g_sci->stereoscopic) {
+		if (!g_sci->stereoscopic || g_sci->depth_rendering) {
 			drawSci11Vga();
 		} else {
-			g_sci->stereoRightEye = false;
-			drawSci11Vga();
-			
-				g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
-			
+			if (g_sci->stereo_pair_rendering) {
+				g_sci->stereoRightEye = false;
+				drawSci11Vga();
+
+				//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+
 				g_sci->stereoRightEye = true;
 				drawSci11Vga();
-				
-					g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+
+				//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
 				g_sci->stereoRightEye = false;
-			
+			}
 		}
 		break;
 	default:
 		// VGA, EGA or Amiga vector data
 		_resourceType = SCI_PICTURE_TYPE_REGULAR;
 		debug(10, "%s\n", _resource->name().c_str());
-		if (!g_sci->stereoscopic) {
+		if (!g_sci->stereoscopic || g_sci->depth_rendering) {
 			drawVectorData(*_resource);
 			drawEnhancedBackground(*_resource);
 		} else {
-			g_sci->stereoRightEye = false;
-			drawVectorData(*_resource);
-			drawEnhancedBackground(*_resource);
-			
-			g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
-			
+			if (g_sci->stereo_pair_rendering) {
+				g_sci->stereoRightEye = false;
+				drawVectorData(*_resource);
+				drawEnhancedBackground(*_resource);
+
+				//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+
 				g_sci->stereoRightEye = true;
 				drawVectorData(*_resource);
 				drawEnhancedBackground(*_resource);
-				
-				g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+
+				//g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
 				g_sci->stereoRightEye = false;
-			
+			}
 		}
 		
 	}

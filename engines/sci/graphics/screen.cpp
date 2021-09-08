@@ -440,7 +440,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-							    if (g_sci->stereoRightEye) {
+							    if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
 								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
@@ -502,7 +502,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-							    if (g_sci->stereoRightEye) {
+							    if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
 								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
@@ -554,7 +554,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-							    if (g_sci->stereoRightEye) {
+							    if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
 								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
@@ -607,7 +607,7 @@ void GfxScreen::convertToRGB(const Common::Rect &rect) {
 								r = *inR_BG * ((0.003921568627451) * (255 - *inA));
 								g = *inG_BG * ((0.003921568627451) * (255 - *inA));
 								b = *inB_BG * ((0.003921568627451) * (255 - *inA));
-							    if (g_sci->stereoRightEye) {
+							    if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
 								    r = *inR_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    g = *inG_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
 								    b = *inB_BG_R_EYE * ((0.003921568627451) * (255 - *inA));
