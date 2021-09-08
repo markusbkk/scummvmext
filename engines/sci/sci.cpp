@@ -1004,7 +1004,7 @@ void SciEngine::runGame() {
 	do {
 		_gamestate->_executionStackPosChanged = false;
 		run_vm(_gamestate);
-		
+		g_sci->getEventManager()->updateScreen();
 		exitGame();
 
 		_guestAdditions->sciEngineRunGameHook();
@@ -1035,7 +1035,6 @@ void SciEngine::runGame() {
 		} else {
 			break; // exit loop
 		}
-
 	} while (true);
 }
 
