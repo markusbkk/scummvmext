@@ -493,10 +493,16 @@ Common::Error SciEngine::run() {
 		_forceHiresGraphics = ConfMan.getBool("enable_high_resolution_graphics");
 	}
 	if (Common::checkGameGUIOption(GAMEOPTION_STEREOSCOPIC, ConfMan.get("guioptions"))) {
-		stereoscopic = ConfMan.getBool("stereoscopic_rendering");
+		stereoscopic = ((ConfMan.getInt("stereoscopic_rendering") != kStereoscopicModeOff) && (ConfMan.getInt("stereoscopic_rendering") != kStereoscopicMode2DDepth));
 	}
-	if (Common::checkGameGUIOption(GAMEOPTION_DEPTH, ConfMan.get("guioptions"))) {
-		depth_rendering = ConfMan.getBool("depth_rendering");
+	if (Common::checkGameGUIOption(GAMEOPTION_STEREOSCOPIC, ConfMan.get("guioptions"))) {
+		depth_rendering = ((ConfMan.getInt("stereoscopic_rendering") == kStereoscopicModeDepth) || (ConfMan.getInt("stereoscopic_rendering") == kStereoscopicMode2DDepth));
+	}
+	if (Common::checkGameGUIOption(GAMEOPTION_STEREOSCOPIC, ConfMan.get("guioptions"))) {
+		stereo_pair_rendering = (ConfMan.getInt("stereoscopic_rendering") == kStereoscopicModePair);
+	}
+	if (Common::checkGameGUIOption(GAMEOPTION_ENHANCE_GFX, ConfMan.get("guioptions"))) {
+		enhanced_gfx_enabled = (ConfMan.getBool("enhanced_gfx_enabled"));
 	}
 	if (getSciVersion() < SCI_VERSION_2) {
 		// Initialize the game screen

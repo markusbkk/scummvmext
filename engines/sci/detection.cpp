@@ -274,29 +274,15 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			false
 		}
 	},
-
-    // Stereoscopic Rendering
-    {
-        GAMEOPTION_STEREOSCOPIC,
-        {
-		 _s("Stereoscopic rendering"),
-         _s("Render Left/Right 'Side-by-Side'format"),
-         "stereoscopic_rendering",
-         false
+	{
+		GAMEOPTION_ENHANCE_GFX,
+		{
+			_s("Replacement graphics"),
+			_s("Use replacement graphics files in Extra folder"),
+			"enhanced_gfx_enabled",
+			true
 		}
 	},
-
-	// Depth Perspective (using _d.png's)
-    {
-        GAMEOPTION_DEPTH,
-        {
-		 _s("Use depth maps"),
-         _s("Use greyscale depth maps to create camera perspectice"),
-         "depth_rendering",
-         false
-		}
-	},
-
 	// SCI16 games: use custom per-resource palettes to improve visuals
 	{
 		GAMEOPTION_PALETTE_MODS,
@@ -330,6 +316,36 @@ struct PopUpOptionsMap {
 #define POPUP_OPTIONS_TERMINATOR { nullptr, nullptr, nullptr, nullptr, 0, { POPUP_OPTIONS_ITEMS_TERMINATOR } }
 
 static const PopUpOptionsMap popUpOptionsList[] = {
+	{
+		GAMEOPTION_STEREOSCOPIC,
+		 _s("Stereoscopic:"),
+         _s("Render Left/Right 'Side-by-Side'format"),
+         "stereoscopic_rendering",
+			kStereoscopicModeOff,
+		{
+			{
+				_s("2D"),
+				kStereoscopicModeOff
+			},
+			{
+				_s("2D Depth Map"),
+				kStereoscopicMode2DDepth
+			},
+			{
+				_s("3D Flat"),
+				kStereoscopicModeFlat
+			},
+			{
+				_s("3D L/R Pair"),
+				kStereoscopicModePair
+			},
+			{
+				_s("3D Depth Map"),
+				kStereoscopicModeDepth
+			},
+			POPUP_OPTIONS_ITEMS_TERMINATOR
+		}
+	},
 	{
 		GAMEOPTION_MIDI_MODE,
 		_s("MIDI mode:"),

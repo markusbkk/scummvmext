@@ -224,6 +224,7 @@ public:
 	bool checkAddressBreakpoint(const reg_t &address);
 
 	bool stereoscopic = false;
+	bool stereo_pair_rendering = false;
 	bool depth_rendering = false;
 	int stereoSeparation = 30; // unused.
 	bool stereoRightEye = false;
@@ -232,6 +233,7 @@ public:
 	int _enhancementMultiplierView;
 	const Graphics::Surface *_theoraSurface;
 	Common::String oggBackground;
+	bool enhanced_gfx_enabled = true;
 	bool enhanced;
 	bool enhancedPrio;
 	bool backgroundIsVideo = false;
