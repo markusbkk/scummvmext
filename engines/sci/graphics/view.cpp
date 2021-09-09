@@ -1070,8 +1070,8 @@ void GfxView::draw(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLe
 									if (offset + (x * 4) + 3 < (viewpng->w * g_sci->_enhancementMultiplier) * (viewpng->h * g_sci->_enhancementMultiplier) * 4) {
 										if (priority >= _screen->getPriorityX((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y)) {
 											_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4)], viewenh[offset + (x * 4) + 3], priority, 0, false); //viewenh[offset + (x * 4)]
-											_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0);    //viewenh[offset + (x * 4) + 1]
-											_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0);
+											_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0, false); //viewenh[offset + (x * 4) + 1]
+											_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0, false);
 											if (viewenh[offset + (x * 4) + 3] >= 127)
 											_screen->putPixelXEtc(false, ((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
 										}
@@ -1420,8 +1420,8 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 										{
 
 											_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 										}
 										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 											_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -1460,8 +1460,8 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 										//if (colorA != 0)
 										{
 											_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 										}
 										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 											_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -1549,8 +1549,8 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 											{
 
 												_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-												_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-												_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											    _screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											    _screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 											}
 											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 												_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -1589,8 +1589,8 @@ void GfxView::drawScaled(Graphics::Surface *viewpng, const byte *viewenh, int pi
 											if (colorA != 0)
 											{
 												_screen->putPixelR(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-												_screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-												_screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											    _screen->putPixelG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											    _screen->putPixelB(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 											}
 											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 												_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -1848,12 +1848,12 @@ void GfxView::drawNoUpdate(Graphics::Surface *viewpng, const byte *viewenh, int 
 												if (g_sci->enhanced_BG) {
 
 													_screen->putPixelR_BG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4)], viewenh[offset + (x * 4) + 3], priority, 0, true); //viewenh[offset + (x * 4)]
-													_screen->putPixelG_BG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0);   //viewenh[offset + (x * 4) + 1]
-													_screen->putPixelB_BG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0);
+													_screen->putPixelG_BG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0, true); //viewenh[offset + (x * 4) + 1]
+													_screen->putPixelB_BG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0, true);
 												} else if (g_sci->paletted_enhanced_BG) {
 													_screen->putPixelR((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4)], viewenh[offset + (x * 4) + 3], priority, 0, false); //viewenh[offset + (x * 4)]
-													_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0);    //viewenh[offset + (x * 4) + 1]
-													_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0);
+													_screen->putPixelG((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 1], viewenh[offset + (x * 4) + 3], priority, 0, false); //viewenh[offset + (x * 4) + 1]
+													_screen->putPixelB((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x, (newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y, drawMask, viewenh[offset + (x * 4) + 2], viewenh[offset + (x * 4) + 3], priority, 0, false);
 												}
 												if (viewenh[offset + (x * 4) + 3] >= 127)
 													_screen->putPixelXEtc(false, ((newClipRectTranslated.left * g_sci->_enhancementMultiplier) + x), ((newClipRectTranslated.top * g_sci->_enhancementMultiplier) + y), drawMask, priority, 0);
@@ -2209,8 +2209,8 @@ void GfxView::drawScaledNoUpdate(Graphics::Surface *viewpng, const byte *viewenh
 										{
 
 											_screen->putPixelR_BG(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-											_screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-											_screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											_screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 										}
 										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 											_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -2249,8 +2249,8 @@ void GfxView::drawScaledNoUpdate(Graphics::Surface *viewpng, const byte *viewenh
 										if (colorA >= 3)
 										{
 											_screen->putPixelR_BG(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-											_screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-											_screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											_screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											_screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 										}
 										if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 											_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -2338,8 +2338,8 @@ void GfxView::drawScaledNoUpdate(Graphics::Surface *viewpng, const byte *viewenh
 											{
 
 												_screen->putPixelR_BG(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-											    _screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-											    _screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											    _screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											    _screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 											}
 											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 												_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);
@@ -2378,8 +2378,8 @@ void GfxView::drawScaledNoUpdate(Graphics::Surface *viewpng, const byte *viewenh
 											if (colorA >= 3)
 											{
 											    _screen->putPixelR_BG(x2, y2, drawMask, getMappedColor(colorR, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
-											    _screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0);
-											    _screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0);
+											    _screen->putPixelG_BG(x2, y2, drawMask, getMappedColor(colorG, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
+											    _screen->putPixelB_BG(x2, y2, drawMask, getMappedColor(colorB, scaleSignal, palette, x2, y2), colorA, priority, 0, false);
 											}
 											if (getMappedColor(colorA, scaleSignal, palette, x2, y2) >= 127) {
 												_screen->putPixelXEtc(false, x2, y2, drawMask, priority, 0);

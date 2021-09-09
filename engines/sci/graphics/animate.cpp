@@ -449,6 +449,12 @@ void GfxAnimate::LoadAllExtraPNG() {
 			    int retVal, buf_size = 32;
 			    retVal = snprintf(viewstrbuffer, buf_size, "view.%u.%u.%u", listEntry.viewId, listEntry.loopNo, listEntry.celNo);
 			    Common::String fn = viewstrbuffer;
+
+			    if (g_sci->stereoscopic && g_sci->stereoRightEye) {
+				    if (fileIsInExtraDIR((fn + ".reye.png").c_str()))
+					    fn += ".reye";
+			    }
+
 			    if (videoCutsceneEnd == fn.c_str()) {
 				    playingVideoCutscenes = false;
 				    wasPlayingVideoCutscenes = true;
@@ -892,10 +898,6 @@ void GfxAnimate::update() {
 	// Draw always-update cels
 	for (it = _list.begin(); it != end; ++it) {
 
-
-		if (it->signal & kSignalNoUpdate) {
-			it->signal &= ~kSignalAlwaysUpdate;
-		}
 		if (it->signal & kSignalAlwaysUpdate) {
 
 			// draw corresponding cel
@@ -947,7 +949,7 @@ void GfxAnimate::update() {
 		if (it->signal & kSignalNoUpdate && !(it->signal & kSignalHidden)) {
 			// draw corresponding cel
 			
-			_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
 
 			it->showBitsFlag = true;
 
@@ -1185,11 +1187,9 @@ void GfxAnimate::drawCels() {
 					writeSelector(_s->_segMan, it->object, SELECTOR(underBits), bitsHandle);
 				}
 			}
-			if (it->signal & kSignalNoUpdate) {
-				_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
-			} else {
-				_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
-			}
+
+				_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY, it->scaleSignal);
+
 			it->showBitsFlag = true;
 
 			if (it->signal & kSignalRemoveView)
@@ -1377,6 +1377,12 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 					int retVal, buf_size = 32;
 					retVal = snprintf(viewstrbuffer, buf_size, "view.%u.%u.%u", it->viewId, it->loopNo, it->celNo);
 					Common::String fn = viewstrbuffer;
+
+					if (g_sci->stereoscopic && g_sci->stereoRightEye) {
+						if (fileIsInExtraDIR((fn + ".reye.png").c_str()))
+							fn += ".reye";
+					}
+
 					bool preloaded = false;
 					if (it->viewpng == NULL) {
 						if (viewsMap.size() > 0)
@@ -1488,7 +1494,10 @@ void GfxAnimate::reAnimate(Common::Rect rect) {
 					}
 				}
 			}
-			_paint16->drawCel(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			
+			
+			_paint16->drawCelNoUpdate(it->viewpng, it->viewenh, it->pixelsLength, it->viewEnhanced, it->enhancedIs256, it->viewId, it->loopNo, it->celNo, 0, it->celRect, it->priority, it->paletteNo, it->scaleX, it->scaleY);
+			
 		}
 		_paint16->bitsShow(rect);
 		// restoring
@@ -1573,7 +1582,17 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 			int retVal, buf_size = 32;
 			retVal = snprintf(viewstrbuffer, buf_size, "view.%u.%u.%u", viewId, loopNo, celNo);
 			Common::String fn = viewstrbuffer;
+			
+			if (g_sci->stereoscopic && g_sci->stereoRightEye) {
+				if (fileIsInExtraDIR((fn + ".reye.png").c_str()))
+					fn += ".reye";
+			}
+
 			bool preloaded = false;
+			if (g_sci->stereoscopic && g_sci->stereoRightEye) {
+				if (fileIsInExtraDIR((fn + ".reye.png").c_str()))
+					fn += ".reye";
+			}
 			if (listEntry.viewpng == NULL) {
 				if (viewsMap.size() > 0)
 					for (viewsMapit = viewsMap.begin();
@@ -1598,7 +1617,7 @@ void GfxAnimate::addToPicDrawView(GuiResourceId viewId, int16 viewNo, int16 loop
 				if (!preloaded) {
 					Common::FSNode folder;
 					if (!extraDIRList.empty()) {
-						if (fileIsInExtraDIR((fn + "png").c_str())) {
+						if (fileIsInExtraDIR((fn + ".png").c_str())) {
 							if (!listEntry.viewEnhanced) {
 								Common::String fileName = fn + ".png";
 								Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);

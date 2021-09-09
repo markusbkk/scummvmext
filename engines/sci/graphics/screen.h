@@ -685,7 +685,7 @@ public:
 		}
 	}
 
-	void putPixelG_BG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
+	void putPixelG_BG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
@@ -783,7 +783,7 @@ public:
 		}
 	}
 
-	void putPixelB_BG(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control) {
+	void putPixelB_BG(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
@@ -1115,6 +1115,8 @@ public:
 						if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
 						_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 					}
 				} else {
 					//assert(_format.bytesPerPixel == 4);
@@ -1130,6 +1132,8 @@ public:
 						if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
 						_displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						_enhancedMatte[displayOffset] = 255;
+					} else {
+						_displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
 					}
 				}
 				break;
@@ -1166,7 +1170,9 @@ public:
 						        if ((_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a) >= (_displayScreenA[displayOffset]))
 						        _displayScreenA[displayOffset] = (_displayScreenA[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (a);
 						        _enhancedMatte[displayOffset] = 255;
-					        }
+					        } else {
+						        _displayScreenR_BG[displayOffset] = (_displayScreenR_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (r * ((0.003921568627451) * a));
+							}
 						}
 				break;
 			}
@@ -1177,7 +1183,7 @@ public:
 		
 	}
 
-	void putPixelG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control) {
+	void putPixelG(int16 x, int16 y, byte drawMask, byte g, byte a, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
@@ -1196,6 +1202,9 @@ public:
 
 					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 				}
+				if (bg) {
+					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
 				break;
 			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
@@ -1210,6 +1219,9 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 
 					_displayScreenG[displayOffset] = (_displayScreenG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
+				}
+				if (bg) {
+					_displayScreenG_BG[displayOffset] = (_displayScreenG_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (g * ((0.003921568627451) * a));
 				}
 				break;
 			}
@@ -1219,7 +1231,7 @@ public:
 		}
 	}
 
-	void putPixelB(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control) {
+	void putPixelB(int16 x, int16 y, byte drawMask, byte b, byte a, byte priority, byte control, bool bg) {
 
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 
@@ -1238,6 +1250,9 @@ public:
 
 					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
+				if (bg) {
+					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+				}
 				break;
 			}
 			case GFX_SCREEN_UPSCALED_320x200_X_EGA:
@@ -1252,6 +1267,9 @@ public:
 					//assert(_format.bytesPerPixel == 4);
 
 					_displayScreenB[displayOffset] = (_displayScreenB[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
+				}
+				if (bg) {
+					_displayScreenB_BG[displayOffset] = (_displayScreenB_BG[displayOffset] * ((0.003921568627451) * (255.0000 - a))) + (b * ((0.003921568627451) * a));
 				}
 				break;
 			}
