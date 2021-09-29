@@ -60,6 +60,8 @@ extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > font
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator fontsMapit;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> > viewsMap;
 extern std::map<std::string, std::pair<Graphics::Surface *, const byte *> >::iterator viewsMapit;
+extern std::list<std::string> extraDIRList;
+extern std::list<std::string>::iterator extraDIRListit;
 extern bool preLoadedPNGs;
 void GfxPaint16::init(GfxAnimate *animate, GfxText16 *text16) {
 	_animate = animate;
@@ -120,7 +122,24 @@ Graphics::Surface *loadCelPNGCLUTOverridePaint(Common::SeekableReadStream *s) {
 	return srf;
 }
 
+bool fileIsInExtraDIRPaint(std::string fileName) {
 
+	bool found = false;
+	std::list<std::string>::iterator it;
+	for (it = extraDIRList.begin(); it != extraDIRList.end(); ++it) {
+		std::string s = it->c_str();
+		if (s.compare(fileName) == 0) {
+			found = true;
+		}
+	}
+	if (found) {
+		//debug("FOUND : %s", fileName.c_str());
+		return true;
+	} else {
+
+		return false;
+	}
+}
 
 void GfxPaint16::drawPicture(GuiResourceId pictureId, bool mirroredFlag, bool addToFlag, GuiResourceId paletteId) {
 	GfxPicture *picture = new GfxPicture(_resMan, _coordAdjuster, _ports, _screen, _palette, pictureId, _EGAdrawingVisualize);
@@ -132,7 +151,10 @@ void GfxPaint16::drawPicture(GuiResourceId pictureId, bool mirroredFlag, bool ad
 	if (!addToFlag)
 		clearScreen(_screen->getColorWhite());
 
-	picture->draw(mirroredFlag, addToFlag, paletteId);
+	
+	
+	picture->draw(mirroredFlag, addToFlag, paletteId); //g_sci->_gfxScreen->copyRectToScreen(g_sci->_gfxPorts->_curPort->rect);
+	
 	delete picture;
 
 	// We make a call to SciPalette here, for increasing sys timestamp and also loading targetpalette, if palvary active
@@ -289,7 +311,9 @@ void GfxPaint16::drawCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo,
 void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	drawCel(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, _cache->getView(viewId), loopNo, celNo, tweenNo, celRect, priority, paletteNo, scaleX, scaleY, scaleSignal);
 }
-
+void GfxPaint16::drawCelNoUpdate(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
+	drawCelNoUpdate(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, _cache->getView(viewId), loopNo, celNo, tweenNo, celRect, priority, paletteNo, scaleX, scaleY, scaleSignal);
+}
 // This version of drawCel is not supposed to call BitsShow()!
 void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GfxView *view, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
 	Common::Rect clipRect = celRect;
@@ -316,6 +340,31 @@ void GfxPaint16::drawCel(Graphics::Surface *viewpng, const byte *viewenh, int pi
 		view->drawScaled(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, celRect, clipRect, clipRectTranslated, loopNo, celNo, tweenNo, priority, scaleX, scaleY, scaleSignal);
 }
 
+// This version of drawCel is not supposed to call BitsShow()!
+void GfxPaint16::drawCelNoUpdate(Graphics::Surface *viewpng, const byte *viewenh, int pixelsLength, bool viewEnhanced, bool enhancedIs256, GfxView *view, int16 loopNo, int16 celNo, int16 tweenNo, const Common::Rect &celRect, byte priority, uint16 paletteNo, uint16 scaleX, uint16 scaleY, uint16 scaleSignal) {
+	Common::Rect clipRect = celRect;
+	Common::Rect curPortRectX;
+	if (_screen->_upscaledHires == GFX_SCREEN_UPSCALED_640x400) {
+		curPortRectX.left = _ports->_curPort->rect.left * 2;
+		curPortRectX.right = _ports->_curPort->rect.right * 2;
+		curPortRectX.top = _ports->_curPort->rect.top * 2;
+		curPortRectX.bottom = _ports->_curPort->rect.bottom * 2;
+	} else {
+		curPortRectX = _ports->_curPort->rect;
+	}
+	clipRect.clip(curPortRectX);
+
+	_currentViewPort = _ports->_curPort->rect;
+	if (clipRect.isEmpty()) // nothing to draw
+		return;
+
+	Common::Rect clipRectTranslated = clipRect;
+	_ports->offsetRect(clipRectTranslated);
+	if (scaleX == 128 && scaleY == 128)
+		view->drawNoUpdate(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, celRect, clipRect, clipRectTranslated, loopNo, celNo, tweenNo, priority, paletteNo, false, scaleSignal);
+	else
+		view->drawScaledNoUpdate(viewpng, viewenh, pixelsLength, viewEnhanced, enhancedIs256, celRect, clipRect, clipRectTranslated, loopNo, celNo, tweenNo, priority, scaleX, scaleY, scaleSignal);
+}
 // This is used as replacement for drawCelAndShow() when hires-cels are drawn to
 // screen. Hires-cels are available only SCI 1.1+.
 void GfxPaint16::drawHiresCelAndShow(GuiResourceId viewId, int16 loopNo, int16 celNo, int16 tweenNo, uint16 leftPos, uint16 topPos, byte priority, uint16 paletteNo, reg_t upscaledHiresHandle, uint16 scaleX, uint16 scaleY) {
@@ -532,9 +581,9 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 				case GFX_SCREEN_UPSCALED_320x200_X_EGA: {
 					for (y = r.top * g_sci->_enhancementMultiplier; y < r.bottom * g_sci->_enhancementMultiplier; y++) {
 						for (x = r.left * g_sci->_enhancementMultiplier; x < r.right * g_sci->_enhancementMultiplier; x++) {
-							_screen->putPixelR(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenR[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, true);
-							_screen->putPixelG(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenG[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0);
-							_screen->putPixelB(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenB[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0);
+							_screen->putPixelR(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenR[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, false);
+						    _screen->putPixelG(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenG[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, false);
+						    _screen->putPixelB(x, y, GFX_SCREEN_MASK_VISUAL, 255 - _screen->_displayedScreenB[(y * (_screen->_width * g_sci->_enhancementMultiplier)) + x], 255, 0, 0, false);
 						}
 					}
 					break;
@@ -556,7 +605,7 @@ void GfxPaint16::fillRect(const Common::Rect &rect, int16 drawFlags, byte color,
 		} else { // just fill rect with color
 			for (y = r.top; y < r.bottom; y++) {
 				for (x = r.left; x < r.right; x++) {
-					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, true);
+					_screen->putPixel(x, y, GFX_SCREEN_MASK_VISUAL, color, 0, 0, false);
 				}
 			}
 		}
@@ -699,17 +748,20 @@ void GfxPaint16::bitsFree(reg_t memoryHandle) {
 void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, bool animationBlackoutFlag, bool mirroredFlag, bool addToFlag, int16 EGApaletteNo) {
 	Port *oldPort = _ports->setPort((Port *)_ports->_picWind);
 
+	
+	g_sci->prevMirroredFlag = mirroredFlag;
+	g_sci->prevAddToFlag = addToFlag;
+	g_sci->prevPaletteId = EGApaletteNo;
 	if (_ports->isFrontWindow(_ports->_picWind)) {
 		_screen->_picNotValid = 1;
-		debug("- TRANSITION %u -", animationNr);
-		if (animationNr != 10) {
+		debug("pic.%u-pic.%u", g_sci->prevPictureId, pictureId);
+		g_sci->scene_transition = true;
+		g_sci->enhanced_bg_frame = 1;
+		g_sci->pictureId = pictureId;
 			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
-			_transitions->setup(animationNr, animationBlackoutFlag);
-		} else {
-			_transitions->fadeOut();
-			drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
-			_transitions->fadeIn();
-		}
+
+			_transitions->setup(100, animationBlackoutFlag);
+			g_sci->prevPictureId = pictureId;
 	} else {
 		// We need to set it for SCI1EARLY+ (sierra sci also did so), otherwise we get at least the following issues:
 		//  LSL5 (english) - last wakeup (taj mahal flute dream)
@@ -720,9 +772,15 @@ void GfxPaint16::kernelDrawPicture(GuiResourceId pictureId, int16 animationNr, b
 		if (getSciVersion() >= SCI_VERSION_1_EARLY)
 			_screen->_picNotValid = 1;
 		_ports->beginUpdate(_ports->_picWind);
+		g_sci->pictureId = pictureId;
 		drawPicture(pictureId, mirroredFlag, addToFlag, EGApaletteNo);
+		
+		g_sci->prevPictureId = pictureId;
 		_ports->endUpdate(_ports->_picWind);
 	}
+
+	
+
 	_ports->setPort(oldPort);
 }
 
@@ -789,7 +847,7 @@ void GfxPaint16::kernelGraphRedrawBox(Common::Rect rect) {
 	_coordAdjuster->kernelGlobalToLocal(rect.left, rect.top);
 	_coordAdjuster->kernelGlobalToLocal(rect.right, rect.bottom);
 
-	_animate->reAnimate(rect);
+	//_animate->reAnimate(rect); // <- whole screen reAnimates
 
 	_ports->setPort(oldPort);
 }
@@ -926,6 +984,7 @@ reg_t GfxPaint16::kernelDisplay(const char *text, uint16 languageSplitter, int a
 	}
 
 	_text16->Box(text, languageSplitter, false, rect, alignment, -1);
+	
 	if (_screen->_picNotValid == 0 && bRedraw)
 		bitsShow(rect);
 	// restoring port and cursor pos

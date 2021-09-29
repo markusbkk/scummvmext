@@ -59,6 +59,7 @@ static const PlainGameDescriptor s_sciGameTitles[] = {
 	// === SCI01 games ========================================================
 	{"qfg2",            "Quest for Glory II: Trial by Fire"},
 	{"kq1sci",          "King's Quest I: Quest for the Crown"},	// Note: There was also an AGI version of this
+    // {"kq2sci",				"King's Quest II: Romancing the Throne"}, // Note: There was also an AGI version of this
 	// === SCI1 games =========================================================
 	{"castlebrain",     "Castle of Dr. Brain"},
 	{"christmas1990",   "Christmas Card 1990: The Seasoned Professional"},
@@ -273,7 +274,15 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			false
 		}
 	},
-	
+	{
+		GAMEOPTION_ENHANCE_GFX,
+		{
+			_s("Replacement graphics"),
+			_s("Use replacement graphics files in Extra folder"),
+			"enhanced_gfx_enabled",
+			true
+		}
+	},
 	// SCI16 games: use custom per-resource palettes to improve visuals
 	{
 		GAMEOPTION_PALETTE_MODS,
@@ -307,6 +316,36 @@ struct PopUpOptionsMap {
 #define POPUP_OPTIONS_TERMINATOR { nullptr, nullptr, nullptr, nullptr, 0, { POPUP_OPTIONS_ITEMS_TERMINATOR } }
 
 static const PopUpOptionsMap popUpOptionsList[] = {
+	{
+		GAMEOPTION_STEREOSCOPIC,
+		 _s("Stereoscopic:"),
+         _s("Render Left/Right 'Side-by-Side'format"),
+         "stereoscopic_rendering",
+			kStereoscopicModeOff,
+		{
+			{
+				_s("2D"),
+				kStereoscopicModeOff
+			},
+			{
+				_s("2D Depth Map"),
+				kStereoscopicMode2DDepth
+			},
+			{
+				_s("3D Flat"),
+				kStereoscopicModeFlat
+			},
+			{
+				_s("3D L/R Pair"),
+				kStereoscopicModePair
+			},
+			{
+				_s("3D Depth Map"),
+				kStereoscopicModeDepth
+			},
+			POPUP_OPTIONS_ITEMS_TERMINATOR
+		}
+	},
 	{
 		GAMEOPTION_MIDI_MODE,
 		_s("MIDI mode:"),

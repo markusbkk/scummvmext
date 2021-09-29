@@ -87,6 +87,7 @@ public:
 	}
 
 	void remapChannel(int channel, int devChannel);
+	
 
 protected:
 	void parseNextEvent(EventInfo &info) override;

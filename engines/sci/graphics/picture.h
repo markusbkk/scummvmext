@@ -85,11 +85,9 @@ private:
 	int16 _resourceId;
 	Resource *_resource;
 	int _resourceType;
-	bool enhanced;
+	
 	bool overlay;
-	bool paletted;
 	bool surface;
-	bool enhancedPrio;
 	bool _mirroredFlag;
 	bool _addToFlag;
 	int16 _EGApaletteNo;
@@ -99,11 +97,13 @@ private:
 	Graphics::Surface *pngPrio;
 	Graphics::Surface *pngOverlay;
 	Graphics::Surface *pngSurface;
+	Graphics::Surface *pngDepth;
 	const byte *enh;
 	const byte *enhPal;
 	const byte *enhPrio;
 	const byte *enhOverlay;
 	const byte *enhSurface;
+	const byte *enhDepth;
 	// If true, we will show the whole EGA drawing process...
 	bool _EGAdrawingVisualize;
 };

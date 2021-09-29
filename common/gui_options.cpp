@@ -90,6 +90,9 @@ const struct GameOpt {
 	{ GUIO_GAMEOPTIONS14, "gameOptionE" },
 	{ GUIO_GAMEOPTIONS15, "gameOptionF" },
 
+	{ GUIO_STEREOSCOPIC, "stereoscopic_rendering"},
+    { GUIO_ENHANCE_GFX, "enhanced_gfx_enabled"},
+
 	{ GUIO_NONE, nullptr }
 };
 

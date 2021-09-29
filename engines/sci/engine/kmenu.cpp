@@ -81,6 +81,11 @@ reg_t kDrawStatus(EngineState *s, int argc, reg_t *argv) {
 		}
 
 		g_sci->_gfxMenu->kernelDrawStatus(g_sci->strSplit(text.c_str(), NULL).c_str(), colorPen, colorBack);
+		if (g_sci->stereoscopic) {
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+			g_sci->_gfxMenu->kernelDrawStatus(g_sci->strSplit(text.c_str(), NULL).c_str(), colorPen, colorBack);
+			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+		}
 	}
 	return s->r_acc;
 }

@@ -42,6 +42,8 @@ namespace Sci {
 #define GAMEOPTION_UPSCALE_VIDEOS           GUIO_GAMEOPTIONS13
 #define GAMEOPTION_RGB_RENDERING            GUIO_GAMEOPTIONS14
 #define GAMEOPTION_PALETTE_MODS             GUIO_GAMEOPTIONS15
+#define GAMEOPTION_STEREOSCOPIC				GUIO_STEREOSCOPIC
+#define GAMEOPTION_ENHANCE_GFX				GUIO_ENHANCE_GFX
 
 enum SciGameId {
 	GID_ASTROCHICKEN,
@@ -74,6 +76,7 @@ enum SciGameId {
 	GID_ISLANDBRAIN,
 	GID_JONES,
 	GID_KQ1,
+	GID_KQ2,
 	GID_KQ4,
 	GID_KQ5,
 	GID_KQ6,
@@ -149,6 +152,15 @@ enum kMidiMode {
 	kMidiModeStandard,
 	kMidiModeFB01,
 	kMidiModeD110
+};
+
+/** Stereoscopic Mode */
+enum kStereoscopicMode {
+	kStereoscopicModeOff,
+	kStereoscopicMode2DDepth,
+	kStereoscopicModeFlat,
+	kStereoscopicModePair,
+	kStereoscopicModeDepth
 };
 
 } // End of namespace Sci

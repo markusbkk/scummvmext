@@ -2187,7 +2187,11 @@ bool Console::cmdDrawCel(int argc, const char **argv) {
 				}
 			}
 		}
-		view->draw(listEntry.viewpng, listEntry.viewenh, listEntry.pixelsLength, listEntry.viewEnhanced, listEntry.enhancedIs256, celRect, celRect, celRect, loopNo, celNo, 0, 255, 0, false);
+		if (listEntry.signal & kSignalNoUpdate) {
+			view->drawNoUpdate(listEntry.viewpng, listEntry.viewenh, listEntry.pixelsLength, listEntry.viewEnhanced, listEntry.enhancedIs256, celRect, celRect, celRect, loopNo, celNo, 0, 255, false, false, 0); //UpscaledHighRes??
+		} else {
+			view->draw(listEntry.viewpng, listEntry.viewenh, listEntry.pixelsLength, listEntry.viewEnhanced, listEntry.enhancedIs256, celRect, celRect, celRect, loopNo, celNo, 0, 255, false, false, 0); //UpscaledHighRes??
+		}
 		_engine->_gfxScreen->copyRectToScreen(celRect);
 	}
 	return true;

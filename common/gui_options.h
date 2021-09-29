@@ -82,6 +82,9 @@
 #define GUIO_GAMEOPTIONS14   "\x3d"
 #define GUIO_GAMEOPTIONS15   "\x3e"
 
+#define GUIO_STEREOSCOPIC   "\x3f"
+#define GUIO_ENHANCE_GFX   "\x40"
+
 #define GUIO0() (GUIO_NONE)
 #define GUIO1(a) (a)
 #define GUIO2(a,b) (a b)

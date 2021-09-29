@@ -665,14 +665,17 @@ void GfxCursor::setPosition(Common::Point pos) {
 	// position only when showing the cursor.
 	if (!_isVisible)
 		return;
-
+	if (g_sci->stereoscopic)
+	if (pos.x > _screen->getScriptWidth() / 2) {
+		pos.x -= _screen->getScriptWidth() / 2;
+	}
 	if (!_upscaledHires) {
 		g_system->warpMouse(pos.x, pos.y);
 	} else {
 		_screen->adjustToUpscaledCoordinates(pos.y, pos.x);
 		g_system->warpMouse(pos.x, pos.y);
 	}
-
+	
 	// WORKAROUNDS for games with windows that are hidden when the mouse cursor
 	// is moved outside them - also check setPositionWorkarounds above.
 	//
@@ -713,9 +716,24 @@ void GfxCursor::setPosition(Common::Point pos) {
 Common::Point GfxCursor::getPosition() {
 	Common::Point mousePos = g_system->getEventManager()->getMousePos();
 
+	if (g_sci->depth_rendering)
+		if (g_sci->enhanced_DEPTH) {
+		if (!g_sci->stereoscopic) {
+			mousePos.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
+			mousePos.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x)];
+		} else {
+			mousePos.x = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x / 2)];
+			mousePos.y = g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_Y[(mousePos.y) * g_sci->_gfxScreen->_displayWidth + (mousePos.x / 2)];
+		}
+	}
+	if (g_sci->stereoscopic) {
+		if (mousePos.x > _screen->getScriptWidth() / 2) {
+			mousePos.x -= _screen->getScriptWidth() / 2;
+		}
+	}
 	if (_upscaledHires)
 		_screen->adjustBackUpscaledCoordinates(mousePos.y, mousePos.x);
-
+	
 	return mousePos;
 }
 
@@ -745,7 +763,11 @@ void GfxCursor::refreshPosition() {
 		if (clipped)
 			setPosition(mousePoint);
 	}
-
+	if (g_sci->stereoscopic) {
+		if (mousePoint.x > _screen->getScriptWidth() / 2) {
+			mousePoint.x -= _screen->getScriptWidth() / 2;
+		}
+	}
 	if (_zoomZoneActive) {
 		// Cursor
 		const CelInfo *cursorCelInfo = _zoomCursorView->getCelInfo(_zoomCursorLoop, _zoomCursorCel);
@@ -852,14 +874,28 @@ void GfxCursor::kernelSetZoomZone(byte multiplier, Common::Rect zone, GuiResourc
 
 void GfxCursor::kernelSetPos(Common::Point pos) {
 	_coordAdjuster->setCursorPos(pos);
+	if (g_sci->stereoscopic)
+	if (pos.x > _screen->getScriptWidth() / 2) {
+		pos.x -= _screen->getScriptWidth() / 2;
+	}
 	kernelMoveCursor(pos);
 }
 
 void GfxCursor::kernelMoveCursor(Common::Point pos) {
 	_coordAdjuster->moveCursor(pos);
-	if (pos.x > _screen->getScriptWidth() || pos.y > _screen->getScriptHeight()) {
-		warning("attempt to place cursor at invalid coordinates (%d, %d)", pos.y, pos.x);
-		return;
+	if (!g_sci->stereoscopic) {
+		if (pos.x > _screen->getScriptWidth() || pos.y > _screen->getScriptHeight()) {
+			warning("attempt to place cursor at invalid coordinates (%d, %d)", pos.y, pos.x);
+			return;
+		}
+	} else {
+		if (pos.x > _screen->getScriptWidth() || pos.y > _screen->getScriptHeight()) {
+			warning("attempt to place cursor at invalid coordinates (%d, %d)", pos.y, pos.x);
+			return;
+		}
+		if (pos.x > _screen->getScriptWidth() / 2) {
+			pos.x -= _screen->getScriptWidth() / 2;
+		}
 	}
 
 	setPosition(pos);

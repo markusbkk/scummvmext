@@ -40,6 +40,8 @@
 
 namespace Sci {
 
+extern std::map<int16, std::pair<int16, std::string> > videoCutscenesMap;
+
 struct GameIdStrToEnum {
 	const char *gameidStr;
 	SciGameId gameidEnum;
@@ -80,6 +82,7 @@ static const GameIdStrToEnum s_gameIdStrToEnum[] = {
 	{ "islandbrain",     GID_ISLANDBRAIN,      false },
 	{ "jones",           GID_JONES,            false },
 	{ "kq1sci",          GID_KQ1,              false },
+    { "kq2",			 GID_KQ2,			   false },
 	{ "kq4sci",          GID_KQ4,              false },
 	{ "kq5",             GID_KQ5,              false },
 	{ "kq6",             GID_KQ6,              false },
@@ -480,6 +483,7 @@ void SciMetaEngine::removeSaveState(const char *target, int slot) const {
 }
 
 Common::Error SciEngine::loadGameState(int slot) {
+	videoCutscenesMap.clear();
 	_gamestate->_delayedRestoreGameId = slot;
 	return Common::kNoError;
 }
