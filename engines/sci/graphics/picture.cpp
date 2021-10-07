@@ -208,8 +208,11 @@ void GfxPicture::drawSci11Vga() {
 		// Create palette and set it
 		_palette->createFromData(inbuffer.subspan(palette_data_ptr), &palette);
 		_palette->set(&palette, true);
-
+		g_sci->stereoRightEye = false;
 		drawCelData(inbuffer, cel_headerPos, cel_RlePos, cel_LiteralPos, 0, 0, 0, 0, false);
+		g_sci->stereoRightEye = true;
+		drawCelData(inbuffer, cel_headerPos, cel_RlePos, cel_LiteralPos, 0, 0, 0, 0, false);
+		g_sci->stereoRightEye = false;
 	}
 
 	// process vector data
@@ -228,8 +231,16 @@ Graphics::Surface *loadPNGPicture(Common::SeekableReadStream *s) {
 		return nullptr;
 	d.loadStream(*s);
 	//delete s;
-
-	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+	Graphics::Surface *srf;
+	if (d.hasPalette()) {
+		srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+		g_sci->paletted_enhanced_BG = true;
+		g_sci->enhanced_BG = false;
+	} else {
+		srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+		g_sci->paletted_enhanced_BG = false;
+		g_sci->enhanced_BG = true;
+	}
 	return srf;
 }
 
@@ -240,7 +251,16 @@ Graphics::Surface *loadPNGCLUTPicture(Common::SeekableReadStream *s, GfxScreen *
 		return nullptr;
 	d.loadStream(*s);
 	//delete s;
-	Graphics::Surface *srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+	Graphics::Surface *srf;
+	if (d.hasPalette()) {
+		srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+		g_sci->paletted_enhanced_BG = true;
+		g_sci->enhanced_BG = false;
+	} else {
+		srf = d.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+		g_sci->paletted_enhanced_BG = false;
+		g_sci->enhanced_BG = true;
+	}
 	return srf;
 }
 
@@ -284,6 +304,13 @@ bool fileIsInExtraDIRPicture(std::string fileName) {
 }
 
 void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos, int rlePos, int literalPos, int16 drawX, int16 drawY, int16 pictureX, int16 pictureY, bool isEGA) {
+
+	if (g_sci->stereoRightEye) {
+		debug("Left");
+	}
+	 else {
+		debug("Right");
+	}
 	g_sci->avgViewPos.clear();
 	g_sci->_gfxPalette16->overridePalette = false;
 	memset(g_sci->_gfxScreen->_displayScreenDEPTH_SHIFT_X, 0, g_sci->_gfxScreen->_displayPixels);
@@ -340,7 +367,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 	
 	Common::String bgFileName = _resource->name().c_str();
 	if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
-		if (fileIsInExtraDIRPicture((bgFileName + ".reye.png").c_str()))
+		if (fileIsInExtraDIRPicture((bgFileName + ".reye.png").c_str()) || fileIsInExtraDIRPicture((bgFileName + ".reye_256.png").c_str()))
 			bgFileName += ".reye";
 	}
 	if (g_sci->scene_transition) {
@@ -348,7 +375,8 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
 			bgFileName += "-";
 			bgFileName += _resource->name().c_str();
-			if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye)
+			
+				if (fileIsInExtraDIRPicture((bgFileName + ".reye.png").c_str()) || fileIsInExtraDIRPicture((bgFileName + ".reye_256.png").c_str()))
 				bgFileName += ".reye";
 		}
 	}
@@ -421,7 +449,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		debug(fn.c_str());
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
-			if (fileIsInExtraDIRPicture((fnNoAnim + ".reye.png").c_str()))
+			if (fileIsInExtraDIRPicture((fnNoAnim + ".reye.png").c_str()) || fileIsInExtraDIRPicture((fnNoAnim + ".reye_256.png").c_str()))
 				fnNoAnim += ".reye";
 		}
 		char picnextstrbuffer[32];
@@ -429,7 +457,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		Common::String nextAnim = picnextstrbuffer;
 
 		if (!g_sci->scene_transition) {
-			if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
+			if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str()) || fileIsInExtraDIRPicture((fnNoAnim + "_256.png").c_str())) {
 				//debug(nextAnim.c_str());
 
 				g_sci->backgroundIsVideo = false;
@@ -536,7 +564,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				g_sci->backgroundIsVideo = false;
 
 				g_sci->play_enhanced_BG_anim = false;
-				if (fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
+				if (!fileIsInExtraDIRPicture((nextAnim + "_256.png").c_str()) && fileIsInExtraDIRPicture((nextAnim + ".png").c_str())) {
 					//debug(nextAnim.c_str());
 					if (g_sci->enhanced_gfx_enabled)
 						g_sci->enhanced_bg_frame++;
@@ -588,20 +616,22 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				     viewsMapit != viewsMap.end(); ++viewsMapit) {
 					if (g_sci->enhanced_gfx_enabled) {
 						if (!g_sci->backgroundIsVideo) {
-
+							
 							if (strcmp(viewsMapit->first.c_str(), (fn + ".png").c_str()) == 0) {
+								if (!fileIsInExtraDIRPicture((fn + "_256.png").c_str())) {
 
-								std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
+									std::pair<Graphics::Surface *, const byte *> tmp = viewsMapit->second;
 
-								//debug("RELOADED FROM RAM");
-								png = tmp.first;
-								if (png) {
-									enh = (const byte *)png->getPixels();
-									if (enh) {
-										preloaded = true;
-										debug((fn + ".png WAS ALREADY CACHED :)").c_str());
-										pixelCountX = png->w * png->h * 4;
-										g_sci->enhanced_BG = true;
+									//debug("RELOADED FROM RAM");
+									png = tmp.first;
+									if (png) {
+										enh = (const byte *)png->getPixels();
+										if (enh) {
+											preloaded = true;
+											debug((fn + ".png WAS ALREADY CACHED :)").c_str());
+											pixelCountX = png->w * png->h * 4;
+											g_sci->enhanced_BG = true;
+										}
 									}
 								}
 							} else if (strcmp(viewsMapit->first.c_str(), (fn + "_256.png").c_str()) == 0) {
@@ -614,7 +644,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									if (enhPal) {
 										preloaded_256 = true;
 										debug((fn + "_256.png WAS ALREADY CACHED :)").c_str());
-										pixelCountX = png->w * png->h * 4;
+										pixelCountX = pngPal->w * pngPal->h * 4;
 										g_sci->enhanced_BG = false;
 										g_sci->paletted_enhanced_BG = true;
 									}
@@ -703,7 +733,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 		if (!g_sci->backgroundIsVideo) {
 			if (!preloaded) {
 				if (g_sci->enhanced_gfx_enabled) {
-					if (fileIsInExtraDIRPicture((fn + ".png").c_str())) {
+					if (!fileIsInExtraDIRPicture((fn + "_256.png").c_str()) && fileIsInExtraDIRPicture((fn + ".png").c_str())) {
 						Common::String fileName = folder.getPath().c_str() + folder.getChild(fn + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -719,7 +749,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									enh = (const byte *)png->getPixels();
 									if (enh) {
 										pixelCountX = png->w * png->h * 4;
-										g_sci->enhanced_BG = true;
 										std::pair<Graphics::Surface *, const byte *> tmp;
 										tmp.first = png;
 										tmp.second = enh;
@@ -728,7 +757,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 								}
 							}
 						}
-					} else if (fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
+					} else if (!fileIsInExtraDIRPicture((fnNoAnim + "_256.png").c_str()) && fileIsInExtraDIRPicture((fnNoAnim + ".png").c_str())) {
 						Common::String fileName = folder.getPath().c_str() + folder.getChild(fnNoAnim + ".png").getName();
 						Common::SeekableReadStream *file = SearchMan.createReadStreamForMember(fileName);
 
@@ -744,7 +773,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									enh = (const byte *)png->getPixels();
 									if (enh) {
 										pixelCountX = png->w * png->h * 4;
-										g_sci->enhanced_BG = true;
 										std::pair<Graphics::Surface *, const byte *> tmp;
 										tmp.first = png;
 										tmp.second = enh;
@@ -773,9 +801,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									enhPal = (const byte *)pngPal->getPixels();
 									if (enhPal) {
 										pixelCountX = pngPal->w * pngPal->h * 4;
-
-										g_sci->enhanced_BG = false;
-										g_sci->paletted_enhanced_BG = true;
 										g_sci->_gfxPalette16->overridePalette = false;
 										std::pair<Graphics::Surface *, const byte *> tmp;
 										tmp.first = pngPal;
@@ -801,8 +826,6 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 									enhPal = (const byte *)pngPal->getPixels();
 									if (enhPal) {
 										pixelCountX = pngPal->w * pngPal->h * 4;
-										g_sci->enhanced_BG = false;
-										g_sci->paletted_enhanced_BG = true;
 										g_sci->_gfxPalette16->overridePalette = false;
 										std::pair<Graphics::Surface *, const byte *> tmp;
 										tmp.first = pngPal;
@@ -1612,7 +1635,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 		debug(fn.c_str());
 		Common::String fnNoAnim = ("%s", _resource->name().c_str());
 		if (g_sci->stereo_pair_rendering && g_sci->stereoRightEye) {
-			if (fileIsInExtraDIRPicture((fnNoAnim + ".reye.png").c_str()))
+			if (fileIsInExtraDIRPicture((fnNoAnim + ".reye.png").c_str()) || fileIsInExtraDIRPicture((fnNoAnim + ".reye_256.png").c_str()))
 				fnNoAnim += ".reye";
 		}
 		char picnextstrbuffer[32];
@@ -2912,7 +2935,11 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 					} else {
 						_priority = 0;
 					}
+					g_sci->stereoRightEye = false;
 					drawCelData(data, curPos, curPos + 8, 0, x, y, 0, 0, true);
+					g_sci->stereoRightEye = true;
+					drawCelData(data, curPos, curPos + 8, 0, x, y, 0, 0, true);
+					g_sci->stereoRightEye = false;
 					curPos += size;
 					break;
 				case PIC_OPX_EGA_SET_PRIORITY_TABLE:
@@ -2961,11 +2988,13 @@ void GfxPicture::drawVectorData(const SciSpan<const byte> &data) {
 					} else {
 						_priority = pic_priority; // set global priority so the cel gets drawn using current priority as well
 					}
+					g_sci->stereoRightEye = false;
 					drawCelData(data, curPos, curPos + 8, 0, x, y, 0, 0, false);
 					if (g_sci->stereoscopic) {
-						g_sci->stereoRightEye = !g_sci->stereoRightEye;
+						g_sci->stereoRightEye = true;
 						drawCelData(data, curPos, curPos + 8, 0, x, y, 0, 0, false);
 						g_sci->stereoRightEye = !g_sci->stereoRightEye;
+						g_sci->stereoRightEye = false;
 					}
 					curPos += size;
 					break;

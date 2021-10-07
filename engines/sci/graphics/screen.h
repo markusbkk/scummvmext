@@ -169,6 +169,8 @@ public:
 	uint16 _height;
 	byte *_displayScreen;
 	byte *_displayScreen_BG;
+	byte *_displayScreen_R_EYE;
+	byte *_displayScreen_BG_R_EYE;
 	byte *_displayScreen_BGtmp;
 	byte *_displayScreenA;
 	byte *_displayedScreenR;
@@ -439,8 +441,20 @@ public:
 				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 					_displayScreenA[displayOffset] = 0;
-					_displayScreen_BG[displayOffset] = c;
-
+					
+					if (!g_sci->stereoscopic) {
+						_displayScreen_BG[displayOffset] = c;
+					} else {
+						if (g_sci->stereo_pair_rendering) {
+							if (!g_sci->stereoRightEye) {
+								_displayScreen_BG[displayOffset] = c;
+							} else {
+								_displayScreen_BG_R_EYE[displayOffset] = c;
+							}
+						} else {
+							_displayScreen_BG[displayOffset] = c;
+						}
+					}
 					if (g_sci->depth_rendering)
 						if (g_sci->enhanced_DEPTH)
 					_displayScreen_BGtmp[displayOffset] = c;
@@ -454,7 +468,19 @@ public:
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 					_displayScreenA[displayOffset] = 0;
-					_displayScreen_BG[displayOffset] = c;
+					if (!g_sci->stereoscopic) {
+						_displayScreen_BG[displayOffset] = c;
+					} else {
+						if (g_sci->stereo_pair_rendering) {
+							if (!g_sci->stereoRightEye) {
+								_displayScreen_BG[displayOffset] = c;
+							} else {
+								_displayScreen_BG_R_EYE[displayOffset] = c;
+							}
+						} else {
+							_displayScreen_BG[displayOffset] = c;
+						}
+					}
 
 					if (g_sci->depth_rendering)
 						if (g_sci->enhanced_DEPTH)
@@ -488,7 +514,19 @@ public:
 				displayOffset = (y * (_width * g_sci->_enhancementMultiplier)) + x;
 				if (_format.bytesPerPixel == 2) {
 					_displayScreenA[displayOffset] = 255;
-					_displayScreen[displayOffset] = c;
+					if (!g_sci->stereoscopic) {
+						_displayScreen[displayOffset] = c;
+					} else {
+						if (g_sci->stereo_pair_rendering) {
+							if (!g_sci->stereoRightEye) {
+								_displayScreen[displayOffset] = c;
+							} else {
+								_displayScreen_R_EYE[displayOffset] = c;
+							}
+						} else {
+							_displayScreen[displayOffset] = c;
+						}
+					}
 					byte r = _palette[3 * c + 0];
 					byte g = _palette[3 * c + 1];
 					byte b = _palette[3 * c + 2];
@@ -505,7 +543,19 @@ public:
 				} else {
 					//assert(_format.bytesPerPixel == 4);
 					_displayScreenA[displayOffset] = 255;
-					_displayScreen[displayOffset] = c;
+					if (!g_sci->stereoscopic) {
+						_displayScreen[displayOffset] = c;
+					} else {
+						if (g_sci->stereo_pair_rendering) {
+							if (!g_sci->stereoRightEye) {
+								_displayScreen[displayOffset] = c;
+							} else {
+								_displayScreen_R_EYE[displayOffset] = c;
+							}
+						} else {
+							_displayScreen[displayOffset] = c;
+						}
+					}
 					byte r = _palette[3 * c + 0];
 					byte g = _palette[3 * c + 1];
 					byte b = _palette[3 * c + 2];
@@ -1682,6 +1732,7 @@ public:
 		if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 			_visualScreen[offset] = color;
 			_displayScreen[offset] = color;
+			_displayScreen_R_EYE[offset] = color;
 			_enhancedMatte[offset] = 0;
 			if (_paletteMapScreen)
 				_paletteMapScreen[offset] = _curPaletteMapValue;

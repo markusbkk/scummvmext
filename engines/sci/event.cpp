@@ -490,9 +490,10 @@ void EventManager::updateScreen() {
 		
 		
 	 } else {
+
 		 if (g_sci->stereoscopic) {
 
-			 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 30) { // could be 60, but were rendering 2 screens.
+			 if (g_system->getMillis() - s->_screenUpdateTime >= 1000 / 30 && !g_sci->_gfxScreen->_picNotValid) { // could be 60, but were rendering 2 screens.
 				 s->_screenUpdateTime = g_system->getMillis();
 
 				 for (int y = 0; y < g_sci->_gfxScreen->_displayHeight; y++) {

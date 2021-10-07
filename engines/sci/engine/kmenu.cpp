@@ -79,12 +79,12 @@ reg_t kDrawStatus(EngineState *s, int argc, reg_t *argv) {
 			// Happens in the fanmade game Cascade Quest when loading - ignore it
 			return s->r_acc;
 		}
-
+		g_sci->stereoRightEye = false;
 		g_sci->_gfxMenu->kernelDrawStatus(g_sci->strSplit(text.c_str(), NULL).c_str(), colorPen, colorBack);
 		if (g_sci->stereoscopic) {
-			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+			g_sci->stereoRightEye = true;
 			g_sci->_gfxMenu->kernelDrawStatus(g_sci->strSplit(text.c_str(), NULL).c_str(), colorPen, colorBack);
-			g_sci->stereoRightEye = !g_sci->stereoRightEye;
+			g_sci->stereoRightEye = false;
 		}
 	}
 	return s->r_acc;
