@@ -371,7 +371,7 @@ public:
 
 		// Set pixel for visual, priority and control map directly, those are not upscaled
 		const int offset = y * _width + x;
-		if (!g_sci->stereo_pair_rendering) {
+		{
 			if (drawMask & GFX_SCREEN_MASK_VISUAL) {
 				_visualScreen[offset] = color;
 				if (_paletteMapScreen)

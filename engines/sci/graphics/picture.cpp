@@ -253,7 +253,13 @@ Graphics::Surface *loadPNGCLUTPicture(Common::SeekableReadStream *s, GfxScreen *
 	//delete s;
 	Graphics::Surface *srf;
 	if (d.hasPalette()) {
-		srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8());
+		byte bytes[256 * 3];
+		for (int16 i = 0; i < 256; i++) {
+			bytes[i * 3] = g_sci->_gfxPalette16->_sysPalette.colors[i].r;
+			bytes[(i * 3) + 1] = g_sci->_gfxPalette16->_sysPalette.colors[i].g;
+			bytes[(i * 3) + 2] = g_sci->_gfxPalette16->_sysPalette.colors[i].b;
+		}
+		srf = d.getSurface()->convertTo(Graphics::PixelFormat::createFormatCLUT8(), bytes);
 		g_sci->paletted_enhanced_BG = true;
 		g_sci->enhanced_BG = false;
 	} else {
@@ -1296,6 +1302,7 @@ void GfxPicture::drawCelData(const SciSpan<const byte> &inbuffer, int headerPos,
 				//if (curByte != clearColor)
 				if (offset + 3 < pixelCountX - 1) {
 					if (g_sci->paletted_enhanced_BG) {
+						if (enhPal[offsetPal] != clearColor)
 						_screen->putPixelPaletted_BG(x, y, GFX_SCREEN_MASK_VISUAL, enhPal[offsetPal], priority, 0, true);
 					}
 					if (g_sci->enhanced_BG && !g_sci->paletted_enhanced_BG) {
@@ -2354,6 +2361,7 @@ void GfxPicture::drawEnhancedBackground(const SciSpan<const byte> &data) {
 				//if (curByte != clearColor)
 				if (offset + 3 < pixelCountX - 1) {
 					if (g_sci->paletted_enhanced_BG) {
+						if (enhPal[offsetPal] != clearColor)
 						_screen->putPixelPaletted_BG(x, y, GFX_SCREEN_MASK_VISUAL, enhPal[offsetPal], priority, 0, true);
 					}
 					if (g_sci->enhanced_BG && !g_sci->paletted_enhanced_BG) {
